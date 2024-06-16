@@ -1,1 +1,3 @@
-# (un)Usable Solidity Compiler
+# Allegedly
+
+A Solidity compiler that "allegedly" works, written in TypeScript.
