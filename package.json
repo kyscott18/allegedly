@@ -1,12 +1,15 @@
 {
-  "name": "usc",
+  "name": "allegedly",
+  "version": "0.0.1-alpha.0",
   "module": "index.ts",
   "type": "module",
+  "files": ["dist"],
   "scripts": {
     "format": "biome format . --write",
     "lint": "biome lint . --apply"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.27.5",
     "@types/bun": "latest"
   },
   "peerDependencies": {
@@ -14,5 +17,8 @@
   },
   "dependencies": {
     "@biomejs/biome": "^1.8.1"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

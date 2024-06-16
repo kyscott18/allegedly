@@ -1,34 +1,34 @@
 import type { TODO } from "./utils";
 
 export type ContractDefinition = {
-	nodeType: "ContractDefinition";
-	contractKind: "contract" | "interface" | "library";
+  nodeType: "ContractDefinition";
+  contractKind: "contract" | "interface" | "library";
 
-	id: number;
+  id: number;
 
-	nodes: TODO[];
+  nodes: TODO[];
 
-	src: string;
+  src: string;
 
-	usedErrors: number[];
-	usedEvents: number[];
+  usedErrors: number[];
+  usedEvents: number[];
 
-	fullyImplemented: boolean;
+  fullyImplemented: boolean;
 
-	contractDependencies: number[];
+  contractDependencies: number[];
 
-	internalFunctionIds?: {
-		[key: string]: number | undefined;
-	};
+  internalFunctionIds?: {
+    [key: string]: number | undefined;
+  };
 
-	scope: number;
+  scope: number;
 
-	name: string;
-	nameLocation: string | undefined;
-	canonicalName: string | undefined;
+  name: string;
+  nameLocation: string | undefined;
+  canonicalName: string | undefined;
 
-	// Not implemented:
-	// abstract
-	// baseContracts
-	// linearizedBaseContracts
+  // Not implemented:
+  // abstract
+  // baseContracts
+  // linearizedBaseContracts
 };

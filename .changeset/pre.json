@@ -1,0 +1,8 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "allegedely": "0.0.0"
+  },
+  "changesets": ["wet-mugs-lay"]
+}
