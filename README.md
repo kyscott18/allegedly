@@ -1,3 +1,3 @@
 # Allegedly
 
-A Solidity compilier that "allegedly" works, written in TypeScript.
+A Solidity compiler that "allegedly" works, written in TypeScript.
