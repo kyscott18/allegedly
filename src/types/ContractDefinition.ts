@@ -4,6 +4,7 @@ export type ContractDefinition = {
   nodeType: "ContractDefinition";
   contractKind: "contract" | "interface" | "library";
 
+  /** Unique identifier for this node. */
   id: number;
 
   nodes: TODO[];

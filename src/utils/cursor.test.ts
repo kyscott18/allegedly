@@ -4,7 +4,7 @@ import { createCursor } from "./cursor";
 test("cursor gets next word", () => {
   const cursor = createCursor("kyle");
 
-  const word = cursor.read();
+  const word = cursor.readToken();
 
   expect(word).toBe("kyle");
 });
