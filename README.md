@@ -1,6 +1,6 @@
 # Allegedly
 
-A [Solidity](https://soliditylang.org) compiler optimized for generating scripts used to do EVM simulations, written in TypeScript.
+A [Solidity](https://soliditylang.org) compiler optimized for EVM simulations, written in TypeScript.
 
 ## Features
 
@@ -26,7 +26,7 @@ contract GetBalance {
 
 ## [`solc`](https://github.com/ethereum/solidity)
 
-## [`solc`](https://github.com/ethereum/solc-js)
+## [`solc-js`](https://github.com/ethereum/solc-js)
 
 ## Supported Language Features
 
