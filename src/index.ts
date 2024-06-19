@@ -3,8 +3,8 @@ import { parse } from "./ast/parse";
 import type { Hex, TODO } from "./types/utils";
 
 export type CompileReturnType = {
-  bytecode: Hex;
-  deployedBytecode: Hex;
+  code: Hex;
+  initCode: Hex;
   abi: Abi;
   sourceMap: TODO;
   metadata: TODO;
@@ -22,7 +22,7 @@ export const compile = (source: string): CompileReturnType => {
   // Semantic analysis
   // todo
 
-  // Abi generation
+  // abi generation
   // todo
 
   // Bytecode generation
