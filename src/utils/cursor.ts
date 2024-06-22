@@ -1,8 +1,9 @@
-export type Cursor = {
+export type Cursor = Iterable<string> & {
   string: string;
   position: number;
   remaining: number;
-  readToken(): string | undefined;
+  peek(): string | undefined;
+  next(): IteratorResult<string>;
 };
 
 const staticCursor: Cursor = {
@@ -11,16 +12,18 @@ const staticCursor: Cursor = {
   get remaining() {
     return this.string.length - this.position;
   },
-  readToken() {
-    const match = this.string.slice(this.position).match(/\w+/);
-
-    if (match === null) return undefined;
-
-    this.position += match[0]!.length;
-
-    return match[0]!;
+  peek() {
+    if (this.remaining === 0) return undefined;
+    return this.string.charAt(this.position);
   },
-};
+  next() {
+    if (this.remaining === 0) return { value: undefined, done: true };
+    return { value: this.string.charAt(this.position++), done: false };
+  },
+  [Symbol.iterator]() {
+    return this;
+  },
+} satisfies Cursor;
 
 export const createCursor = (source: string): Cursor => {
   const cursor: Cursor = Object.create(staticCursor);
