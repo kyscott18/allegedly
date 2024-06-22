@@ -2,12 +2,6 @@
 
 A [Solidity](https://soliditylang.org) compiler optimized for EVM simulations, written in TypeScript.
 
-## Features
-
-- Compile Solidity anywhere JavaScript runs
-- Returns strictly typed ABIs
-- Inject external contract ABIs
-
 ## Overview
 
 ```ts
@@ -26,7 +20,12 @@ contract GetBalance {
 
 ## [`solc`](https://github.com/ethereum/solidity)
 
-## [`solc-js`](https://github.com/ethereum/solc-js)
+## Benchmarks
+
+|           | bundle size | compilation speed (weth9) |
+|-----------|-------------|---------------------------|
+| solc      |             |                           |
+| allegedly |             |                           |
 
 ## Supported Language Features
 
