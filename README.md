@@ -20,13 +20,6 @@ contract GetBalance {
 
 ## [`solc`](https://github.com/ethereum/solidity)
 
-## Benchmarks
-
-|           | bundle size | compilation speed (weth9) |
-|-----------|-------------|---------------------------|
-| solc      |             |                           |
-| allegedly |             |                           |
-
 ## Supported Language Features
 
 - [x] none
