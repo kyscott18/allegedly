@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { createCursor } from "./cursor.js";
+import { createCursor } from "./cursor";
 
 test("cursor iterator", () => {
   const cursor = createCursor("kyle");

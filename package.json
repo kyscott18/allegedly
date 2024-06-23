@@ -17,7 +17,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@biomejs/biome": "^1.8.1"
+    "@biomejs/biome": "^1.8.2"
   },
   "publishConfig": {
     "access": "public"

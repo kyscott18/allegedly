@@ -30,6 +30,7 @@ export namespace Token {
     exponent: string;
   };
   export type HexNumberLiteral = BaseToken & { type: "hexNumberLiteral"; value: `0x${string}` };
+  export type BoolLiteral = BaseToken & { type: "boolLiteral"; value: boolean };
 
   // keywords
 
@@ -49,6 +50,7 @@ export namespace Token {
   export type Memory = BaseToken & { type: "memory" };
   export type Storage = BaseToken & { type: "storage" };
   export type Immutable = BaseToken & { type: "immutable" };
+  export type Constant = BaseToken & { type: "constant" };
 
   export type Contract = BaseToken & { type: "contract" };
   export type Abstract = BaseToken & { type: "abstract" };
@@ -99,14 +101,10 @@ export namespace Token {
 
   export type Address = BaseToken & { type: "address" };
   export type String = BaseToken & { type: "string" };
-
   export type Uint = BaseToken & { type: "uint"; size: number };
   export type Int = BaseToken & { type: "int"; size: number };
   export type Bytes = BaseToken & { type: "bytes"; size: number };
-
   export type Bool = BaseToken & { type: "bool" };
-  export type True = BaseToken & { type: "true" };
-  export type False = BaseToken & { type: "false" };
 
   // symbols
 
@@ -166,6 +164,7 @@ export namespace Token {
     | NumberLiteral
     | RationalNumberLiteral
     | HexNumberLiteral
+    | BoolLiteral
     | If
     | Else
     | While
@@ -181,6 +180,7 @@ export namespace Token {
     | Memory
     | Storage
     | Immutable
+    | Constant
     | Contract
     | Abstract
     | Interface
@@ -224,8 +224,6 @@ export namespace Token {
     | Int
     | Bytes
     | Bool
-    | True
-    | False
     | Member
     | Comma
     | Question

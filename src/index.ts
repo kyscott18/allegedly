@@ -1,13 +1,12 @@
 import type { Abi } from "abitype";
-import { parse } from "./ast/parse";
-import type { Hex, TODO } from "./types/utils";
+import { check } from "./checker";
+import { compileAbi, compileCode } from "./compiler";
+import { parse } from "./parser";
+import type { Hex } from "./types/utils";
 
-export type CompileReturnType = {
+export type SolReturnType<source extends string> = {
   code: Hex;
-  initCode: Hex;
   abi: Abi;
-  sourceMap: TODO;
-  metadata: TODO;
 };
 
 /**
@@ -15,16 +14,18 @@ export type CompileReturnType = {
  *
  * @param source Source code of a Solidity program.
  */
-export const compile = (source: string): CompileReturnType => {
+export const sol = <const source extends string>(source: source): SolReturnType<source> => {
   // Lexical + syntax analysis
-  const ast = parse(source);
+  const program = parse(source);
 
   // Semantic analysis
-  // todo
+  check(program);
 
   // abi generation
-  // todo
+  const abi = compileAbi(program);
 
   // Bytecode generation
-  // todo
+  const code = compileCode(program);
+
+  return { code, abi };
 };
