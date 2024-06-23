@@ -1,6 +1,7 @@
 import type { Abi } from "abitype";
 import { check } from "./checker";
 import { compileAbi, compileCode } from "./compiler";
+import { tokenize } from "./lexer";
 import { parse } from "./parser";
 import type { Hex } from "./types/utils";
 
@@ -15,8 +16,11 @@ export type SolReturnType<source extends string> = {
  * @param source Source code of a Solidity program.
  */
 export const sol = <const source extends string>(source: source): SolReturnType<source> => {
-  // Lexical + syntax analysis
-  const program = parse(source);
+  // Lexical analysis
+  const tokens = tokenize(source);
+
+  // Syntax analysis
+  const program = parse(tokens);
 
   // Semantic analysis
   check(program);
