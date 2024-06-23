@@ -125,32 +125,32 @@ export namespace Token {
   export type Assign = BaseToken & { type: "assign" };
   export type ColonAssign = BaseToken & { type: "colonAssign" };
   export type Add = BaseToken & { type: "add" };
-  export type AddAssign = BaseToken & { token: "addAssign" };
-  export type Increment = BaseToken & { token: "increment" };
+  export type AddAssign = BaseToken & { type: "addAssign" };
+  export type Increment = BaseToken & { type: "increment" };
   export type Subtract = BaseToken & { type: "subtract" };
-  export type SubtractAssign = BaseToken & { token: "subtractAssign" };
-  export type Decrement = BaseToken & { token: "decrement" };
-  export type Mul = BaseToken & { token: "mul" };
-  export type MulAssign = BaseToken & { token: "mulAssign" };
-  export type Divide = BaseToken & { token: "divide" };
-  export type DivideAssign = BaseToken & { token: "divideAssign" };
-  export type Modulo = BaseToken & { token: "modulo" };
-  export type ModuloAssign = BaseToken & { token: "moduloAssign" };
-  export type Power = BaseToken & { token: "power" };
-  export type And = BaseToken & { token: "and" };
-  export type Or = BaseToken & { token: "or" };
+  export type SubtractAssign = BaseToken & { type: "subtractAssign" };
+  export type Decrement = BaseToken & { type: "decrement" };
+  export type Mul = BaseToken & { type: "mul" };
+  export type MulAssign = BaseToken & { type: "mulAssign" };
+  export type Divide = BaseToken & { type: "divide" };
+  export type DivideAssign = BaseToken & { type: "divideAssign" };
+  export type Modulo = BaseToken & { type: "modulo" };
+  export type ModuloAssign = BaseToken & { type: "moduloAssign" };
+  export type Power = BaseToken & { type: "power" };
+  export type And = BaseToken & { type: "and" };
+  export type Or = BaseToken & { type: "or" };
 
   // TODO(kyle) bitwise operators
 
   // comparisons
 
   export type Equal = BaseToken & { type: "equal" };
-  export type Not = BaseToken & { token: "not" };
-  export type NotEqual = BaseToken & { token: "notEqual" };
-  export type Less = BaseToken & { token: "less" };
-  export type LessEqual = BaseToken & { token: "lessEqual" };
-  export type More = BaseToken & { token: "more" };
-  export type MoreEqual = BaseToken & { token: "moreEqual" };
+  export type Not = BaseToken & { type: "not" };
+  export type NotEqual = BaseToken & { type: "notEqual" };
+  export type Less = BaseToken & { type: "less" };
+  export type LessEqual = BaseToken & { type: "lessEqual" };
+  export type More = BaseToken & { type: "more" };
+  export type MoreEqual = BaseToken & { type: "moreEqual" };
 
   // TODO(kyle) yul
 

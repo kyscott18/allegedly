@@ -69,7 +69,7 @@ export namespace Ast {
     ty: Token.Address | Token.String | Token.Uint | Token.Int | Token.Bytes | Token.Bool;
     location: Token.Storage | Token.Memory | Token.Calldata | undefined;
     attributes: VariableAttributes[];
-    name: Token.Identifier;
+    identifier: Token.Identifier;
     initializer: Expression | undefined;
   };
 
