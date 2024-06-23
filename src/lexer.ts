@@ -17,24 +17,18 @@ export const tokenize = (source: string): Token.Token[] => {
     if (char === "=") {
       tokens.push({
         type: "assign",
-        start: cursor.position,
-        end: cursor.position + 1,
       } satisfies Token.Assign);
     }
 
     if (char === "+") {
       tokens.push({
         type: "add",
-        start: cursor.position,
-        end: cursor.position + 1,
       } satisfies Token.Add);
     }
 
     if (char === "-") {
       tokens.push({
         type: "subtract",
-        start: cursor.position,
-        end: cursor.position + 1,
       } satisfies Token.Subtract);
     }
 
@@ -51,8 +45,6 @@ export const tokenize = (source: string): Token.Token[] => {
       tokens.push({
         type: "number",
         value,
-        start: cursor.position,
-        end: cursor.position + lexeme.length,
       } satisfies Token.NumberLiteral);
     }
 
@@ -63,7 +55,7 @@ export const tokenize = (source: string): Token.Token[] => {
         else break;
       }
 
-      tokens.push(matchWord(lexeme, cursor.position));
+      tokens.push(matchWord(lexeme));
     }
 
     throw new NotImplementedError({ source: char });
@@ -72,14 +64,12 @@ export const tokenize = (source: string): Token.Token[] => {
   return tokens;
 };
 
-const matchWord = (string: string, offset: number): Token.Token => {
+const matchWord = (string: string): Token.Token => {
   if (string === "if") {
-    return { type: "if", start: offset, end: offset + 2 } satisfies Token.If;
+    return { type: "if" } satisfies Token.If;
   }
   return {
     type: "identifier",
     lexeme: string,
-    start: offset,
-    end: offset + string.length,
   } satisfies Token.Identifier;
 };

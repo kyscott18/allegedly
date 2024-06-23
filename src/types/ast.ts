@@ -1,7 +1,5 @@
 import type { Token } from "./token";
 
-// TODO(kyle) offset as proxy?
-
 export namespace Ast {
   export type Identifier = {
     type: "identifier";
