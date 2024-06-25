@@ -16,7 +16,8 @@
         "noShadowRestrictedNames": "off"
       },
       "style": {
-        "noNonNullAssertion": "off"
+        "noNonNullAssertion": "off",
+        "useEnumInitializers": "off"
       }
     }
   }
