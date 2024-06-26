@@ -1,5 +1,5 @@
 export namespace Token {
-  enum TokenType {
+  export enum TokenType {
     Identifier,
     StringLiteral,
     AddressLiteral,
@@ -240,7 +240,8 @@ export namespace Token {
   export type String = { token: TokenType.String; value: undefined };
   export type Uint = { token: TokenType.Uint; value: undefined; size: number };
   export type Int = { token: TokenType.Int; value: undefined; size: number };
-  export type Bytes = { token: TokenType.Bytes; value: undefined; size: number };
+  // export type Byte = { token: TokenType.Bytes; value: undefined; size: number };
+  export type Bytes = { token: TokenType.Bytes; value: undefined };
   export type Bool = { token: TokenType.Bool; value: undefined };
 
   // symbols
