@@ -1,13 +1,54 @@
+import type { Block } from "typescript";
 import type { Token } from "./token";
 
 export namespace Ast {
+  export enum AstType {
+    Identifier,
+    Literal,
+    Assignment,
+    UnaryOperation,
+    BinaryOperation,
+    LogicalExpression,
+    ConditionalExpression,
+    FunctionCallExpression,
+    MemberAccessExpression,
+    IndexAccessExpression,
+    NewExpression,
+    TupleExpression,
+    VariableDeclaration,
+    ExpressionStatement,
+    BlockStatement,
+    UncheckedBlockStatement,
+    IfStatement,
+    ForStatement,
+    WhileStatement,
+    DoWhileStatement,
+    BreakStatement,
+    ContinueStatement,
+    EmitStatement,
+    RevertStatement,
+    ReturnStatement,
+    PlaceholderStatement,
+    ElementaryType,
+    ArrayType,
+    Mapping,
+    FunctionDefinition,
+    ContractDefinition,
+    EventDefinition,
+    ErrorDefinition,
+    StructDefinition,
+    ModifierDefinition,
+  }
+
+  // expressions
+
   export type Identifier = {
-    type: "identifier";
+    ast: AstType.Identifier;
     token: Token.Identifier;
   };
 
   export type Literal = {
-    type: "literal";
+    ast: AstType.Literal;
     token:
       | Token.StringLiteral
       | Token.AddressLiteral
@@ -19,7 +60,7 @@ export namespace Ast {
   };
 
   export type Assignment = {
-    type: "assignment";
+    ast: AstType.Assignment;
     operator:
       | Token.Assign
       | Token.AddAssign
@@ -32,13 +73,13 @@ export namespace Ast {
   };
 
   export type UnaryOperation = {
-    type: "unaryOperation";
+    ast: AstType.UnaryOperation;
     operator: Token.Increment | Token.Decrement | Token.Subtract | Token.Delete;
     expression: Expression;
   };
 
   export type BinaryOperation = {
-    type: "binaryOperation";
+    ast: AstType.BinaryOperation;
     operator:
       | Token.Add
       | Token.Subtract
@@ -46,8 +87,6 @@ export namespace Ast {
       | Token.Divide
       | Token.Modulo
       | Token.Power
-      | Token.And
-      | Token.Or
       | Token.Equal
       | Token.NotEqual
       | Token.Less
@@ -58,23 +97,230 @@ export namespace Ast {
     right: Expression;
   };
 
-  type Visibility = Token.External | Token.Public | Token.Internal | Token.Private;
+  export type LogicalExpression = {
+    ast: AstType.LogicalExpression;
+    operator: Token.And | Token.Or;
+    left: Expression;
+    right: Expression;
+  };
+
+  export type ConditionalExpression = {
+    ast: AstType.ConditionalExpression;
+    condition: Expression;
+    trueExpression: Expression;
+    falseExpression: Expression;
+  };
+
+  export type FunctionCallExpression = {
+    ast: AstType.FunctionCallExpression;
+    expression: Expression;
+    arguments: Expression[];
+  };
+
+  export type MemberAccessExpression = {
+    ast: AstType.MemberAccessExpression;
+    expression: Expression;
+    member: Identifier;
+  };
+
+  export type IndexAccessExpression = {
+    ast: AstType.IndexAccessExpression;
+    base: Expression;
+    index: Expression | undefined;
+  };
+
+  export type NewExpression = {
+    ast: AstType.NewExpression;
+    expression: Expression;
+  };
+
+  export type TupleExpression = {
+    ast: AstType.TupleExpression;
+    elements: Expression[];
+  };
 
   type VariableAttributes = Visibility | Token.Constant | Token.Override;
 
   export type VariableDeclaration = {
-    type: "variableDeclaration";
-    ty: Token.Address | Token.String | Token.Uint | Token.Int | Token.Bytes | Token.Bool;
+    ast: AstType.VariableDeclaration;
+    type: Token.Address | Token.String | Token.Uint | Token.Int | Token.Bytes | Token.Bool;
     location: Token.Storage | Token.Memory | Token.Calldata | undefined;
     attributes: VariableAttributes[];
     identifier: Token.Identifier;
     initializer: Expression | undefined;
   };
 
+  // statements
+
   export type ExpressionStatement = {
-    type: "expressionStatement";
+    ast: AstType.ExpressionStatement;
     expression: Expression;
   };
+
+  export type BlockStatement = {
+    ast: AstType.BlockStatement;
+    statements: Statement[];
+  };
+
+  export type UncheckedBlockStatement = {
+    ast: AstType.UncheckedBlockStatement;
+    statements: Statement[];
+  };
+
+  export type IfStatement = {
+    ast: AstType.IfStatement;
+    condition: Expression;
+    trueBody: Statement;
+    falseBody: Statement | undefined;
+  };
+
+  export type ForStatement = {
+    ast: AstType.ForStatement;
+    body: Statement;
+    init: Expression | undefined;
+    test: Expression | undefined;
+    update: Expression | undefined;
+  };
+
+  export type WhileStatement = {
+    ast: AstType.WhileStatement;
+    body: Statement;
+    test: Expression;
+  };
+
+  export type DoWhileStatement = {
+    ast: AstType.DoWhileStatement;
+    body: Statement;
+    test: Expression;
+  };
+
+  export type BreakStatement = {
+    ast: AstType.BreakStatement;
+  };
+
+  export type ContinueStatement = {
+    ast: AstType.ContinueStatement;
+  };
+
+  export type EmitStatement = {
+    ast: AstType.EmitStatement;
+    event: FunctionCallExpression;
+  };
+
+  export type RevertStatement = {
+    ast: AstType.RevertStatement;
+    error: FunctionCallExpression;
+  };
+
+  export type ReturnStatement = {
+    ast: AstType.ReturnStatement;
+    expression: Expression | undefined;
+  };
+
+  export type PlaceholderStatement = {
+    ast: AstType.PlaceholderStatement;
+  };
+
+  // types
+
+  export type ElementaryType = {
+    ast: AstType.ElementaryType;
+    type:
+      | Token.TokenType.Address
+      | Token.TokenType.String
+      | Token.TokenType.Uint
+      | Token.TokenType.Int
+      | Token.TokenType.Byte
+      | Token.TokenType.Bytes
+      | Token.TokenType.Bool;
+  };
+
+  export type ArrayType = {
+    ast: AstType.ArrayType;
+    length: Expression | undefined;
+    type: ElementaryType;
+  };
+
+  export type Mapping = {
+    ast: AstType.Mapping;
+    key: Expression;
+    keyName: Identifier | undefined;
+    value: Expression;
+    valueName: Identifier | undefined;
+  };
+
+  // source units
+
+  /**
+   * function modifier or contract inheritance specifier
+   */
+  type Base = {
+    name: Identifier;
+    args: Expression[];
+  };
+
+  type FunctionAttribute = Visibility | Mutability | Token.Virtual | Token.Override | Base;
+
+  type Parameter = {
+    type: Expression;
+    storage: Token.Memory | Token.Storage | Token.Calldata | undefined;
+    name: Identifier | undefined;
+  };
+
+  type ParameterList = (Parameter | undefined)[];
+
+  export type FunctionDefinition = {
+    ast: "functionDefinition";
+    kind: Token.Function | Token.Receive | Token.Constructor | Token.Fallback;
+    attributes: FunctionAttribute[];
+    parameters: ParameterList;
+    returns: ParameterList;
+    name: Identifier | undefined;
+    body: Block;
+  };
+
+  export type ContractDefinition = {
+    ast: "contractDefintion";
+    name: Identifier;
+    kind: Token.Contract | Token.Interface | Token.Library;
+    nodes: (
+      | FunctionDefinition
+      | StructDefinition
+      | VariableDeclaration
+      | EventDefinition
+      | ErrorDefinition
+      | ModifierDefinition
+    )[];
+  };
+
+  export type EventDefinition = {
+    ast: AstType.EventDefinition;
+    name: Identifier;
+    parameters: ParameterList;
+  };
+
+  export type ErrorDefinition = {
+    ast: AstType.ErrorDefinition;
+    name: Identifier;
+    parameters: ParameterList;
+  };
+
+  export type StructDefinition = {
+    ast: AstType.StructDefinition;
+    name: Identifier;
+    members: VariableDeclaration[];
+  };
+
+  export type ModifierDefinition = {
+    ast: AstType.ModifierDefinition;
+    name: Identifier;
+    body: Block;
+    visibility: Visibility;
+    parameters: ParameterList;
+  };
+
+  type Visibility = Token.External | Token.Public | Token.Internal | Token.Private;
+  type Mutability = Token.Pure | Token.View | Token.Payable;
 
   export type Expression =
     | Identifier
@@ -83,6 +329,26 @@ export namespace Ast {
     | UnaryOperation
     | BinaryOperation
     | VariableDeclaration;
+
   export type Statement = ExpressionStatement;
-  export type Program = Statement[];
+
+  export type Type = ElementaryType | ArrayType | Mapping;
+
+  export type SourceUnit =
+    | FunctionDefinition
+    | ContractDefinition
+    | EventDefinition
+    | ErrorDefinition
+    | StructDefinition
+    | ModifierDefinition;
+
+  export type Program = SourceUnit[];
 }
+
+/**
+ * functionCallBlock
+ * ArrayIndexRange
+ * UserDefinedType
+ * functionType
+ * enum
+ */
