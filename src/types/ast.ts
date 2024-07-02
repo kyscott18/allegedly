@@ -1,4 +1,3 @@
-import type { Block } from "typescript";
 import type { Token } from "./token";
 
 export namespace Ast {
@@ -87,19 +86,19 @@ export namespace Ast {
       | Token.Divide
       | Token.Modulo
       | Token.Power
+      | Token.And
+      | Token.Or
       | Token.Equal
       | Token.NotEqual
       | Token.Less
       | Token.LessEqual
       | Token.More
-      | Token.MoreEqual;
-    left: Expression;
-    right: Expression;
-  };
-
-  export type LogicalExpression = {
-    ast: AstType.LogicalExpression;
-    operator: Token.And | Token.Or;
+      | Token.MoreEqual
+      | Token.BitwiseAnd
+      | Token.BitwiseOr
+      | Token.BitwiseXOr
+      | Token.ShiftRight
+      | Token.ShiftLeft;
     left: Expression;
     right: Expression;
   };
@@ -249,7 +248,7 @@ export namespace Ast {
     valueName: Identifier | undefined;
   };
 
-  // source units
+  // defintions
 
   /**
    * function modifier or contract inheritance specifier
@@ -276,7 +275,7 @@ export namespace Ast {
     parameters: ParameterList;
     returns: ParameterList;
     name: Identifier | undefined;
-    body: Block;
+    body: BlockStatement;
   };
 
   export type ContractDefinition = {
@@ -314,7 +313,7 @@ export namespace Ast {
   export type ModifierDefinition = {
     ast: AstType.ModifierDefinition;
     name: Identifier;
-    body: Block;
+    body: BlockStatement;
     visibility: Visibility;
     parameters: ParameterList;
   };
@@ -334,7 +333,7 @@ export namespace Ast {
 
   export type Type = ElementaryType | ArrayType | Mapping;
 
-  export type SourceUnit =
+  export type Definition =
     | FunctionDefinition
     | ContractDefinition
     | EventDefinition
@@ -342,7 +341,7 @@ export namespace Ast {
     | StructDefinition
     | ModifierDefinition;
 
-  export type Program = SourceUnit[];
+  export type Program = Definition[];
 }
 
 /**

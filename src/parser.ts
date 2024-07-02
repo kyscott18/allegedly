@@ -1,5 +1,5 @@
-import type { Ast } from "./types/ast";
-import type { Token } from "./types/token";
+import { Ast } from "./types/ast";
+import { Token } from "./types/token";
 
 type Context = {
   tokens: Token.Token[];
@@ -11,17 +11,28 @@ export const parse = (tokens: Token.Token[]): Ast.Program => {
   const context = { tokens, tokenIndex: 0 };
 
   while (context.tokenIndex < tokens.length) {
-    const statement = tryParseStatement(context);
+    const defintion = tryParseDefinition(context);
 
-    if (statement === undefined) break;
+    if (defintion === undefined) break;
 
-    program.push(statement);
+    program.push(defintion);
   }
 
   return program;
 };
 
-const tryParseStatement = (context: Context): Ast.Statement | undefined => {
+export const tryParseDefinition = (context: Context): Ast.Definition | undefined => {
+  const token = context.tokens[context.tokenIndex];
+  if (token === undefined) return undefined;
+
+  return tryParseFunctionDefinition(context) ?? undefined;
+};
+
+export const tryParseFunctionDefinition = (
+  context: Context,
+): Ast.FunctionDefinition | undefined => {};
+
+export const tryParseStatement = (context: Context): Ast.Statement | undefined => {
   const expression = tryParseExpression(context);
   if (expression === undefined) return undefined;
   return {
@@ -30,11 +41,12 @@ const tryParseStatement = (context: Context): Ast.Statement | undefined => {
   } satisfies Ast.ExpressionStatement;
 };
 
-const tryParseExpression = (context: Context): Ast.Expression | undefined => {
+export const tryParseExpression = (context: Context): Ast.Expression | undefined => {
   const token = context.tokens[context.tokenIndex];
   if (token === undefined) return undefined;
 
   return (
+    tryParseIdentifier(context) ??
     tryParseVariableDeclaration(context) ??
     tryParseAssignment(context) ??
     tryParseBinaryOperation(context) ??
@@ -43,15 +55,47 @@ const tryParseExpression = (context: Context): Ast.Expression | undefined => {
   );
 };
 
-const tryParseIdentifier = (context: Context): Ast.Identifier | undefined => {
-  return undefined;
+export const tryParseIdentifier = (context: Context): Ast.Identifier | undefined => {
+  const maybeIdentifier = context.tokens[context.tokenIndex++];
+
+  if (maybeIdentifier === undefined) {
+    context.tokenIndex--;
+    return undefined;
+  }
+
+  if (maybeIdentifier.token !== Token.TokenType.Identifier) {
+    context.tokenIndex--;
+    return undefined;
+  }
+
+  return { ast: Ast.AstType.Identifier, token: maybeIdentifier };
 };
 
-const tryParseAssignment = (context: Context): Ast.Assignment | undefined => {
-  return undefined;
+export const tryParseLiteral = (context: Context): Ast.Literal | undefined => {
+  const maybeLiteral = context.tokens[context.tokenIndex++];
+
+  if (maybeLiteral === undefined) {
+    context.tokenIndex--;
+    return undefined;
+  }
+
+  if (
+    maybeLiteral.token !== Token.TokenType.StringLiteral &&
+    maybeLiteral.token !== Token.TokenType.AddressLiteral &&
+    maybeLiteral.token !== Token.TokenType.HexLiteral &&
+    maybeLiteral.token !== Token.TokenType.NumberLiteral &&
+    maybeLiteral.token !== Token.TokenType.RationalNumberLiteral &&
+    maybeLiteral.token !== Token.TokenType.HexNumberLiteral &&
+    maybeLiteral.token !== Token.TokenType.BoolLiteral
+  ) {
+    context.tokenIndex--;
+    return undefined;
+  }
+
+  return { ast: Ast.AstType.Literal, token: maybeLiteral };
 };
 
-const tryParseBinaryOperation = (context: Context): Ast.BinaryOperation | undefined => {
+export const tryParseAssignment = (context: Context): Ast.Assignment | undefined => {
   const startIndex = context.tokenIndex;
 
   const left = tryParseExpression(context);
@@ -68,20 +112,12 @@ const tryParseBinaryOperation = (context: Context): Ast.BinaryOperation | undefi
   }
 
   if (
-    maybeOperator.type !== "add" &&
-    maybeOperator.type !== "subtract" &&
-    maybeOperator.type !== "mul" &&
-    maybeOperator.type !== "divide" &&
-    maybeOperator.type !== "modulo" &&
-    maybeOperator.type !== "power" &&
-    maybeOperator.type !== "and" &&
-    maybeOperator.type !== "or" &&
-    maybeOperator.type !== "equal" &&
-    maybeOperator.type !== "notEqual" &&
-    maybeOperator.type !== "less" &&
-    maybeOperator.type !== "lessEqual" &&
-    maybeOperator.type !== "more" &&
-    maybeOperator.type !== "moreEqual"
+    maybeOperator.token !== Token.TokenType.Assign &&
+    maybeOperator.token !== Token.TokenType.AddAssign &&
+    maybeOperator.token !== Token.TokenType.SubtractAssign &&
+    maybeOperator.token !== Token.TokenType.MulAssign &&
+    maybeOperator.token !== Token.TokenType.Divide &&
+    maybeOperator.token !== Token.TokenType.ModuloAssign
   ) {
     context.tokenIndex = startIndex;
     return undefined;
@@ -94,14 +130,104 @@ const tryParseBinaryOperation = (context: Context): Ast.BinaryOperation | undefi
   }
 
   return {
-    type: "binaryOperation",
+    ast: Ast.AstType.Assignment,
     operator: maybeOperator,
     left,
     right,
   };
 };
 
-const tryParseVariableDeclaration = (context: Context): Ast.VariableDeclaration | undefined => {
+export const tryParseUnaryOperation = (context: Context): Ast.UnaryOperation | undefined => {
+  const startIndex = context.tokenIndex;
+
+  const maybeOperator = context.tokens[context.tokenIndex++];
+
+  if (maybeOperator === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  if (
+    maybeOperator.token !== Token.TokenType.Increment &&
+    maybeOperator.token !== Token.TokenType.Decrement &&
+    maybeOperator.token !== Token.TokenType.Subtract &&
+    maybeOperator.token !== Token.TokenType.Delete
+  ) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const expression = tryParseExpression(context);
+  if (expression === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.UnaryOperation,
+    operator: maybeOperator,
+    expression,
+  };
+};
+
+export const tryParseBinaryOperation = (context: Context): Ast.BinaryOperation | undefined => {
+  const startIndex = context.tokenIndex;
+
+  const left = tryParseExpression(context);
+  if (left === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const maybeOperator = context.tokens[context.tokenIndex++];
+
+  if (maybeOperator === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  if (
+    maybeOperator.token !== Token.TokenType.Add &&
+    maybeOperator.token !== Token.TokenType.Subtract &&
+    maybeOperator.token !== Token.TokenType.Mul &&
+    maybeOperator.token !== Token.TokenType.Divide &&
+    maybeOperator.token !== Token.TokenType.Modulo &&
+    maybeOperator.token !== Token.TokenType.Power &&
+    maybeOperator.token !== Token.TokenType.And &&
+    maybeOperator.token !== Token.TokenType.Or &&
+    maybeOperator.token !== Token.TokenType.Equal &&
+    maybeOperator.token !== Token.TokenType.NotEqual &&
+    maybeOperator.token !== Token.TokenType.Less &&
+    maybeOperator.token !== Token.TokenType.LessEqual &&
+    maybeOperator.token !== Token.TokenType.More &&
+    maybeOperator.token !== Token.TokenType.MoreEqual &&
+    maybeOperator.token !== Token.TokenType.BitwiseAnd &&
+    maybeOperator.token !== Token.TokenType.BitwiseOr &&
+    maybeOperator.token !== Token.TokenType.BitwiseXOr &&
+    maybeOperator.token !== Token.TokenType.ShiftRight &&
+    maybeOperator.token !== Token.TokenType.ShiftLeft
+  ) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const right = tryParseExpression(context);
+  if (right === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.BinaryOperation,
+    operator: maybeOperator,
+    left,
+    right,
+  };
+};
+
+export const tryParseVariableDeclaration = (
+  context: Context,
+): Ast.VariableDeclaration | undefined => {
   const startIndex = context.tokenIndex;
 
   // TODO(kyle) don't assert defined

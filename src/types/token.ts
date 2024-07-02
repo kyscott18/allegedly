@@ -340,6 +340,23 @@ export namespace Token {
   export type Typeof = { token: TokenType.Typeof; value: undefined };
   export type Var = { token: TokenType.Var; value: undefined };
 
+  // abi
+  // block
+  // tx
+  // keccak256
+  // blockhash
+  // blobhash
+  // msg
+  // gasleft
+  // sha256
+  // ripemd160
+  // ecrecover
+  // addmod
+  // mulmod
+  // this
+  // super
+  // selfdestruct
+
   export type Token =
     | Identifier
     | StringLiteral
