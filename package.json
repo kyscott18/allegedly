@@ -9,7 +9,7 @@
     "lint": "biome lint . --apply"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.5",
+    "@changesets/cli": "^2.27.7",
     "@types/bun": "latest"
   },
   "peerDependencies": {
@@ -17,7 +17,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@biomejs/biome": "^1.8.2"
+    "@biomejs/biome": "^1.8.3"
   },
   "publishConfig": {
     "access": "public"
