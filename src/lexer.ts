@@ -207,6 +207,7 @@ export const tokenize = (source: string): Token.Token[] => {
           throw new UnrecognizedSymbolError({ symbol: char });
         }
       }
+    } else if (char === "\\") {
     } else if (char === '"') {
       // TODO(kyle) string literal
     } else if (isDigit(char)) {

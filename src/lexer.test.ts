@@ -43,6 +43,6 @@ test("comments", () => {
 });
 
 test("ERC20", async () => {
-  const source = await Bun.file("/Users/kylescott/src/allegedly/src/_sol/Storage.sol").text();
+  const source = await Bun.file("/Users/kylescott/src/allegedly/src/_sol/ERC20.sol").text();
   tokenize(source);
 });
