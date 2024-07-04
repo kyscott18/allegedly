@@ -1,6 +1,15 @@
 import { expect, test } from "bun:test";
 import { tokenize } from "./lexer.js";
-import { tryParseBinaryOperation, tryParseIdentifier, tryParseUnaryOperation } from "./parser.js";
+import {
+  tryParseAssignment,
+  tryParseBinaryOperation,
+  tryParseConditionalExpression,
+  tryParseIdentifier,
+  tryParseLiteral,
+  tryParseTupleExpress,
+  tryParseTupleExpression,
+  tryParseUnaryOperation,
+} from "./parser.js";
 import { Ast } from "./types/ast.js";
 
 test("identifier", () => {
@@ -10,9 +19,82 @@ test("identifier", () => {
   expect(identifier!.ast).toBe(Ast.AstType.Identifier);
 });
 
-test.todo("literal");
+test("literal", () => {
+  const stringLiteral = tryParseLiteral({ tokens: tokenize(`"stringLiteral"`), tokenIndex: 0 });
+  const addressLiteral = tryParseLiteral({
+    tokens: tokenize("0x0000000000000000000000000000"),
+    tokenIndex: 0,
+  });
+  const hexLiteral = tryParseLiteral({
+    tokens: tokenize(`hex"0x0"`),
+    tokenIndex: 0,
+  });
+  const numberLiteral = tryParseLiteral({
+    tokens: tokenize("52"),
+    tokenIndex: 0,
+  });
+  const rationalNumberLiteral = tryParseLiteral({
+    tokens: tokenize("52.0"),
+    tokenIndex: 0,
+  });
+  // TODO(kyle): hexNumberLiteral
+  const boolLiteral = tryParseLiteral({
+    tokens: tokenize("true"),
+    tokenIndex: 0,
+  });
 
-test.todo("assignment");
+  expect(stringLiteral).toBeDefined();
+  expect(addressLiteral).toBeDefined();
+  expect(hexLiteral).toBeDefined();
+  expect(numberLiteral).toBeDefined();
+  expect(rationalNumberLiteral).toBeDefined();
+  expect(boolLiteral).toBeDefined();
+
+  expect(stringLiteral!.ast).toBe(Ast.AstType.Literal);
+  expect(addressLiteral!.ast).toBe(Ast.AstType.Literal);
+  expect(hexLiteral!.ast).toBe(Ast.AstType.Literal);
+  expect(numberLiteral!.ast).toBe(Ast.AstType.Literal);
+  expect(rationalNumberLiteral!.ast).toBe(Ast.AstType.Literal);
+  expect(boolLiteral!.ast).toBe(Ast.AstType.Literal);
+});
+
+test("assignment", () => {
+  const assign = tryParseAssignment({ tokens: tokenize("a = b"), tokenIndex: 0 });
+  const addAssign = tryParseAssignment({ tokens: tokenize("a += b"), tokenIndex: 0 });
+  const subtractAssign = tryParseAssignment({ tokens: tokenize("a -= b"), tokenIndex: 0 });
+  const mulAssign = tryParseAssignment({ tokens: tokenize("a *= b"), tokenIndex: 0 });
+  const divideAssign = tryParseAssignment({ tokens: tokenize("a /= b"), tokenIndex: 0 });
+  const moduloAssign = tryParseAssignment({ tokens: tokenize("a %= b"), tokenIndex: 0 });
+  const bitwiseAndAssign = tryParseAssignment({ tokens: tokenize("a &= b"), tokenIndex: 0 });
+  const bitwiseOrAssign = tryParseAssignment({ tokens: tokenize("a |= b"), tokenIndex: 0 });
+  const bitwiseXOrAssign = tryParseAssignment({ tokens: tokenize("a ^= b"), tokenIndex: 0 });
+  const shiftRightAssign = tryParseAssignment({ tokens: tokenize("a >>= b"), tokenIndex: 0 });
+  const shiftLeftAssign = tryParseAssignment({ tokens: tokenize("a <<= b"), tokenIndex: 0 });
+
+  expect(assign).toBeDefined();
+  expect(addAssign).toBeDefined();
+  expect(subtractAssign).toBeDefined();
+  expect(mulAssign).toBeDefined();
+  expect(divideAssign).toBeDefined();
+  expect(moduloAssign).toBeDefined();
+  expect(bitwiseAndAssign).toBeDefined();
+  expect(bitwiseOrAssign).toBeDefined();
+  expect(bitwiseXOrAssign).toBeDefined();
+  expect(shiftRightAssign).toBeDefined();
+  expect(shiftLeftAssign).toBeDefined();
+
+  expect(assign!.ast).toBe(Ast.AstType.Assignment);
+  expect(addAssign!.ast).toBe(Ast.AstType.Assignment);
+  expect(subtractAssign!.ast).toBe(Ast.AstType.Assignment);
+  expect(mulAssign!.ast).toBe(Ast.AstType.Assignment);
+  expect(divideAssign!.ast).toBe(Ast.AstType.Assignment);
+  expect(moduloAssign!.ast).toBe(Ast.AstType.Assignment);
+  expect(bitwiseAndAssign!.ast).toBe(Ast.AstType.Assignment);
+  expect(bitwiseOrAssign!.ast).toBe(Ast.AstType.Assignment);
+  expect(bitwiseXOrAssign!.ast).toBe(Ast.AstType.Assignment);
+  expect(shiftRightAssign!.ast).toBe(Ast.AstType.Assignment);
+  expect(shiftLeftAssign!.ast).toBe(Ast.AstType.Assignment);
+});
 
 test("unary operation", () => {
   const increment = tryParseUnaryOperation({ tokens: tokenize("++id"), tokenIndex: 0 });
@@ -92,3 +174,42 @@ test("binary operation", () => {
   expect(shiftRight!.ast).toBe(Ast.AstType.BinaryOperation);
   expect(shiftLeft!.ast).toBe(Ast.AstType.BinaryOperation);
 });
+
+test("conditional expression", () => {
+  const conditional = tryParseConditionalExpression({
+    tokens: tokenize("a ? b : c"),
+    tokenIndex: 0,
+  });
+
+  expect(conditional).toBeDefined();
+
+  expect(conditional!.ast).toBe(Ast.AstType.ConditionalExpression);
+});
+
+test.todo("function call expression");
+
+test.todo("member access expression");
+
+test.todo("index access expression");
+
+test.todo("new expression");
+
+test.skip("tuple expression", () => {
+  const emptyTuple = tryParseTupleExpression({ tokens: tokenize("()"), tokenIndex: 0 });
+  const singleTuple = tryParseTupleExpression({ tokens: tokenize("(a)"), tokenIndex: 0 });
+  const manyTuple = tryParseTupleExpression({ tokens: tokenize("(a,b,c)"), tokenIndex: 0 });
+
+  expect(emptyTuple).toBeDefined();
+  expect(singleTuple).toBeDefined();
+  expect(manyTuple).toBeDefined();
+
+  expect(emptyTuple!.ast).toBe(Ast.AstType.TupleExpression);
+  expect(singleTuple!.ast).toBe(Ast.AstType.TupleExpression);
+  expect(manyTuple!.ast).toBe(Ast.AstType.TupleExpression);
+
+  expect(emptyTuple!.expressions).toHaveLength(0);
+  expect(singleTuple!.expressions).toHaveLength(1);
+  expect(manyTuple!.expressions).toHaveLength(2);
+});
+
+test.todo("variable declaration");

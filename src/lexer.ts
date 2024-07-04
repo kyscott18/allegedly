@@ -66,7 +66,7 @@ export const tokenize = (source: string): Token.Token[] => {
           cursor.position++;
           tokens.push({ token: Token.TokenType.ColonAssign, value: undefined });
         } else {
-          tokens.push({ token: Token.TokenType.Assign, value: undefined });
+          tokens.push({ token: Token.TokenType.Colon, value: undefined });
         }
       } else if (char === ";") {
         tokens.push({ token: Token.TokenType.Semicolon, value: undefined });

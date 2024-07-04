@@ -66,7 +66,12 @@ export namespace Ast {
       | Token.SubtractAssign
       | Token.MulAssign
       | Token.DivideAssign
-      | Token.ModuloAssign;
+      | Token.ModuloAssign
+      | Token.BitwiseAndAssign
+      | Token.BitwiseOrAssign
+      | Token.BitwiseXOrAssign
+      | Token.ShiftRightAssign
+      | Token.ShiftLeftAssign;
     left: Expression;
     right: Expression;
   };
@@ -142,7 +147,7 @@ export namespace Ast {
 
   export type VariableDeclaration = {
     ast: AstType.VariableDeclaration;
-    type: Token.Address | Token.String | Token.Uint | Token.Int | Token.Bytes | Token.Bool;
+    type: Type;
     location: Token.Storage | Token.Memory | Token.Calldata | undefined;
     attributes: VariableAttributes[];
     identifier: Token.Identifier;
@@ -225,26 +230,26 @@ export namespace Ast {
   export type ElementaryType = {
     ast: AstType.ElementaryType;
     type:
-      | Token.TokenType.Address
-      | Token.TokenType.String
-      | Token.TokenType.Uint
-      | Token.TokenType.Int
-      | Token.TokenType.Byte
-      | Token.TokenType.Bytes
-      | Token.TokenType.Bool;
+      | Token.Address
+      | Token.String
+      | Token.Uint
+      | Token.Int
+      | Token.Byte
+      | Token.Bytes
+      | Token.Bool;
   };
 
   export type ArrayType = {
     ast: AstType.ArrayType;
     length: Expression | undefined;
-    type: ElementaryType;
+    type: Type;
   };
 
   export type Mapping = {
     ast: AstType.Mapping;
-    key: Expression;
+    keyType: Type;
     keyName: Identifier | undefined;
-    value: Expression;
+    valueType: Type;
     valueName: Identifier | undefined;
   };
 

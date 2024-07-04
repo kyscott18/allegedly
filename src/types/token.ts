@@ -241,7 +241,7 @@ export namespace Token {
   export type String = { token: TokenType.String; value: undefined };
   export type Uint = { token: TokenType.Uint; value: undefined; size: number };
   export type Int = { token: TokenType.Int; value: undefined; size: number };
-  export type Byte = { token: TokenType.Bytes; value: undefined; size: number };
+  export type Byte = { token: TokenType.Byte; value: undefined; size: number };
   export type Bytes = { token: TokenType.Bytes; value: undefined };
   export type Bool = { token: TokenType.Bool; value: undefined };
 
@@ -279,7 +279,7 @@ export namespace Token {
   export type And = { token: TokenType.And; value: undefined };
   export type Or = { token: TokenType.Or; value: undefined };
 
-  // TODO(kyle) bitwise operators
+  // bitwise operators
 
   export type BitwiseOr = { token: TokenType.BitwiseOr; value: undefined };
   export type BitwiseOrAssign = { token: TokenType.BitwiseOrAssign; value: undefined };

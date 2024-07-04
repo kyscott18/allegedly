@@ -21,6 +21,8 @@ export const parse = (tokens: Token.Token[]): Ast.Program => {
   return program;
 };
 
+// defintions
+
 export const tryParseDefinition = (context: Context): Ast.Definition | undefined => {
   const token = context.tokens[context.tokenIndex];
   if (token === undefined) return undefined;
@@ -29,17 +31,21 @@ export const tryParseDefinition = (context: Context): Ast.Definition | undefined
 };
 
 export const tryParseFunctionDefinition = (
-  context: Context,
+  _context: Context,
 ): Ast.FunctionDefinition | undefined => {};
+
+// statements
 
 export const tryParseStatement = (context: Context): Ast.Statement | undefined => {
   const expression = tryParseExpression(context);
   if (expression === undefined) return undefined;
   return {
-    type: "expressionStatement",
+    ast: Ast.AstType.ExpressionStatement,
     expression,
   } satisfies Ast.ExpressionStatement;
 };
+
+// expressions
 
 export const tryParseExpression = (context: Context): Ast.Expression | undefined => {
   const token = context.tokens[context.tokenIndex];
@@ -116,8 +122,13 @@ export const tryParseAssignment = (context: Context): Ast.Assignment | undefined
     maybeOperator.token !== Token.TokenType.AddAssign &&
     maybeOperator.token !== Token.TokenType.SubtractAssign &&
     maybeOperator.token !== Token.TokenType.MulAssign &&
-    maybeOperator.token !== Token.TokenType.Divide &&
-    maybeOperator.token !== Token.TokenType.ModuloAssign
+    maybeOperator.token !== Token.TokenType.DivideAssign &&
+    maybeOperator.token !== Token.TokenType.ModuloAssign &&
+    maybeOperator.token !== Token.TokenType.BitwiseAndAssign &&
+    maybeOperator.token !== Token.TokenType.BitwiseOrAssign &&
+    maybeOperator.token !== Token.TokenType.BitwiseXOrAssign &&
+    maybeOperator.token !== Token.TokenType.ShiftRightAssign &&
+    maybeOperator.token !== Token.TokenType.ShiftLeftAssign
   ) {
     context.tokenIndex = startIndex;
     return undefined;
@@ -225,26 +236,135 @@ export const tryParseBinaryOperation = (context: Context): Ast.BinaryOperation |
   };
 };
 
+export const tryParseConditionalExpression = (
+  context: Context,
+): Ast.ConditionalExpression | undefined => {
+  const startIndex = context.tokenIndex;
+
+  const condition = tryParseExpression(context);
+  if (condition === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const maybeQuestion = context.tokens[context.tokenIndex++];
+
+  if (maybeQuestion === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  if (maybeQuestion.token !== Token.TokenType.Question) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const trueExpression = tryParseExpression(context);
+  if (trueExpression === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const maybeColon = context.tokens[context.tokenIndex++];
+
+  if (maybeColon === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  if (maybeColon.token !== Token.TokenType.Colon) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const falseExpression = tryParseExpression(context);
+  if (falseExpression === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.ConditionalExpression,
+    condition,
+    trueExpression,
+    falseExpression,
+  };
+};
+
+// function call expression
+
+// member access expression
+
+// index access expression
+
+// new expression
+
+export const tryParseTupleExpression = (context: Context) => {
+  const startIndex = context.tokenIndex;
+
+  const maybeOpenParenthesis = context.tokens[context.tokenIndex++];
+
+  if (maybeOpenParenthesis === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  if (maybeOpenParenthesis.token !== Token.TokenType.OpenParenthesis) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const expressions: Ast.Expression[] = [];
+
+  while (true) {
+    const maybeCloseParenthesis = context.tokens[context.tokenIndex];
+    console.log(0);
+    if (maybeCloseParenthesis?.token === Token.TokenType.CloseParenthesis) {
+      context.tokenIndex++;
+
+      return {
+        ast: Ast.AstType.TupleExpression,
+        expressions,
+      };
+    }
+
+    const expression = tryParseExpression(context);
+    if (expression === undefined) {
+      context.tokenIndex = startIndex;
+      return undefined;
+    }
+
+    expressions.push(expression);
+  }
+};
+
 export const tryParseVariableDeclaration = (
   context: Context,
 ): Ast.VariableDeclaration | undefined => {
   const startIndex = context.tokenIndex;
 
-  // TODO(kyle) don't assert defined
-  const type = context.tokens[context.tokenIndex]!;
-
-  if (
-    type.type !== "address" &&
-    type.type !== "string" &&
-    type.type !== "uint" &&
-    type.type !== "int" &&
-    type.type !== "bytes" &&
-    type.type !== "bool"
-  ) {
+  const type = tryParseType(context);
+  if (type === undefined) {
+    context.tokenIndex = startIndex;
     return undefined;
   }
 
-  context.tokenIndex++;
+  let maybeLocation = context.tokens[context.tokenIndex++];
+
+  if (maybeLocation === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  if (
+    maybeLocation.token !== Token.TokenType.Storage &&
+    maybeLocation.token !== Token.TokenType.Memory &&
+    maybeLocation.token !== Token.TokenType.Calldata
+  ) {
+    context.tokenIndex--;
+    maybeLocation = undefined;
+  }
+
   const identifier = tryParseIdentifier(context);
 
   if (identifier === undefined) {
@@ -259,18 +379,18 @@ export const tryParseVariableDeclaration = (
     return undefined;
   }
 
-  if (maybeAssignOrSemicolon.type === "semicolon") {
+  if (maybeAssignOrSemicolon.token === Token.TokenType.Semicolon) {
     return {
-      type: "variableDeclaration",
-      ty: type,
-      location: undefined,
+      ast: Ast.AstType.VariableDeclaration,
+      type,
+      location: maybeLocation,
       attributes: [],
       identifier: identifier.token,
       initializer: undefined,
     };
   }
 
-  if (maybeAssignOrSemicolon.type !== "assign") {
+  if (maybeAssignOrSemicolon.token !== Token.TokenType.Assign) {
     context.tokenIndex = startIndex;
     return undefined;
   }
@@ -283,11 +403,41 @@ export const tryParseVariableDeclaration = (
   }
 
   return {
-    type: "variableDeclaration",
-    ty: type,
-    location: undefined,
+    ast: Ast.AstType.VariableDeclaration,
+    type,
+    location: maybeLocation,
     attributes: [],
     identifier: identifier.token,
     initializer,
   };
+};
+
+// types
+
+export const tryParseType = (context: Context): Ast.Type | undefined => {
+  return tryParseElementaryType(context) ?? undefined;
+};
+
+export const tryParseElementaryType = (context: Context): Ast.ElementaryType | undefined => {
+  const maybeType = context.tokens[context.tokenIndex++];
+
+  if (maybeType === undefined) {
+    context.tokenIndex--;
+    return undefined;
+  }
+
+  if (
+    maybeType.token !== Token.TokenType.Address &&
+    maybeType.token !== Token.TokenType.String &&
+    maybeType.token !== Token.TokenType.Uint &&
+    maybeType.token !== Token.TokenType.Int &&
+    maybeType.token !== Token.TokenType.Byte &&
+    maybeType.token !== Token.TokenType.Bytes &&
+    maybeType.token !== Token.TokenType.Bool
+  ) {
+    context.tokenIndex--;
+    return undefined;
+  }
+
+  return { ast: Ast.AstType.ElementaryType, type: maybeType };
 };
