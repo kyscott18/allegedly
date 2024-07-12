@@ -6,7 +6,10 @@ import {
   tryParseConditionalExpression,
   tryParseFunctionCallExpression,
   tryParseIdentifier,
+  tryParseIndexAccessExpression,
   tryParseLiteral,
+  tryParseMemberAccessExpression,
+  tryParseNewExpression,
   tryParseTupleExpression,
   tryParseUnaryOperation,
 } from "./parser.js";
@@ -214,11 +217,30 @@ test("function call expression", () => {
   expect(manyFunction!.arguments).toHaveLength(3);
 });
 
-test.todo("member access expression");
+test("member access expression", () => {
+  const memberAccess = tryParseMemberAccessExpression({ tokens: tokenize("a.b"), tokenIndex: 0 });
 
-test.todo("index access expression");
+  expect(memberAccess).toBeDefined();
+  expect(memberAccess!.ast).toBe(Ast.AstType.MemberAccessExpression);
+  expect(memberAccess!.expression.ast).toBe(Ast.AstType.Identifier);
+  expect(memberAccess!.member.ast).toBe(Ast.AstType.Identifier);
+});
 
-test.todo("new expression");
+test("index access expression", () => {
+  const indexAccess = tryParseIndexAccessExpression({ tokens: tokenize("a[0]"), tokenIndex: 0 });
+
+  expect(indexAccess).toBeDefined();
+  expect(indexAccess!.ast).toBe(Ast.AstType.IndexAccessExpression);
+  expect(indexAccess!.base.ast).toBe(Ast.AstType.Identifier);
+  expect(indexAccess!.index.ast).toBe(Ast.AstType.Literal);
+});
+
+test("new expression", () => {
+  const _new = tryParseNewExpression({ tokens: tokenize("new Contract"), tokenIndex: 0 });
+
+  expect(_new).toBeDefined();
+  expect(_new!.ast).toBe(Ast.AstType.NewExpression);
+});
 
 test("tuple expression", () => {
   const emptyTuple = tryParseTupleExpression({ tokens: tokenize("()"), tokenIndex: 0 });

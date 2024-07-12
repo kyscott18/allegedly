@@ -54,6 +54,7 @@ export const tryParseExpression = (context: Context): Ast.Expression | undefined
 
   return (
     tryParseIdentifier(context) ??
+    tryParseLiteral(context) ??
     tryParseAssignment(context) ??
     tryParseBinaryOperation(context) ??
     tryParseVariableDeclaration(context) ??
@@ -315,11 +316,115 @@ export const tryParseFunctionCallExpression = (
   };
 };
 
-// member access expression
+export const tryParseMemberAccessExpression = (
+  context: Context,
+): Ast.MemberAccessExpression | undefined => {
+  const startIndex = context.tokenIndex;
 
-// index access expression
+  const expression = tryParseExpression(context);
+  if (expression === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
 
-// new expression
+  const maybeMember = context.tokens[context.tokenIndex++];
+
+  if (maybeMember === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  if (maybeMember.token !== Token.TokenType.Member) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const memberIdentifier = tryParseIdentifier(context);
+  if (memberIdentifier === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.MemberAccessExpression,
+    expression,
+    member: memberIdentifier,
+  };
+};
+
+export const tryParseIndexAccessExpression = (
+  context: Context,
+): Ast.IndexAccessExpression | undefined => {
+  const startIndex = context.tokenIndex;
+
+  const base = tryParseExpression(context);
+  if (base === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const maybeOpenBracket = context.tokens[context.tokenIndex++];
+
+  if (maybeOpenBracket === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  if (maybeOpenBracket.token !== Token.TokenType.OpenBracket) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const index = tryParseExpression(context);
+  if (index === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const maybeCloseBracket = context.tokens[context.tokenIndex++];
+
+  if (maybeCloseBracket === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  if (maybeCloseBracket.token !== Token.TokenType.CloseBracket) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.IndexAccessExpression,
+    base,
+    index,
+  };
+};
+
+export const tryParseNewExpression = (context: Context): Ast.NewExpression | undefined => {
+  const startIndex = context.tokenIndex;
+
+  const maybeNew = context.tokens[context.tokenIndex++];
+
+  if (maybeNew === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  if (maybeNew.token !== Token.TokenType.New) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+  const expression = tryParseExpression(context);
+  if (expression === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.NewExpression,
+    expression,
+  };
+};
 
 export const tryParseTupleExpression = (context: Context) => {
   const startIndex = context.tokenIndex;
