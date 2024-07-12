@@ -4,9 +4,9 @@ import {
   tryParseAssignment,
   tryParseBinaryOperation,
   tryParseConditionalExpression,
+  tryParseFunctionCallExpression,
   tryParseIdentifier,
   tryParseLiteral,
-  tryParseTupleExpress,
   tryParseTupleExpression,
   tryParseUnaryOperation,
 } from "./parser.js";
@@ -186,7 +186,33 @@ test("conditional expression", () => {
   expect(conditional!.ast).toBe(Ast.AstType.ConditionalExpression);
 });
 
-test.todo("function call expression");
+test("function call expression", () => {
+  const emptyFunction = tryParseFunctionCallExpression({ tokens: tokenize("fn()"), tokenIndex: 0 });
+  const singleFunction = tryParseFunctionCallExpression({
+    tokens: tokenize("fn(a)"),
+    tokenIndex: 0,
+  });
+  const manyFunction = tryParseFunctionCallExpression({
+    tokens: tokenize("fn(a,b,c)"),
+    tokenIndex: 0,
+  });
+
+  expect(emptyFunction).toBeDefined();
+  expect(singleFunction).toBeDefined();
+  expect(manyFunction).toBeDefined();
+
+  expect(emptyFunction!.ast).toBe(Ast.AstType.FunctionCallExpression);
+  expect(singleFunction!.ast).toBe(Ast.AstType.FunctionCallExpression);
+  expect(manyFunction!.ast).toBe(Ast.AstType.FunctionCallExpression);
+
+  expect(emptyFunction!.expression.ast).toBe(Ast.AstType.Identifier);
+  expect(singleFunction!.expression.ast).toBe(Ast.AstType.Identifier);
+  expect(manyFunction!.expression.ast).toBe(Ast.AstType.Identifier);
+
+  expect(emptyFunction!.arguments).toHaveLength(0);
+  expect(singleFunction!.arguments).toHaveLength(1);
+  expect(manyFunction!.arguments).toHaveLength(3);
+});
 
 test.todo("member access expression");
 
@@ -194,7 +220,7 @@ test.todo("index access expression");
 
 test.todo("new expression");
 
-test.skip("tuple expression", () => {
+test("tuple expression", () => {
   const emptyTuple = tryParseTupleExpression({ tokens: tokenize("()"), tokenIndex: 0 });
   const singleTuple = tryParseTupleExpression({ tokens: tokenize("(a)"), tokenIndex: 0 });
   const manyTuple = tryParseTupleExpression({ tokens: tokenize("(a,b,c)"), tokenIndex: 0 });
@@ -209,7 +235,7 @@ test.skip("tuple expression", () => {
 
   expect(emptyTuple!.expressions).toHaveLength(0);
   expect(singleTuple!.expressions).toHaveLength(1);
-  expect(manyTuple!.expressions).toHaveLength(2);
+  expect(manyTuple!.expressions).toHaveLength(3);
 });
 
 test.todo("variable declaration");

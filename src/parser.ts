@@ -4,6 +4,7 @@ import { Token } from "./types/token";
 type Context = {
   tokens: Token.Token[];
   tokenIndex: number;
+  // depth: number;
 };
 
 export const parse = (tokens: Token.Token[]): Ast.Program => {
@@ -53,7 +54,6 @@ export const tryParseExpression = (context: Context): Ast.Expression | undefined
 
   return (
     tryParseIdentifier(context) ??
-    tryParseVariableDeclaration(context) ??
     tryParseAssignment(context) ??
     tryParseBinaryOperation(context) ??
     tryParseVariableDeclaration(context) ??
@@ -291,7 +291,29 @@ export const tryParseConditionalExpression = (
   };
 };
 
-// function call expression
+export const tryParseFunctionCallExpression = (
+  context: Context,
+): Ast.FunctionCallExpression | undefined => {
+  const startIndex = context.tokenIndex;
+
+  const expression = tryParseExpression(context);
+  if (expression === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const _arguments = tryParseTupleExpression(context);
+  if (_arguments === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.FunctionCallExpression,
+    expression,
+    arguments: _arguments.expressions,
+  };
+};
 
 // member access expression
 
@@ -318,7 +340,7 @@ export const tryParseTupleExpression = (context: Context) => {
 
   while (true) {
     const maybeCloseParenthesis = context.tokens[context.tokenIndex];
-    console.log(0);
+
     if (maybeCloseParenthesis?.token === Token.TokenType.CloseParenthesis) {
       context.tokenIndex++;
 
@@ -326,6 +348,14 @@ export const tryParseTupleExpression = (context: Context) => {
         ast: Ast.AstType.TupleExpression,
         expressions,
       };
+    }
+
+    if (expressions.length > 0) {
+      const maybeComma = context.tokens[context.tokenIndex++];
+      if (maybeComma?.token !== Token.TokenType.Comma) {
+        context.tokenIndex = startIndex;
+        return undefined;
+      }
     }
 
     const expression = tryParseExpression(context);
