@@ -4,7 +4,7 @@ import { Token } from "./types/token";
 type Context = {
   tokens: Token.Token[];
   tokenIndex: number;
-  // depth: number;
+  // TODO(kyle) depth: number;
 };
 
 export const parse = (tokens: Token.Token[]): Ast.Program => {
@@ -28,23 +28,94 @@ export const tryParseDefinition = (context: Context): Ast.Definition | undefined
   const token = context.tokens[context.tokenIndex];
   if (token === undefined) return undefined;
 
-  return tryParseFunctionDefinition(context) ?? undefined;
+  return (
+    tryParseFunctionDefinition(context) ??
+    tryParseContractDefinition(context) ??
+    tryParseEventDefinition(context) ??
+    tryParseErrorDefinition(context) ??
+    tryParseStructDefinition(context) ??
+    tryParseModifierDefinition(context) ??
+    undefined
+  );
 };
 
 export const tryParseFunctionDefinition = (
   _context: Context,
 ): Ast.FunctionDefinition | undefined => {};
 
+export const tryParseContractDefinition = (
+  context: Context,
+): Ast.ContractDefinition | undefined => {};
+
+export const tryParseEventDefinition = (context: Context): Ast.EventDefinition | undefined => {};
+
+export const tryParseErrorDefinition = (context: Context): Ast.ErrorDefinition | undefined => {};
+
+export const tryParseStructDefinition = (context: Context): Ast.StructDefinition | undefined => {};
+
+export const tryParseModifierDefinition = (
+  context: Context,
+): Ast.ModifierDefinition | undefined => {};
+
 // statements
 
 export const tryParseStatement = (context: Context): Ast.Statement | undefined => {
-  const expression = tryParseExpression(context);
-  if (expression === undefined) return undefined;
-  return {
-    ast: Ast.AstType.ExpressionStatement,
-    expression,
-  } satisfies Ast.ExpressionStatement;
+  const token = context.tokens[context.tokenIndex];
+  if (token === undefined) return undefined;
+
+  return (
+    tryParseExpressionStatement(context) ??
+    tryParseBlockStatement(context) ??
+    tryParseUncheckedBlockStatement(context) ??
+    tryParseIfStatement(context) ??
+    tryParseForStatement(context) ??
+    tryParseWhileStatement(context) ??
+    tryParseDoWhileStatement(context) ??
+    tryParseBreakStatement(context) ??
+    tryParseContinueStatement(context) ??
+    tryParseEmitStatement(context) ??
+    tryParseRevertStatement(context) ??
+    tryParseReturnStatement(context) ??
+    tryParsePlaceholderStatement(context) ??
+    undefined
+  );
 };
+
+export const tryParseExpressionStatement = (
+  context: Context,
+): Ast.ExpressionStatement | undefined => {};
+
+export const tryParseBlockStatement = (
+  context: Context,
+): Ast.BlockStatementStatement | undefined => {};
+
+export const tryParseUncheckedBlockStatement = (
+  context: Context,
+): Ast.UncheckedBlockStatement | undefined => {};
+
+export const tryParseIfStatement = (context: Context): Ast.IfStatement | undefined => {};
+
+export const tryParseForStatement = (context: Context): Ast.ForStatement | undefined => {};
+
+export const tryParseWhileStatement = (context: Context): Ast.WhileStatement | undefined => {};
+
+export const tryParseDoWhileStatement = (context: Context): Ast.DoWhileStatement | undefined => {};
+
+export const tryParseBreakStatement = (context: Context): Ast.BreakStatement | undefined => {};
+
+export const tryParseContinueStatement = (
+  context: Context,
+): Ast.ContinueStatement | undefined => {};
+
+export const tryParseEmitStatement = (context: Context): Ast.EmitStatement | undefined => {};
+
+export const tryParseRevertStatement = (context: Context): Ast.RevertStatement | undefined => {};
+
+export const tryParseReturnStatement = (context: Context): Ast.ReturnStatement | undefined => {};
+
+export const tryParsePlaceholderStatement = (
+  context: Context,
+): Ast.PlaceholderStatement | undefined => {};
 
 // expressions
 
@@ -56,7 +127,14 @@ export const tryParseExpression = (context: Context): Ast.Expression | undefined
     tryParseIdentifier(context) ??
     tryParseLiteral(context) ??
     tryParseAssignment(context) ??
+    tryParseUnaryOperation(context) ??
     tryParseBinaryOperation(context) ??
+    tryParseConditionalExpression(context) ??
+    tryParseFunctionCallExpression(context) ??
+    tryParseMemberAccessExpression(context) ??
+    tryParseIndexAccessExpression(context) ??
+    tryParseNewExpression(context) ??
+    tryParseTupleExpression(context) ??
     tryParseVariableDeclaration(context) ??
     undefined
   );
@@ -312,7 +390,7 @@ export const tryParseFunctionCallExpression = (
   return {
     ast: Ast.AstType.FunctionCallExpression,
     expression,
-    arguments: _arguments.expressions,
+    arguments: _arguments.elements,
   };
 };
 
@@ -426,7 +504,7 @@ export const tryParseNewExpression = (context: Context): Ast.NewExpression | und
   };
 };
 
-export const tryParseTupleExpression = (context: Context) => {
+export const tryParseTupleExpression = (context: Context): Ast.TupleExpression | undefined => {
   const startIndex = context.tokenIndex;
 
   const maybeOpenParenthesis = context.tokens[context.tokenIndex++];
@@ -441,7 +519,7 @@ export const tryParseTupleExpression = (context: Context) => {
     return undefined;
   }
 
-  const expressions: Ast.Expression[] = [];
+  const elements: Ast.Expression[] = [];
 
   while (true) {
     const maybeCloseParenthesis = context.tokens[context.tokenIndex];
@@ -451,11 +529,11 @@ export const tryParseTupleExpression = (context: Context) => {
 
       return {
         ast: Ast.AstType.TupleExpression,
-        expressions,
+        elements,
       };
     }
 
-    if (expressions.length > 0) {
+    if (elements.length > 0) {
       const maybeComma = context.tokens[context.tokenIndex++];
       if (maybeComma?.token !== Token.TokenType.Comma) {
         context.tokenIndex = startIndex;
@@ -469,7 +547,7 @@ export const tryParseTupleExpression = (context: Context) => {
       return undefined;
     }
 
-    expressions.push(expression);
+    elements.push(expression);
   }
 };
 
@@ -540,7 +618,12 @@ export const tryParseVariableDeclaration = (
 // types
 
 export const tryParseType = (context: Context): Ast.Type | undefined => {
-  return tryParseElementaryType(context) ?? undefined;
+  return (
+    tryParseElementaryType(context) ??
+    tryParseArrayType(context) ??
+    tryParseMapping(context) ??
+    undefined
+  );
 };
 
 export const tryParseElementaryType = (context: Context): Ast.ElementaryType | undefined => {
@@ -566,3 +649,7 @@ export const tryParseElementaryType = (context: Context): Ast.ElementaryType | u
 
   return { ast: Ast.AstType.ElementaryType, type: maybeType };
 };
+
+export const tryParseArrayType = (context: Context): Ast.ArrayType | undefined => {};
+
+export const tryParseMapping = (context: Context): Ast.Mapping | undefined => {};

@@ -7,7 +7,6 @@ export namespace Ast {
     Assignment,
     UnaryOperation,
     BinaryOperation,
-    LogicalExpression,
     ConditionalExpression,
     FunctionCallExpression,
     MemberAccessExpression,
@@ -130,7 +129,7 @@ export namespace Ast {
   export type IndexAccessExpression = {
     ast: AstType.IndexAccessExpression;
     base: Expression;
-    index: Expression | undefined;
+    index: Expression;
   };
 
   export type NewExpression = {
@@ -332,9 +331,28 @@ export namespace Ast {
     | Assignment
     | UnaryOperation
     | BinaryOperation
+    | ConditionalExpression
+    | FunctionCallExpression
+    | MemberAccessExpression
+    | IndexAccessExpression
+    | NewExpression
+    | TupleExpression
     | VariableDeclaration;
 
-  export type Statement = ExpressionStatement;
+  export type Statement =
+    | ExpressionStatement
+    | BlockStatement
+    | UncheckedBlockStatement
+    | IfStatement
+    | ForStatement
+    | WhileStatement
+    | DoWhileStatement
+    | BreakStatement
+    | ContinueStatement
+    | EmitStatement
+    | RevertStatement
+    | ReturnStatement
+    | PlaceholderStatement;
 
   export type Type = ElementaryType | ArrayType | Mapping;
 

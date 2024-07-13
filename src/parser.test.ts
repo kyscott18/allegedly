@@ -256,9 +256,9 @@ test("tuple expression", () => {
   expect(singleTuple!.ast).toBe(Ast.AstType.TupleExpression);
   expect(manyTuple!.ast).toBe(Ast.AstType.TupleExpression);
 
-  expect(emptyTuple!.expressions).toHaveLength(0);
-  expect(singleTuple!.expressions).toHaveLength(1);
-  expect(manyTuple!.expressions).toHaveLength(3);
+  expect(emptyTuple!.elements).toHaveLength(0);
+  expect(singleTuple!.elements).toHaveLength(1);
+  expect(manyTuple!.elements).toHaveLength(3);
 });
 
 test("variable declaration", () => {
