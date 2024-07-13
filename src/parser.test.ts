@@ -12,6 +12,7 @@ import {
   tryParseNewExpression,
   tryParseTupleExpression,
   tryParseUnaryOperation,
+  tryParseVariableDeclaration,
 } from "./parser.js";
 import { Ast } from "./types/ast.js";
 
@@ -260,4 +261,29 @@ test("tuple expression", () => {
   expect(manyTuple!.expressions).toHaveLength(3);
 });
 
-test.todo("variable declaration");
+test("variable declaration", () => {
+  const noInitializer = tryParseVariableDeclaration({
+    tokens: tokenize("uint256 a"),
+    tokenIndex: 0,
+  });
+  const initializer = tryParseVariableDeclaration({
+    tokens: tokenize("uint256 a = 0"),
+    tokenIndex: 0,
+  });
+  const location = tryParseVariableDeclaration({
+    tokens: tokenize("uint256 memory a"),
+    tokenIndex: 0,
+  });
+
+  // TODO(kyle) attributes
+
+  expect(noInitializer).toBeDefined();
+  expect(initializer).toBeDefined();
+  expect(location).toBeDefined();
+
+  expect(noInitializer!.ast).toBe(Ast.AstType.VariableDeclaration);
+  expect(initializer!.ast).toBe(Ast.AstType.VariableDeclaration);
+  expect(location!.ast).toBe(Ast.AstType.VariableDeclaration);
+
+  expect(initializer!.initializer).toBeDefined();
+});

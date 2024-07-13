@@ -507,14 +507,9 @@ export const tryParseVariableDeclaration = (
     return undefined;
   }
 
-  const maybeAssignOrSemicolon = context.tokens[context.tokenIndex++];
+  const maybeAssign = context.tokens[context.tokenIndex++];
 
-  if (maybeAssignOrSemicolon === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  if (maybeAssignOrSemicolon.token === Token.TokenType.Semicolon) {
+  if (maybeAssign === undefined || maybeAssign.token !== Token.TokenType.Assign) {
     return {
       ast: Ast.AstType.VariableDeclaration,
       type,
@@ -523,11 +518,6 @@ export const tryParseVariableDeclaration = (
       identifier: identifier.token,
       initializer: undefined,
     };
-  }
-
-  if (maybeAssignOrSemicolon.token !== Token.TokenType.Assign) {
-    context.tokenIndex = startIndex;
-    return undefined;
   }
 
   const initializer = tryParseExpression(context);
