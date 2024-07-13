@@ -368,6 +368,8 @@ export namespace Ast {
 }
 
 /**
+ * Not Implemented
+ *
  * functionCallBlock
  * ArrayIndexRange
  * UserDefinedType

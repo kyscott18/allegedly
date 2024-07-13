@@ -85,6 +85,7 @@ export namespace Token {
     Semicolon,
     Colon,
     Arrow,
+    Placeholder,
     Assign,
     Add,
     AddAssign,
@@ -259,6 +260,7 @@ export namespace Token {
   export type Semicolon = { token: TokenType.Semicolon; value: undefined };
   export type Colon = { token: TokenType.Colon; value: undefined };
   export type Arrow = { token: TokenType.Arrow; value: undefined };
+  export type Placeholder = { token: TokenType.Placeholder; value: undefined };
 
   // operators
 
@@ -443,6 +445,7 @@ export namespace Token {
     | Semicolon
     | Colon
     | Arrow
+    | Placeholder
     | Assign
     | Add
     | AddAssign

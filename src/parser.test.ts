@@ -3,18 +3,31 @@ import { tokenize } from "./lexer.js";
 import {
   tryParseAssignment,
   tryParseBinaryOperation,
+  tryParseBlockStatement,
+  tryParseBreakStatement,
   tryParseConditionalExpression,
+  tryParseContinueStatement,
+  tryParseEmitStatement,
+  tryParseExpressionStatement,
   tryParseFunctionCallExpression,
   tryParseIdentifier,
+  tryParseIfStatement,
   tryParseIndexAccessExpression,
   tryParseLiteral,
   tryParseMemberAccessExpression,
   tryParseNewExpression,
+  tryParsePlaceholderStatement,
+  tryParseReturnStatement,
+  tryParseRevertStatement,
   tryParseTupleExpression,
   tryParseUnaryOperation,
+  tryParseUncheckedBlockStatement,
   tryParseVariableDeclaration,
+  tryParseWhileStatement,
 } from "./parser.js";
 import { Ast } from "./types/ast.js";
+
+// expressions
 
 test("identifier", () => {
   const identifier = tryParseIdentifier({ tokens: tokenize("id"), tokenIndex: 0 });
@@ -286,4 +299,135 @@ test("variable declaration", () => {
   expect(location!.ast).toBe(Ast.AstType.VariableDeclaration);
 
   expect(initializer!.initializer).toBeDefined();
+});
+
+// statements
+
+test.todo("expression statement", () => {
+  const expressionStatement = tryParseExpressionStatement({
+    tokens: tokenize("a + b;"),
+    tokenIndex: 0,
+  });
+
+  expect(expressionStatement).toBeDefined();
+  expect(expressionStatement!.ast).toBe(Ast.AstType.ExpressionStatement);
+});
+
+test("block statement", () => {
+  const emptyBlock = tryParseBlockStatement({ tokens: tokenize("{}"), tokenIndex: 0 });
+  const singleBlock = tryParseBlockStatement({ tokens: tokenize("{a;}"), tokenIndex: 0 });
+  const manyBlock = tryParseBlockStatement({ tokens: tokenize("{a; b;}"), tokenIndex: 0 });
+
+  expect(emptyBlock).toBeDefined();
+  expect(singleBlock).toBeDefined();
+  expect(manyBlock).toBeDefined();
+
+  expect(emptyBlock!.ast).toBe(Ast.AstType.BlockStatement);
+  expect(singleBlock!.ast).toBe(Ast.AstType.BlockStatement);
+  expect(manyBlock!.ast).toBe(Ast.AstType.BlockStatement);
+
+  expect(emptyBlock!.statements).toHaveLength(0);
+  expect(manyBlock!.statements).toHaveLength(2);
+  expect(singleBlock!.statements).toHaveLength(1);
+});
+
+test("unchecked block statement", () => {
+  const emptyBlock = tryParseUncheckedBlockStatement({
+    tokens: tokenize("unchecked {}"),
+    tokenIndex: 0,
+  });
+  const singleBlock = tryParseUncheckedBlockStatement({
+    tokens: tokenize("unchecked {a;}"),
+    tokenIndex: 0,
+  });
+  const manyBlock = tryParseUncheckedBlockStatement({
+    tokens: tokenize("unchecked { a; b; }"),
+    tokenIndex: 0,
+  });
+
+  expect(emptyBlock).toBeDefined();
+  expect(singleBlock).toBeDefined();
+  expect(manyBlock).toBeDefined();
+
+  expect(emptyBlock!.ast).toBe(Ast.AstType.UncheckedBlockStatement);
+  expect(singleBlock!.ast).toBe(Ast.AstType.UncheckedBlockStatement);
+  expect(manyBlock!.ast).toBe(Ast.AstType.UncheckedBlockStatement);
+
+  expect(emptyBlock!.statements).toHaveLength(0);
+  expect(singleBlock!.statements).toHaveLength(1);
+  expect(manyBlock!.statements).toHaveLength(2);
+});
+
+test.todo("if statement", () => {
+  const _if = tryParseIfStatement({ tokens: tokenize("if (a) { b; }"), tokenIndex: 0 });
+  const _ifElse = tryParseIfStatement({
+    tokens: tokenize("if (a) { b; } else { c; }"),
+    tokenIndex: 0,
+  });
+
+  expect(_if).toBeDefined();
+  expect(_ifElse).toBeDefined();
+
+  expect(_if!.ast).toBe(Ast.AstType.IfStatement);
+  expect(_ifElse!.ast).toBe(Ast.AstType.IfStatement);
+});
+
+test.todo("for statement", () => {});
+
+test.todo("while statement", () => {
+  const _while = tryParseWhileStatement({ tokens: tokenize("while (a) { b; }"), tokenIndex: 0 });
+
+  expect(_while).toBeDefined();
+
+  expect(_while!.ast).toBe(Ast.AstType.WhileStatement);
+});
+
+test.todo("do while statement");
+
+test("break statement", () => {
+  const _break = tryParseBreakStatement({ tokens: tokenize("break;"), tokenIndex: 0 });
+
+  expect(_break).toBeDefined();
+
+  expect(_break!.ast).toBe(Ast.AstType.BreakStatement);
+});
+
+test("continue statement", () => {
+  const _continue = tryParseContinueStatement({ tokens: tokenize("continue;"), tokenIndex: 0 });
+
+  expect(_continue).toBeDefined();
+
+  expect(_continue!.ast).toBe(Ast.AstType.ContinueStatement);
+});
+
+test("emit statement", () => {
+  const emit = tryParseEmitStatement({ tokens: tokenize("emit Log();"), tokenIndex: 0 });
+
+  expect(emit).toBeDefined();
+
+  expect(emit!.ast).toBe(Ast.AstType.EmitStatement);
+});
+
+test("revert statement", () => {
+  const revert = tryParseRevertStatement({ tokens: tokenize("revert Error();"), tokenIndex: 0 });
+
+  expect(revert).toBeDefined();
+
+  expect(revert!.ast).toBe(Ast.AstType.RevertStatement);
+});
+
+test.todo("return statement", () => {
+  const _return = tryParseReturnStatement({ tokens: tokenize("return;"), tokenIndex: 0 });
+  const _returnExpression = tryParseReturnStatement({
+    tokens: tokenize("return a;"),
+    tokenIndex: 0,
+  });
+});
+
+test.todo("placehoder statement", () => {
+  const placeholder = tryParsePlaceholderStatement({ tokens: tokenize("_;"), tokenIndex: 0 });
+
+  expect(placeholder).toBeDefined();
+
+  expect(placeholder!.ast).toBe(Ast.AstType.PlaceholderStatement);
 });

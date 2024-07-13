@@ -83,15 +83,115 @@ export const tryParseStatement = (context: Context): Ast.Statement | undefined =
 
 export const tryParseExpressionStatement = (
   context: Context,
-): Ast.ExpressionStatement | undefined => {};
+): Ast.ExpressionStatement | undefined => {
+  const startIndex = context.tokenIndex;
 
-export const tryParseBlockStatement = (
-  context: Context,
-): Ast.BlockStatementStatement | undefined => {};
+  // TODO(kyle) more specific recursion is needed
+  const expression = tryParseExpression(context);
+  if (expression === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const maybeSemiColon = context.tokens[context.tokenIndex++];
+
+  if (maybeSemiColon === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  if (maybeSemiColon.token !== Token.TokenType.Semicolon) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.ExpressionStatement,
+    expression,
+  };
+};
+
+export const tryParseBlockStatement = (context: Context): Ast.BlockStatement | undefined => {
+  const startIndex = context.tokenIndex;
+
+  const maybeOpenCurlyBracket = context.tokens[context.tokenIndex++];
+
+  if (maybeOpenCurlyBracket === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  if (maybeOpenCurlyBracket.token !== Token.TokenType.OpenCurlyBrace) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const statements: Ast.Statement[] = [];
+
+  while (true) {
+    const maybeCloseCurlyBracket = context.tokens[context.tokenIndex];
+
+    if (maybeCloseCurlyBracket?.token === Token.TokenType.CloseCurlyBrace) {
+      context.tokenIndex++;
+
+      return {
+        ast: Ast.AstType.BlockStatement,
+        statements,
+      };
+    }
+
+    const statement = tryParseStatement(context);
+    if (statement === undefined) {
+      context.tokenIndex = startIndex;
+      return undefined;
+    }
+
+    statements.push(statement);
+  }
+};
 
 export const tryParseUncheckedBlockStatement = (
   context: Context,
-): Ast.UncheckedBlockStatement | undefined => {};
+): Ast.UncheckedBlockStatement | undefined => {
+  const startIndex = context.tokenIndex;
+
+  const maybeUnchecked = context.tokens[context.tokenIndex++];
+
+  if (maybeUnchecked?.token !== Token.TokenType.Unchecked) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const maybeOpenCurlyBracket = context.tokens[context.tokenIndex++];
+
+  if (maybeOpenCurlyBracket?.token !== Token.TokenType.OpenCurlyBrace) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const statements: Ast.Statement[] = [];
+
+  while (true) {
+    const maybeCloseCurlyBracket = context.tokens[context.tokenIndex];
+
+    if (maybeCloseCurlyBracket?.token === Token.TokenType.CloseCurlyBrace) {
+      context.tokenIndex++;
+
+      return {
+        ast: Ast.AstType.UncheckedBlockStatement,
+        statements,
+      };
+    }
+
+    const statement = tryParseStatement(context);
+    if (statement === undefined) {
+      context.tokenIndex = startIndex;
+      return undefined;
+    }
+
+    statements.push(statement);
+  }
+};
 
 export const tryParseIfStatement = (context: Context): Ast.IfStatement | undefined => {};
 
@@ -101,21 +201,160 @@ export const tryParseWhileStatement = (context: Context): Ast.WhileStatement | u
 
 export const tryParseDoWhileStatement = (context: Context): Ast.DoWhileStatement | undefined => {};
 
-export const tryParseBreakStatement = (context: Context): Ast.BreakStatement | undefined => {};
+export const tryParseBreakStatement = (context: Context): Ast.BreakStatement | undefined => {
+  const startIndex = context.tokenIndex;
 
-export const tryParseContinueStatement = (
-  context: Context,
-): Ast.ContinueStatement | undefined => {};
+  const maybeBreak = context.tokens[context.tokenIndex++];
 
-export const tryParseEmitStatement = (context: Context): Ast.EmitStatement | undefined => {};
+  if (maybeBreak?.token !== Token.TokenType.Break) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
 
-export const tryParseRevertStatement = (context: Context): Ast.RevertStatement | undefined => {};
+  const maybeSemiColon = context.tokens[context.tokenIndex++];
 
-export const tryParseReturnStatement = (context: Context): Ast.ReturnStatement | undefined => {};
+  if (maybeSemiColon?.token !== Token.TokenType.Semicolon) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.BreakStatement,
+  };
+};
+
+export const tryParseContinueStatement = (context: Context): Ast.ContinueStatement | undefined => {
+  const startIndex = context.tokenIndex;
+
+  const maybeContinue = context.tokens[context.tokenIndex++];
+
+  if (maybeContinue?.token !== Token.TokenType.Continue) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const maybeSemiColon = context.tokens[context.tokenIndex++];
+
+  if (maybeSemiColon?.token !== Token.TokenType.Semicolon) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.ContinueStatement,
+  };
+};
+
+export const tryParseEmitStatement = (context: Context): Ast.EmitStatement | undefined => {
+  const startIndex = context.tokenIndex;
+
+  const maybeEmit = context.tokens[context.tokenIndex++];
+
+  if (maybeEmit?.token !== Token.TokenType.Emit) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const event = tryParseFunctionCallExpression(context);
+  if (event === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const maybeSemiColon = context.tokens[context.tokenIndex++];
+
+  if (maybeSemiColon?.token !== Token.TokenType.Semicolon) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.EmitStatement,
+    event,
+  };
+};
+
+export const tryParseRevertStatement = (context: Context): Ast.RevertStatement | undefined => {
+  const startIndex = context.tokenIndex;
+
+  const maybeRevert = context.tokens[context.tokenIndex++];
+
+  if (maybeRevert?.token !== Token.TokenType.Revert) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const error = tryParseFunctionCallExpression(context);
+  if (error === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const maybeSemiColon = context.tokens[context.tokenIndex++];
+
+  if (maybeSemiColon?.token !== Token.TokenType.Semicolon) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.RevertStatement,
+    error,
+  };
+};
+
+export const tryParseReturnStatement = (context: Context): Ast.ReturnStatement | undefined => {
+  const startIndex = context.tokenIndex;
+
+  const maybeReturn = context.tokens[context.tokenIndex++];
+
+  if (maybeReturn?.token !== Token.TokenType.Return) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const expression = tryParseExpression(context);
+  if (expression === undefined) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const maybeSemiColon = context.tokens[context.tokenIndex++];
+
+  if (maybeSemiColon?.token !== Token.TokenType.Semicolon) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.ReturnStatement,
+    expression,
+  };
+};
 
 export const tryParsePlaceholderStatement = (
   context: Context,
-): Ast.PlaceholderStatement | undefined => {};
+): Ast.PlaceholderStatement | undefined => {
+  const startIndex = context.tokenIndex;
+
+  const maybePlaceholder = context.tokens[context.tokenIndex++];
+
+  if (maybePlaceholder?.token !== Token.TokenType.Placeholder) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  const maybeSemiColon = context.tokens[context.tokenIndex++];
+
+  if (maybeSemiColon?.token !== Token.TokenType.Semicolon) {
+    context.tokenIndex = startIndex;
+    return undefined;
+  }
+
+  return {
+    ast: Ast.AstType.PlaceholderStatement,
+  };
+};
 
 // expressions
 
