@@ -33,3 +33,10 @@ export const sol = <const source extends string>(source: source): SolReturnType<
 
   return { code, abi };
 };
+
+export { Ast } from "./types/ast";
+export { Token } from "./types/token";
+export { tokenize } from "./lexer";
+export { parse } from "./parser";
+export { check } from "./checker";
+export { compileAbi, compileCode } from "./compiler";
