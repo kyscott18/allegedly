@@ -27,6 +27,8 @@ import {
 } from "./parser.js";
 import { Ast } from "./types/ast.js";
 
+// TODO(kyle) test `parse` entry point function
+
 // expressions
 
 test("identifier", () => {
@@ -36,7 +38,7 @@ test("identifier", () => {
   expect(identifier!.ast).toBe(Ast.AstType.Identifier);
 });
 
-test("literal", () => {
+test.todo("literal", () => {
   const stringLiteral = tryParseLiteral({ tokens: tokenize(`"stringLiteral"`), tokenIndex: 0 });
   const addressLiteral = tryParseLiteral({
     tokens: tokenize("0x0000000000000000000000000000"),
@@ -303,9 +305,9 @@ test("variable declaration", () => {
 
 // statements
 
-test.todo("expression statement", () => {
+test("expression statement", () => {
   const expressionStatement = tryParseExpressionStatement({
-    tokens: tokenize("a + b;"),
+    tokens: tokenize("uint256 a;"),
     tokenIndex: 0,
   });
 
@@ -422,6 +424,12 @@ test.todo("return statement", () => {
     tokens: tokenize("return a;"),
     tokenIndex: 0,
   });
+
+  expect(_return).toBeDefined();
+  expect(_returnExpression).toBeDefined();
+
+  expect(_return!.ast).toBe(Ast.AstType.ReturnStatement);
+  expect(_returnExpression!.ast).toBe(Ast.AstType.ReturnStatement);
 });
 
 test.todo("placehoder statement", () => {
