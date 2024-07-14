@@ -1,8 +1,23 @@
 import type { Abi } from "abitype";
-import type { Ast } from "./types/ast";
-import type { Hex } from "./types/utils";
+import { Ast } from "./types/ast";
+import type { Hex, Mutable } from "./types/utils";
 
-export const compileAbi = (program: Ast.Program): Abi => {};
+type Contract = { name: string; abi: Abi };
+
+export const compileAbi = (program: Ast.Program): (Abi | Contract)[] => {
+  const abi: Mutable<Abi> = [];
+  for (const defintion of program) {
+    switch (defintion.ast) {
+      case Ast.AstType.EventDefinition:
+        abi.push({
+          type: "event",
+          inputs: [],
+          name: defintion.name.token.value,
+        });
+        break;
+    }
+  }
+};
 
 type Context = {
   code: Hex;
