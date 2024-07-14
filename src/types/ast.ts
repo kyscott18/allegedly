@@ -273,7 +273,7 @@ export namespace Ast {
   type ParameterList = (Parameter | undefined)[];
 
   export type FunctionDefinition = {
-    ast: "functionDefinition";
+    ast: Ast.AstType.FunctionDefinition;
     kind: Token.Function | Token.Receive | Token.Constructor | Token.Fallback;
     attributes: FunctionAttribute[];
     parameters: ParameterList;
@@ -283,7 +283,7 @@ export namespace Ast {
   };
 
   export type ContractDefinition = {
-    ast: "contractDefintion";
+    ast: Ast.AstType.ContractDefinition;
     name: Identifier;
     kind: Token.Contract | Token.Interface | Token.Library;
     nodes: (
