@@ -1,9 +1,8 @@
-export type Cursor = Iterable<string> & {
+export type Cursor = IterableIterator<string> & {
   string: string;
   position: number;
   remaining: number;
   peek: () => string | undefined;
-  next: () => IteratorResult<string>;
 };
 
 const staticCursor: Cursor = {
