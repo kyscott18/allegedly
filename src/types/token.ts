@@ -108,6 +108,7 @@ export namespace Token {
     BitwiseXOrAssign,
     BitwiseAnd,
     BitwiseAndAssign,
+    BitwiseNot,
     ShiftRight,
     ShiftRightAssign,
     ShiftLeft,
@@ -289,6 +290,7 @@ export namespace Token {
   export type BitwiseXOrAssign = { token: TokenType.BitwiseXOrAssign; value: undefined };
   export type BitwiseAnd = { token: TokenType.BitwiseAnd; value: undefined };
   export type BitwiseAndAssign = { token: TokenType.BitwiseAndAssign; value: undefined };
+  export type BitwiseNot = { token: TokenType.BitwiseNot; value: undefined };
   export type ShiftRight = { token: TokenType.ShiftRight; value: undefined };
   export type ShiftRightAssign = { token: TokenType.ShiftRightAssign; value: undefined };
   export type ShiftLeft = { token: TokenType.ShiftLeft; value: undefined };
@@ -468,6 +470,7 @@ export namespace Token {
     | BitwiseXOrAssign
     | BitwiseAnd
     | BitwiseAndAssign
+    | BitwiseNot
     | ShiftRight
     | ShiftRightAssign
     | ShiftLeft

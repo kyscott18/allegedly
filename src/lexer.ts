@@ -28,6 +28,7 @@ const symbolSet = new Set([
   "&",
   "^",
   "|",
+  "~",
   ">",
   "<",
   "!",
@@ -162,6 +163,8 @@ export const tokenize = (source: string): Token.Token[] => {
         } else {
           tokens.push({ token: Token.TokenType.BitwiseXOr, value: undefined });
         }
+      } else if (char === "~") {
+        tokens.push({ token: Token.TokenType.BitwiseNot, value: undefined });
       } else if (char === ">") {
         if (cursor.peek() === "=") {
           cursor.position++;

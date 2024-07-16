@@ -101,6 +101,7 @@ export namespace Ast {
       | Token.BitwiseAnd
       | Token.BitwiseOr
       | Token.BitwiseXOr
+      | Token.BitwiseNot
       | Token.ShiftRight
       | Token.ShiftLeft;
     left: Expression;
@@ -336,8 +337,7 @@ export namespace Ast {
     | MemberAccessExpression
     | IndexAccessExpression
     | NewExpression
-    | TupleExpression
-    | VariableDeclaration;
+    | TupleExpression;
 
   export type Statement =
     | ExpressionStatement
@@ -357,6 +357,7 @@ export namespace Ast {
   export type Type = ElementaryType | ArrayType | Mapping;
 
   export type Definition =
+    | VariableDeclaration
     | FunctionDefinition
     | ContractDefinition
     | EventDefinition

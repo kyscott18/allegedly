@@ -1,10 +1,10 @@
+import { UnrecognizedSymbolError } from "./errors/unrecognizedSymbol";
 import { Ast } from "./types/ast";
 import { Token } from "./types/token";
 
 export type ParseContext = {
   tokens: Token.Token[];
   tokenIndex: number;
-  // TODO(kyle) depth: number;
 };
 
 export const parse = (tokens: Token.Token[]): Ast.Program => {
@@ -41,26 +41,32 @@ export const tryParseDefinition = (context: ParseContext): Ast.Definition | unde
 
 export const tryParseFunctionDefinition = (
   _context: ParseContext,
+  // @ts-expect-error
 ): Ast.FunctionDefinition | undefined => {};
 
 export const tryParseContractDefinition = (
-  context: ParseContext,
+  _context: ParseContext,
+  // @ts-expect-error
 ): Ast.ContractDefinition | undefined => {};
 
 export const tryParseEventDefinition = (
-  context: ParseContext,
+  _context: ParseContext,
+  // @ts-expect-error
 ): Ast.EventDefinition | undefined => {};
 
 export const tryParseErrorDefinition = (
-  context: ParseContext,
+  _context: ParseContext,
+  // @ts-expect-error
 ): Ast.ErrorDefinition | undefined => {};
 
 export const tryParseStructDefinition = (
-  context: ParseContext,
+  _context: ParseContext,
+  // @ts-expect-error
 ): Ast.StructDefinition | undefined => {};
 
 export const tryParseModifierDefinition = (
-  context: ParseContext,
+  _context: ParseContext,
+  // @ts-expect-error
 ): Ast.ModifierDefinition | undefined => {};
 
 // statements
@@ -92,23 +98,15 @@ export const tryParseExpressionStatement = (
 ): Ast.ExpressionStatement | undefined => {
   const startIndex = context.tokenIndex;
 
-  let expression: Ast.Expression | undefined = undefined;
-  for (const expressionParser of expressionParsers) {
+  const expression = tryParseExpression(context);
+  if (expression === undefined) {
     context.tokenIndex = startIndex;
-
-    const maybeExpression = expressionParser(context);
-    if (maybeExpression === undefined) continue;
-
-    const maybeSemiColon = context.tokens[context.tokenIndex];
-
-    if (maybeSemiColon?.token === Token.TokenType.Semicolon) {
-      context.tokenIndex++;
-      expression = maybeExpression;
-      break;
-    }
+    return undefined;
   }
 
-  if (expression === undefined) {
+  const maybeSemiColon = context.tokens[context.tokenIndex++];
+
+  if (maybeSemiColon?.token !== Token.TokenType.Semicolon) {
     context.tokenIndex = startIndex;
     return undefined;
   }
@@ -201,14 +199,20 @@ export const tryParseUncheckedBlockStatement = (
   }
 };
 
-export const tryParseIfStatement = (context: ParseContext): Ast.IfStatement | undefined => {};
+// @ts-expect-error
+export const tryParseIfStatement = (_context: ParseContext): Ast.IfStatement | undefined => {};
 
-export const tryParseForStatement = (context: ParseContext): Ast.ForStatement | undefined => {};
+// @ts-expect-error
+export const tryParseForStatement = (_context: ParseContext): Ast.ForStatement | undefined => {};
 
-export const tryParseWhileStatement = (context: ParseContext): Ast.WhileStatement | undefined => {};
+export const tryParseWhileStatement = (
+  _context: ParseContext,
+  // @ts-expect-error
+): Ast.WhileStatement | undefined => {};
 
 export const tryParseDoWhileStatement = (
-  context: ParseContext,
+  _context: ParseContext,
+  // @ts-expect-error
 ): Ast.DoWhileStatement | undefined => {};
 
 export const tryParseBreakStatement = (context: ParseContext): Ast.BreakStatement | undefined => {
@@ -267,23 +271,22 @@ export const tryParseEmitStatement = (context: ParseContext): Ast.EmitStatement 
     return undefined;
   }
 
-  const event = tryParseFunctionCallExpression(context);
-  if (event === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
+  const events = tryParseFunctionCallExpression(context);
+  for (const event of events) {
+    const maybeSemiColon = context.tokens[context.tokenIndex++];
+
+    if (maybeSemiColon?.token !== Token.TokenType.Semicolon) {
+      context.tokenIndex = startIndex;
+      return undefined;
+    }
+
+    return {
+      ast: Ast.AstType.EmitStatement,
+      event,
+    };
   }
 
-  const maybeSemiColon = context.tokens[context.tokenIndex++];
-
-  if (maybeSemiColon?.token !== Token.TokenType.Semicolon) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  return {
-    ast: Ast.AstType.EmitStatement,
-    event,
-  };
+  return undefined;
 };
 
 export const tryParseRevertStatement = (context: ParseContext): Ast.RevertStatement | undefined => {
@@ -296,23 +299,22 @@ export const tryParseRevertStatement = (context: ParseContext): Ast.RevertStatem
     return undefined;
   }
 
-  const error = tryParseFunctionCallExpression(context);
-  if (error === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
+  const errors = tryParseFunctionCallExpression(context);
+  for (const error of errors) {
+    const maybeSemiColon = context.tokens[context.tokenIndex++];
+
+    if (maybeSemiColon?.token !== Token.TokenType.Semicolon) {
+      context.tokenIndex = startIndex;
+      return undefined;
+    }
+
+    return {
+      ast: Ast.AstType.RevertStatement,
+      error,
+    };
   }
 
-  const maybeSemiColon = context.tokens[context.tokenIndex++];
-
-  if (maybeSemiColon?.token !== Token.TokenType.Semicolon) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  return {
-    ast: Ast.AstType.RevertStatement,
-    error,
-  };
+  return undefined;
 };
 
 export const tryParseReturnStatement = (context: ParseContext): Ast.ReturnStatement | undefined => {
@@ -325,23 +327,22 @@ export const tryParseReturnStatement = (context: ParseContext): Ast.ReturnStatem
     return undefined;
   }
 
-  const expression = tryParseExpression(context);
-  if (expression === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
+  const expressions = tryParseExpression(context);
+  for (const expression of expressions) {
+    const maybeSemiColon = context.tokens[context.tokenIndex++];
+
+    if (maybeSemiColon?.token !== Token.TokenType.Semicolon) {
+      context.tokenIndex = startIndex;
+      return undefined;
+    }
+
+    return {
+      ast: Ast.AstType.ReturnStatement,
+      expression,
+    };
   }
 
-  const maybeSemiColon = context.tokens[context.tokenIndex++];
-
-  if (maybeSemiColon?.token !== Token.TokenType.Semicolon) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  return {
-    ast: Ast.AstType.ReturnStatement,
-    expression,
-  };
+  return undefined;
 };
 
 export const tryParsePlaceholderStatement = (
@@ -370,55 +371,92 @@ export const tryParsePlaceholderStatement = (
 
 // expressions
 
-export const tryParseExpression = (context: ParseContext): Ast.Expression | undefined => {
-  const token = context.tokens[context.tokenIndex];
-  if (token === undefined) return undefined;
+// https://docs.soliditylang.org/en/v0.8.26/cheatsheet.html#order-of-precedence-of-operators
+const getInfixBindingPower = (operator: Token.Token): [number, number] => {
+  switch (operator.token) {
+    case Token.TokenType.Add:
+    case Token.TokenType.Subtract:
+      return [1, 2];
 
-  // lookahead to make a more informed decision
-  switch (token.token) {
-    case Token.TokenType.Identifier:
-      return (
-        tryParseIdentifier(context) ??
-        tryParseBinaryOperation(context) ??
-        tryParseConditionalExpression(context) ??
-        undefined
-      );
+    case Token.TokenType.Mul:
+    case Token.TokenType.Divide:
+    case Token.TokenType.Modulo:
+      return [3, 4];
 
-    case Token.TokenType.Address:
-    case Token.TokenType.String:
-    case Token.TokenType.Uint:
-    case Token.TokenType.Int:
-    case Token.TokenType.Byte:
-    case Token.TokenType.Bytes:
-    case Token.TokenType.Bool:
-      return tryParseVariableDeclaration(context);
+    case Token.TokenType.Member:
+      return [5, 6];
 
     default:
-      for (const expressionParser of expressionParsers) {
-        const expression = expressionParser(context);
-        if (expression !== undefined) return expression;
-      }
-      return undefined;
+      throw new UnrecognizedSymbolError({ symbol: operator.toString() });
   }
 };
 
-export const tryParseIdentifier = (context: ParseContext): Ast.Identifier | undefined => {
-  const maybeIdentifier = context.tokens[context.tokenIndex++];
+export function tryParseExpression(context: ParseContext, minBp = 0): Ast.Expression | undefined {
+  const startIndex = context.tokenIndex;
 
-  if (maybeIdentifier === undefined) {
-    context.tokenIndex--;
+  // TODO(kyle) check for unexpected tokens
+  let left: Ast.Expression | undefined = tryParseIdentifier(context) ?? tryParseLiteral(context);
+  if (left === undefined) {
+    context.tokenIndex = startIndex;
     return undefined;
   }
 
-  if (maybeIdentifier.token !== Token.TokenType.Identifier) {
+  while (true) {
+    const operator = context.tokens[context.tokenIndex];
+
+    if (operator === undefined || operator.token === Token.TokenType.Semicolon) {
+      break;
+    }
+
+    // Note: assume operation is good
+
+    const [lBp, rBp] = getInfixBindingPower(operator as any);
+
+    if (lBp < minBp) break;
+
+    context.tokenIndex++;
+
+    const right = tryParseExpression(context, rBp);
+    if (right === undefined) {
+      context.tokenIndex = startIndex;
+      return undefined;
+    }
+
+    switch (operator.token) {
+      case Token.TokenType.Member:
+        left = {
+          ast: Ast.AstType.MemberAccessExpression,
+          expression: left!,
+          member: right as any,
+        } satisfies Ast.MemberAccessExpression;
+        break;
+
+      default:
+        // binary
+        left = {
+          ast: Ast.AstType.BinaryOperation,
+          operator: operator as any,
+          left: left!,
+          right,
+        } satisfies Ast.BinaryOperation;
+    }
+  }
+
+  return left;
+}
+
+export function tryParseIdentifier(context: ParseContext): Ast.Identifier | undefined {
+  const maybeIdentifier = context.tokens[context.tokenIndex++];
+
+  if (maybeIdentifier?.token !== Token.TokenType.Identifier) {
     context.tokenIndex--;
     return undefined;
   }
 
   return { ast: Ast.AstType.Identifier, token: maybeIdentifier };
-};
+}
 
-export const tryParseLiteral = (context: ParseContext): Ast.Literal | undefined => {
+export function tryParseLiteral(context: ParseContext): Ast.Literal | undefined {
   const maybeLiteral = context.tokens[context.tokenIndex++];
 
   if (maybeLiteral === undefined) {
@@ -440,63 +478,59 @@ export const tryParseLiteral = (context: ParseContext): Ast.Literal | undefined 
   }
 
   return { ast: Ast.AstType.Literal, token: maybeLiteral };
-};
+}
 
-export const tryParseAssignment = (context: ParseContext): Ast.Assignment | undefined => {
+export function* tryParseAssignment(context: ParseContext): Generator<Ast.Assignment> {
   const startIndex = context.tokenIndex;
 
-  const left = tryParseIdentifier(context);
-  if (left === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
+  // Note: This is still performing depth first search by entering a new stack
+  // and eventually recursively calling this function
+  const lefts = tryParseExpression(context);
+  for (const left of lefts) {
+    const maybeOperator = context.tokens[context.tokenIndex++];
+
+    if (maybeOperator === undefined) {
+      context.tokenIndex = startIndex;
+      continue;
+    }
+
+    if (
+      maybeOperator.token !== Token.TokenType.Assign &&
+      maybeOperator.token !== Token.TokenType.AddAssign &&
+      maybeOperator.token !== Token.TokenType.SubtractAssign &&
+      maybeOperator.token !== Token.TokenType.MulAssign &&
+      maybeOperator.token !== Token.TokenType.DivideAssign &&
+      maybeOperator.token !== Token.TokenType.ModuloAssign &&
+      maybeOperator.token !== Token.TokenType.BitwiseAndAssign &&
+      maybeOperator.token !== Token.TokenType.BitwiseOrAssign &&
+      maybeOperator.token !== Token.TokenType.BitwiseXOrAssign &&
+      maybeOperator.token !== Token.TokenType.ShiftRightAssign &&
+      maybeOperator.token !== Token.TokenType.ShiftLeftAssign
+    ) {
+      context.tokenIndex = startIndex;
+      continue;
+    }
+
+    const rights = tryParseExpression(context);
+    for (const right of rights) {
+      yield {
+        ast: Ast.AstType.Assignment,
+        operator: maybeOperator,
+        left,
+        right,
+      };
+    }
   }
+}
 
-  const maybeOperator = context.tokens[context.tokenIndex++];
-
-  if (maybeOperator === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  if (
-    maybeOperator.token !== Token.TokenType.Assign &&
-    maybeOperator.token !== Token.TokenType.AddAssign &&
-    maybeOperator.token !== Token.TokenType.SubtractAssign &&
-    maybeOperator.token !== Token.TokenType.MulAssign &&
-    maybeOperator.token !== Token.TokenType.DivideAssign &&
-    maybeOperator.token !== Token.TokenType.ModuloAssign &&
-    maybeOperator.token !== Token.TokenType.BitwiseAndAssign &&
-    maybeOperator.token !== Token.TokenType.BitwiseOrAssign &&
-    maybeOperator.token !== Token.TokenType.BitwiseXOrAssign &&
-    maybeOperator.token !== Token.TokenType.ShiftRightAssign &&
-    maybeOperator.token !== Token.TokenType.ShiftLeftAssign
-  ) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  const right = tryParseExpression(context);
-  if (right === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  return {
-    ast: Ast.AstType.Assignment,
-    operator: maybeOperator,
-    left,
-    right,
-  };
-};
-
-export const tryParseUnaryOperation = (context: ParseContext): Ast.UnaryOperation | undefined => {
+export function* tryParseUnaryOperation(context: ParseContext): Generator<Ast.UnaryOperation> {
   const startIndex = context.tokenIndex;
 
   const maybeOperator = context.tokens[context.tokenIndex++];
 
   if (maybeOperator === undefined) {
     context.tokenIndex = startIndex;
-    return undefined;
+    return;
   }
 
   if (
@@ -506,392 +540,303 @@ export const tryParseUnaryOperation = (context: ParseContext): Ast.UnaryOperatio
     maybeOperator.token !== Token.TokenType.Delete
   ) {
     context.tokenIndex = startIndex;
-    return undefined;
+    return;
   }
 
-  const expression = tryParseExpression(context);
-  if (expression === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
+  const expressions = tryParseExpression(context);
+  for (const expression of expressions) {
+    yield {
+      ast: Ast.AstType.UnaryOperation,
+      operator: maybeOperator,
+      expression,
+    };
   }
+}
 
-  return {
-    ast: Ast.AstType.UnaryOperation,
-    operator: maybeOperator,
-    expression,
-  };
-};
-
-export const tryParseBinaryOperation = (context: ParseContext): Ast.BinaryOperation | undefined => {
+export function* tryParseBinaryOperation(context: ParseContext): Generator<Ast.BinaryOperation> {
   const startIndex = context.tokenIndex;
 
-  const left = tryParseExpression(context);
-  if (left === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
+  const lefts = tryParseExpression(context);
+  for (const left of lefts) {
+    const maybeOperator = context.tokens[context.tokenIndex++];
 
-  const maybeOperator = context.tokens[context.tokenIndex++];
-
-  if (maybeOperator === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  if (
-    maybeOperator.token !== Token.TokenType.Add &&
-    maybeOperator.token !== Token.TokenType.Subtract &&
-    maybeOperator.token !== Token.TokenType.Mul &&
-    maybeOperator.token !== Token.TokenType.Divide &&
-    maybeOperator.token !== Token.TokenType.Modulo &&
-    maybeOperator.token !== Token.TokenType.Power &&
-    maybeOperator.token !== Token.TokenType.And &&
-    maybeOperator.token !== Token.TokenType.Or &&
-    maybeOperator.token !== Token.TokenType.Equal &&
-    maybeOperator.token !== Token.TokenType.NotEqual &&
-    maybeOperator.token !== Token.TokenType.Less &&
-    maybeOperator.token !== Token.TokenType.LessEqual &&
-    maybeOperator.token !== Token.TokenType.More &&
-    maybeOperator.token !== Token.TokenType.MoreEqual &&
-    maybeOperator.token !== Token.TokenType.BitwiseAnd &&
-    maybeOperator.token !== Token.TokenType.BitwiseOr &&
-    maybeOperator.token !== Token.TokenType.BitwiseXOr &&
-    maybeOperator.token !== Token.TokenType.ShiftRight &&
-    maybeOperator.token !== Token.TokenType.ShiftLeft
-  ) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  const right = tryParseExpression(context);
-  if (right === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  return {
-    ast: Ast.AstType.BinaryOperation,
-    operator: maybeOperator,
-    left,
-    right,
-  };
-};
-
-export const tryParseConditionalExpression = (
-  context: ParseContext,
-): Ast.ConditionalExpression | undefined => {
-  const startIndex = context.tokenIndex;
-
-  const condition = tryParseExpression(context);
-  if (condition === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  const maybeQuestion = context.tokens[context.tokenIndex++];
-
-  if (maybeQuestion === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  if (maybeQuestion.token !== Token.TokenType.Question) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  const trueExpression = tryParseExpression(context);
-  if (trueExpression === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  const maybeColon = context.tokens[context.tokenIndex++];
-
-  if (maybeColon === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  if (maybeColon.token !== Token.TokenType.Colon) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  const falseExpression = tryParseExpression(context);
-  if (falseExpression === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  return {
-    ast: Ast.AstType.ConditionalExpression,
-    condition,
-    trueExpression,
-    falseExpression,
-  };
-};
-
-export const tryParseFunctionCallExpression = (
-  context: ParseContext,
-): Ast.FunctionCallExpression | undefined => {
-  const startIndex = context.tokenIndex;
-
-  const expression = tryParseExpression(context);
-  if (expression === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  const _arguments = tryParseTupleExpression(context);
-  if (_arguments === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  return {
-    ast: Ast.AstType.FunctionCallExpression,
-    expression,
-    arguments: _arguments.elements,
-  };
-};
-
-export const tryParseMemberAccessExpression = (
-  context: ParseContext,
-): Ast.MemberAccessExpression | undefined => {
-  const startIndex = context.tokenIndex;
-
-  const expression = tryParseExpression(context);
-  if (expression === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  const maybeMember = context.tokens[context.tokenIndex++];
-
-  if (maybeMember === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  if (maybeMember.token !== Token.TokenType.Member) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  const memberIdentifier = tryParseIdentifier(context);
-  if (memberIdentifier === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  return {
-    ast: Ast.AstType.MemberAccessExpression,
-    expression,
-    member: memberIdentifier,
-  };
-};
-
-export const tryParseIndexAccessExpression = (
-  context: ParseContext,
-): Ast.IndexAccessExpression | undefined => {
-  const startIndex = context.tokenIndex;
-
-  const base = tryParseExpression(context);
-  if (base === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  const maybeOpenBracket = context.tokens[context.tokenIndex++];
-
-  if (maybeOpenBracket === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  if (maybeOpenBracket.token !== Token.TokenType.OpenBracket) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  const index = tryParseExpression(context);
-  if (index === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  const maybeCloseBracket = context.tokens[context.tokenIndex++];
-
-  if (maybeCloseBracket === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  if (maybeCloseBracket.token !== Token.TokenType.CloseBracket) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  return {
-    ast: Ast.AstType.IndexAccessExpression,
-    base,
-    index,
-  };
-};
-
-export const tryParseNewExpression = (context: ParseContext): Ast.NewExpression | undefined => {
-  const startIndex = context.tokenIndex;
-
-  const maybeNew = context.tokens[context.tokenIndex++];
-
-  if (maybeNew === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  if (maybeNew.token !== Token.TokenType.New) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-  const expression = tryParseExpression(context);
-  if (expression === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  return {
-    ast: Ast.AstType.NewExpression,
-    expression,
-  };
-};
-
-export const tryParseTupleExpression = (context: ParseContext): Ast.TupleExpression | undefined => {
-  const startIndex = context.tokenIndex;
-
-  const maybeOpenParenthesis = context.tokens[context.tokenIndex++];
-
-  if (maybeOpenParenthesis === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  if (maybeOpenParenthesis.token !== Token.TokenType.OpenParenthesis) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  const elements: Ast.Expression[] = [];
-
-  while (true) {
-    const maybeCloseParenthesis = context.tokens[context.tokenIndex];
-
-    if (maybeCloseParenthesis?.token === Token.TokenType.CloseParenthesis) {
-      context.tokenIndex++;
-
-      return {
-        ast: Ast.AstType.TupleExpression,
-        elements,
-      };
+    if (maybeOperator === undefined) {
+      context.tokenIndex = startIndex;
+      continue;
     }
 
-    if (elements.length > 0) {
-      const maybeComma = context.tokens[context.tokenIndex++];
-      if (maybeComma?.token !== Token.TokenType.Comma) {
-        context.tokenIndex = startIndex;
-        return undefined;
-      }
-    }
-
-    const expression = tryParseExpression(context);
-    if (expression === undefined) {
+    if (
+      maybeOperator.token !== Token.TokenType.Add &&
+      maybeOperator.token !== Token.TokenType.Subtract &&
+      maybeOperator.token !== Token.TokenType.Mul &&
+      maybeOperator.token !== Token.TokenType.Divide &&
+      maybeOperator.token !== Token.TokenType.Modulo &&
+      maybeOperator.token !== Token.TokenType.Power &&
+      maybeOperator.token !== Token.TokenType.And &&
+      maybeOperator.token !== Token.TokenType.Or &&
+      maybeOperator.token !== Token.TokenType.Equal &&
+      maybeOperator.token !== Token.TokenType.NotEqual &&
+      maybeOperator.token !== Token.TokenType.Less &&
+      maybeOperator.token !== Token.TokenType.LessEqual &&
+      maybeOperator.token !== Token.TokenType.More &&
+      maybeOperator.token !== Token.TokenType.MoreEqual &&
+      maybeOperator.token !== Token.TokenType.BitwiseAnd &&
+      maybeOperator.token !== Token.TokenType.BitwiseOr &&
+      maybeOperator.token !== Token.TokenType.BitwiseXOr &&
+      maybeOperator.token !== Token.TokenType.ShiftRight &&
+      maybeOperator.token !== Token.TokenType.ShiftLeft
+    ) {
       context.tokenIndex = startIndex;
       return undefined;
     }
 
-    elements.push(expression);
+    const rights = tryParseExpression(context);
+    for (const right of rights) {
+      yield {
+        ast: Ast.AstType.BinaryOperation,
+        operator: maybeOperator,
+        left,
+        right,
+      };
+    }
   }
-};
+}
 
-export const tryParseVariableDeclaration = (
+export function* tryParseConditionalExpression(
   context: ParseContext,
-): Ast.VariableDeclaration | undefined => {
+): Generator<Ast.ConditionalExpression> {
+  const startIndex = context.tokenIndex;
+
+  const conditions = tryParseExpression(context);
+  for (const condition of conditions) {
+    const maybeQuestion = context.tokens[context.tokenIndex++];
+
+    if (maybeQuestion?.token !== Token.TokenType.Question) {
+      context.tokenIndex = startIndex;
+      continue;
+    }
+
+    const trueExpressions = tryParseExpression(context);
+    for (const trueExpression of trueExpressions) {
+      const maybeColon = context.tokens[context.tokenIndex++];
+
+      if (maybeColon?.token !== Token.TokenType.Colon) {
+        context.tokenIndex = startIndex;
+        continue;
+      }
+
+      const falseExpressions = tryParseExpression(context);
+      for (const falseExpression of falseExpressions) {
+        yield {
+          ast: Ast.AstType.ConditionalExpression,
+          condition,
+          trueExpression,
+          falseExpression,
+        };
+      }
+    }
+  }
+}
+
+export function* tryParseFunctionCallExpression(
+  context: ParseContext,
+): Generator<Ast.FunctionCallExpression> {
+  const expressions = tryParseExpression(context);
+  for (const expression of expressions) {
+    const tuples = tryParseTupleExpression(context);
+    for (const tuple of tuples) {
+      yield {
+        ast: Ast.AstType.FunctionCallExpression,
+        expression,
+        arguments: tuple.elements,
+      };
+    }
+  }
+}
+
+export function* tryParseMemberAccessExpression(
+  context: ParseContext,
+): Generator<Ast.MemberAccessExpression> {
+  const startIndex = context.tokenIndex;
+
+  const expressions = tryParseExpression(context);
+  for (const expression of expressions) {
+    const maybeMember = context.tokens[context.tokenIndex++];
+
+    if (maybeMember?.token !== Token.TokenType.Member) {
+      context.tokenIndex = startIndex;
+      continue;
+    }
+
+    const memberIdentifiers = tryParseIdentifier(context);
+    for (const memberIdentifier of memberIdentifiers) {
+      yield {
+        ast: Ast.AstType.MemberAccessExpression,
+        expression,
+        member: memberIdentifier,
+      };
+    }
+  }
+}
+
+export function* tryParseIndexAccessExpression(
+  context: ParseContext,
+): Generator<Ast.IndexAccessExpression> {
+  const startIndex = context.tokenIndex;
+
+  const bases = tryParseExpression(context);
+  for (const base of bases) {
+    const maybeOpenBracket = context.tokens[context.tokenIndex++];
+
+    if (maybeOpenBracket?.token !== Token.TokenType.OpenBracket) {
+      context.tokenIndex = startIndex;
+      continue;
+    }
+
+    const indexes = tryParseExpression(context);
+    for (const index of indexes) {
+      const maybeCloseBracket = context.tokens[context.tokenIndex++];
+
+      if (maybeCloseBracket?.token !== Token.TokenType.CloseBracket) {
+        context.tokenIndex = startIndex;
+        continue;
+      }
+
+      yield {
+        ast: Ast.AstType.IndexAccessExpression,
+        base,
+        index,
+      };
+    }
+  }
+}
+
+export function* tryParseNewExpression(context: ParseContext): Generator<Ast.NewExpression> {
+  const startIndex = context.tokenIndex;
+
+  const maybeNew = context.tokens[context.tokenIndex++];
+
+  if (maybeNew?.token !== Token.TokenType.New) {
+    context.tokenIndex = startIndex;
+    return;
+  }
+
+  const expressions = tryParseExpression(context);
+
+  for (const expression of expressions) {
+    yield {
+      ast: Ast.AstType.NewExpression,
+      expression,
+    };
+  }
+}
+
+export function* tryParseTupleExpression(context: ParseContext): Generator<Ast.TupleExpression> {
+  const startIndex = context.tokenIndex;
+
+  const maybeOpenParenthesis = context.tokens[context.tokenIndex++];
+  if (maybeOpenParenthesis?.token !== Token.TokenType.OpenParenthesis) {
+    context.tokenIndex = startIndex;
+    return;
+  }
+
+  const maybeCloseParenthesis = context.tokens[context.tokenIndex];
+  if (maybeCloseParenthesis?.token === Token.TokenType.CloseParenthesis) {
+    context.tokenIndex++;
+
+    yield {
+      ast: Ast.AstType.TupleExpression,
+      elements: [],
+    };
+
+    return;
+  }
+
+  const elements: Ast.Expression[] = [];
+  function* _parseTuple(): Generator<Ast.TupleExpression> {
+    const expressions = tryParseExpression(context);
+    for (const expression of expressions) {
+      elements.push(expression);
+
+      const maybeCloseParenthesis = context.tokens[context.tokenIndex];
+
+      if (maybeCloseParenthesis?.token === Token.TokenType.CloseParenthesis) {
+        context.tokenIndex++;
+
+        yield {
+          ast: Ast.AstType.TupleExpression,
+          elements,
+        };
+      } else {
+        const maybeComma = context.tokens[context.tokenIndex];
+        if (maybeComma?.token === Token.TokenType.Comma) {
+          context.tokenIndex++;
+
+          for (const result of _parseTuple()) {
+            yield result;
+          }
+        }
+      }
+    }
+  }
+
+  for (const result of _parseTuple()) {
+    yield result;
+  }
+}
+
+export function* tryParseVariableDeclaration(
+  context: ParseContext,
+): Generator<Ast.VariableDeclaration> {
   const startIndex = context.tokenIndex;
 
   const type = tryParseType(context);
   if (type === undefined) {
     context.tokenIndex = startIndex;
-    return undefined;
+    return;
   }
 
   let maybeLocation = context.tokens[context.tokenIndex++];
 
-  if (maybeLocation === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
   if (
-    maybeLocation.token !== Token.TokenType.Storage &&
-    maybeLocation.token !== Token.TokenType.Memory &&
-    maybeLocation.token !== Token.TokenType.Calldata
+    maybeLocation?.token !== Token.TokenType.Storage &&
+    maybeLocation?.token !== Token.TokenType.Memory &&
+    maybeLocation?.token !== Token.TokenType.Calldata
   ) {
     context.tokenIndex--;
     maybeLocation = undefined;
   }
 
-  const identifier = tryParseIdentifier(context);
+  const identifiers = tryParseIdentifier(context);
+  for (const identifier of identifiers) {
+    const maybeAssign = context.tokens[context.tokenIndex++];
 
-  if (identifier === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
+    if (maybeAssign?.token !== Token.TokenType.Assign) {
+      context.tokenIndex--;
+      yield {
+        ast: Ast.AstType.VariableDeclaration,
+        type,
+        location: maybeLocation,
+        attributes: [],
+        identifier: identifier.token,
+        initializer: undefined,
+      };
+      continue;
+    }
+
+    const initializers = tryParseExpression(context);
+    for (const initializer of initializers) {
+      yield {
+        ast: Ast.AstType.VariableDeclaration,
+        type,
+        location: maybeLocation,
+        attributes: [],
+        identifier: identifier.token,
+        initializer,
+      };
+    }
   }
-
-  const maybeAssign = context.tokens[context.tokenIndex++];
-
-  if (maybeAssign === undefined || maybeAssign.token !== Token.TokenType.Assign) {
-    context.tokenIndex--;
-    return {
-      ast: Ast.AstType.VariableDeclaration,
-      type,
-      location: maybeLocation,
-      attributes: [],
-      identifier: identifier.token,
-      initializer: undefined,
-    };
-  }
-
-  const initializer = tryParseExpression(context);
-
-  if (initializer === undefined) {
-    context.tokenIndex = startIndex;
-    return undefined;
-  }
-
-  return {
-    ast: Ast.AstType.VariableDeclaration,
-    type,
-    location: maybeLocation,
-    attributes: [],
-    identifier: identifier.token,
-    initializer,
-  };
-};
-
-const expressionParsers = [
-  tryParseIdentifier,
-  tryParseLiteral,
-  tryParseAssignment,
-  tryParseUnaryOperation,
-  tryParseBinaryOperation,
-  tryParseConditionalExpression,
-  tryParseFunctionCallExpression,
-  tryParseMemberAccessExpression,
-  tryParseIndexAccessExpression,
-  tryParseNewExpression,
-  tryParseTupleExpression,
-  tryParseVariableDeclaration,
-];
+}
 
 // types
 
@@ -928,6 +873,8 @@ export const tryParseElementaryType = (context: ParseContext): Ast.ElementaryTyp
   return { ast: Ast.AstType.ElementaryType, type: maybeType };
 };
 
-export const tryParseArrayType = (context: ParseContext): Ast.ArrayType | undefined => {};
+// @ts-expect-error
+export const tryParseArrayType = (_context: ParseContext): Ast.ArrayType | undefined => {};
 
-export const tryParseMapping = (context: ParseContext): Ast.Mapping | undefined => {};
+// @ts-expect-error
+export const tryParseMapping = (_context: ParseContext): Ast.Mapping | undefined => {};
