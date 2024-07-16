@@ -1,4 +1,4 @@
-import { _2271Error } from "./errors/2271";
+import { TypeError } from "./errors/type";
 import { Ast } from "./types/ast";
 
 export type CheckContext = {
@@ -46,6 +46,6 @@ export const checkExpression = (expression: Ast.Expression, context: CheckContex
       checkExpression(expression.left, context);
       checkExpression(expression.right, context);
 
-      throw new _2271Error();
+      throw new TypeError("", 2271);
   }
 };

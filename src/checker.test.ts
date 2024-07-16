@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { type CheckContext, checkStatement } from "./checker";
-import type { BaseError } from "./errors/base";
+import type { TypeError } from "./errors/type";
 import { tokenize } from "./lexer";
 import { type ParseContext, tryParseBlockStatement } from "./parser";
 import type { Ast } from "./types/ast";
@@ -9,7 +9,7 @@ const getError = <ast extends Ast.Statement | Ast.Definition | Ast.Expression>(
   source: string,
   parser: (context: ParseContext) => ast | undefined,
   checker: (ast: ast, context: CheckContext) => void,
-): BaseError | undefined => {
+): TypeError | undefined => {
   try {
     const tokens = tokenize(source);
 
@@ -17,7 +17,7 @@ const getError = <ast extends Ast.Statement | Ast.Definition | Ast.Expression>(
 
     return undefined;
   } catch (error) {
-    return error as BaseError;
+    return error as TypeError;
   }
 };
 

@@ -1,6 +1,6 @@
-export type BaseErrorType = BaseError & { name: "BaseError" };
-export class BaseError extends Error {
-  override name = "BaseError";
+export type TypeErrorType = TypeError & { name: "TypeError" };
+export class TypeError extends Error {
+  override name = "TypeError";
 
   code: number;
 
