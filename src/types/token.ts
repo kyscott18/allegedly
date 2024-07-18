@@ -1,3 +1,5 @@
+import type { TODO } from "./utils";
+
 export namespace Token {
   export enum TokenType {
     Identifier,
@@ -100,7 +102,9 @@ export namespace Token {
     Modulo,
     ModuloAssign,
     Power,
+    /** `&&` */
     And,
+    /** `||` */
     Or,
     BitwiseOr,
     BitwiseOrAssign,
@@ -158,12 +162,12 @@ export namespace Token {
 
   // literals
 
-  export type StringLiteral = { token: TokenType.StringLiteral; value: string };
-  export type AddressLiteral = { token: TokenType.AddressLiteral; value: string };
-  export type HexLiteral = { token: TokenType.HexLiteral; value: string };
-  export type NumberLiteral = { token: TokenType.NumberLiteral; value: string };
-  export type RationalNumberLiteral = { token: TokenType.RationalNumberLiteral; value: string };
-  export type HexNumberLiteral = { token: TokenType.HexNumberLiteral; value: string };
+  export type StringLiteral = { token: TokenType.StringLiteral; value: TODO };
+  export type AddressLiteral = { token: TokenType.AddressLiteral; value: TODO };
+  export type HexLiteral = { token: TokenType.HexLiteral; value: TODO };
+  export type NumberLiteral = { token: TokenType.NumberLiteral; value: bigint };
+  export type RationalNumberLiteral = { token: TokenType.RationalNumberLiteral; value: TODO };
+  export type HexNumberLiteral = { token: TokenType.HexNumberLiteral; value: TODO };
   export type BoolLiteral = { token: TokenType.BoolLiteral; value: boolean };
 
   // keywords
@@ -313,8 +317,6 @@ export namespace Token {
   export type YulArrow = { token: TokenType.YulArrow };
   export type Let = { token: TokenType.Let };
   export type Leave = { token: TokenType.Leave };
-
-  // reserved keywords
 
   // abi
   // block

@@ -372,24 +372,29 @@ export const tryParsePlaceholderStatement = (
 // binding power for operator associativity and precendence
 // https://docs.soliditylang.org/en/v0.8.26/cheatsheet.html#order-of-precedence-of-operators
 
-const getPrefixBindingPower = (operator: Token.Token): [undefined, number] => {
+const getPrefixBindingPower = (operator: Token.Token): number => {
   switch (operator.token) {
+    case Token.TokenType.Increment:
+    case Token.TokenType.Decrement:
     case Token.TokenType.Subtract:
-      return [undefined, 9];
+    case Token.TokenType.Delete:
+    case Token.TokenType.Not:
+    case Token.TokenType.BitwiseNot:
+      return 27;
 
     default:
       throw new UnrecognizedSymbolError({ symbol: operator.toString() });
   }
 };
 
-const getPostfixBindingPower = (operator: Token.Token): [number, undefined] | undefined => {
+const getPostfixBindingPower = (operator: Token.Token): number | undefined => {
   switch (operator.token) {
     case Token.TokenType.Increment:
     case Token.TokenType.Decrement:
-      return [11, undefined];
+      return 29;
 
     case Token.TokenType.OpenBracket:
-      return [11, undefined];
+      return 29;
 
     default:
       return undefined;
@@ -399,22 +404,64 @@ const getPostfixBindingPower = (operator: Token.Token): [number, undefined] | un
 const getInfixBindingPower = (operator: Token.Token): [number, number] | undefined => {
   switch (operator.token) {
     case Token.TokenType.Assign:
+    case Token.TokenType.AddAssign:
+    case Token.TokenType.SubtractAssign:
+    case Token.TokenType.MulAssign:
+    case Token.TokenType.DivideAssign:
+    case Token.TokenType.ModuloAssign:
+    case Token.TokenType.BitwiseAndAssign:
+    case Token.TokenType.BitwiseOrAssign:
+    case Token.TokenType.BitwiseXOrAssign:
+    case Token.TokenType.ShiftRightAssign:
+    case Token.TokenType.ShiftLeftAssign:
       return [2, 1];
 
     case Token.TokenType.Question:
       return [4, 3];
 
+    case Token.TokenType.Or:
+      return [5, 6];
+
+    case Token.TokenType.And:
+      return [7, 8];
+
+    case Token.TokenType.Equal:
+    case Token.TokenType.NotEqual:
+      return [9, 10];
+
+    case Token.TokenType.Less:
+    case Token.TokenType.More:
+    case Token.TokenType.LessEqual:
+    case Token.TokenType.MoreEqual:
+      return [11, 12];
+
+    case Token.TokenType.BitwiseOr:
+      return [13, 14];
+
+    case Token.TokenType.BitwiseXOr:
+      return [15, 16];
+
+    case Token.TokenType.BitwiseAnd:
+      return [17, 18];
+
+    case Token.TokenType.ShiftLeft:
+    case Token.TokenType.ShiftRight:
+      return [19, 20];
+
     case Token.TokenType.Add:
     case Token.TokenType.Subtract:
-      return [5, 6];
+      return [21, 22];
 
     case Token.TokenType.Mul:
     case Token.TokenType.Divide:
     case Token.TokenType.Modulo:
-      return [7, 8];
+      return [23, 24];
+
+    case Token.TokenType.Power:
+      return [25, 26];
 
     case Token.TokenType.Member:
-      return [11, 12];
+      return [29, 30];
 
     default:
       return undefined;
@@ -448,9 +495,15 @@ export function tryParseExpression(context: ParseContext, minBp = 0): Ast.Expres
       left = { ast: Ast.AstType.Identifier, token } satisfies Ast.Identifier;
       break;
 
+    // prefix unary operators
+    case Token.TokenType.Increment:
+    case Token.TokenType.Decrement:
     case Token.TokenType.Subtract:
+    case Token.TokenType.Delete:
+    case Token.TokenType.Not:
+    case Token.TokenType.BitwiseNot:
       {
-        const [_, rBp] = getPrefixBindingPower(token);
+        const rBp = getPrefixBindingPower(token);
 
         const right = tryParseExpression(context, rBp);
         if (right === undefined) {
@@ -462,6 +515,7 @@ export function tryParseExpression(context: ParseContext, minBp = 0): Ast.Expres
           ast: Ast.AstType.UnaryOperation,
           operator: token,
           expression: right,
+          prefix: true,
         } satisfies Ast.UnaryOperation;
       }
       break;
@@ -493,7 +547,7 @@ export function tryParseExpression(context: ParseContext, minBp = 0): Ast.Expres
 
     const postfixBp = getPostfixBindingPower(operator);
     if (postfixBp) {
-      if (postfixBp[0] < minBp) break;
+      if (postfixBp < minBp) break;
 
       context.tokenIndex++;
 
@@ -511,15 +565,16 @@ export function tryParseExpression(context: ParseContext, minBp = 0): Ast.Expres
       } else {
         left = {
           ast: Ast.AstType.UnaryOperation,
-          operator: operator as any,
+          operator: operator as Token.Increment | Token.Decrement,
           expression: left,
+          prefix: false,
         } satisfies Ast.UnaryOperation;
       }
 
       continue;
     }
 
-    const infixBindingPower = getInfixBindingPower(operator as any);
+    const infixBindingPower = getInfixBindingPower(operator);
     if (infixBindingPower === undefined) break;
 
     if (infixBindingPower[0] < minBp) break;
@@ -556,14 +611,29 @@ export function tryParseExpression(context: ParseContext, minBp = 0): Ast.Expres
 
       switch (operator.token) {
         case Token.TokenType.Member:
+          if (right.ast !== Ast.AstType.Identifier) {
+            context.tokenIndex = startIndex;
+            return undefined;
+          }
+
           left = {
             ast: Ast.AstType.MemberAccessExpression,
             expression: left!,
-            member: right as any,
+            member: right,
           } satisfies Ast.MemberAccessExpression;
           break;
 
         case Token.TokenType.Assign:
+        case Token.TokenType.AddAssign:
+        case Token.TokenType.SubtractAssign:
+        case Token.TokenType.MulAssign:
+        case Token.TokenType.DivideAssign:
+        case Token.TokenType.ModuloAssign:
+        case Token.TokenType.BitwiseAndAssign:
+        case Token.TokenType.BitwiseOrAssign:
+        case Token.TokenType.BitwiseXOrAssign:
+        case Token.TokenType.ShiftRightAssign:
+        case Token.TokenType.ShiftLeftAssign:
           left = {
             ast: Ast.AstType.Assignment,
             operator: operator,
@@ -573,11 +643,10 @@ export function tryParseExpression(context: ParseContext, minBp = 0): Ast.Expres
           break;
 
         default:
-          // binary
           left = {
             ast: Ast.AstType.BinaryOperation,
-            operator: operator as any,
-            left: left!,
+            operator: operator as Ast.BinaryOperation["operator"],
+            left,
             right,
           } satisfies Ast.BinaryOperation;
       }
@@ -596,36 +665,6 @@ export function tryParseIdentifier(context: ParseContext): Ast.Identifier | unde
   }
 
   return { ast: Ast.AstType.Identifier, token: maybeIdentifier };
-}
-
-export function* tryParseUnaryOperation(context: ParseContext): Generator<Ast.UnaryOperation> {
-  const startIndex = context.tokenIndex;
-
-  const maybeOperator = context.tokens[context.tokenIndex++];
-
-  if (maybeOperator === undefined) {
-    context.tokenIndex = startIndex;
-    return;
-  }
-
-  if (
-    maybeOperator.token !== Token.TokenType.Increment &&
-    maybeOperator.token !== Token.TokenType.Decrement &&
-    maybeOperator.token !== Token.TokenType.Subtract &&
-    maybeOperator.token !== Token.TokenType.Delete
-  ) {
-    context.tokenIndex = startIndex;
-    return;
-  }
-
-  const expressions = tryParseExpression(context);
-  for (const expression of expressions) {
-    yield {
-      ast: Ast.AstType.UnaryOperation,
-      operator: maybeOperator,
-      expression,
-    };
-  }
 }
 
 export function* tryParseFunctionCallExpression(

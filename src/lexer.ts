@@ -556,6 +556,7 @@ export const tokenize = (source: string): Token.Token[] => {
     } else if (isDigit(char)) {
       // TODO(kyle) rational number literal
       // TODO(kyle) hex number literal
+      // TODO(kyle) address literal
       let length = 1;
       for (const char of cursor) {
         if (isDigit(char)) length++;
@@ -567,7 +568,7 @@ export const tokenize = (source: string): Token.Token[] => {
 
       tokens.push({
         token: Token.TokenType.NumberLiteral,
-        value: source.substring(cursor.position - length, cursor.position),
+        value: BigInt(source.substring(cursor.position - length, cursor.position)),
       });
     } else if (isIndentifierStart(char)) {
       // TODO(kyle) hex literal

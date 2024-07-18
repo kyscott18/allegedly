@@ -10,13 +10,29 @@ test("identifier", () => {
   expect((tokens[0] as Token.Identifier)?.value).toBe("hi");
 });
 
+test.todo("string literal");
+
+test("bool literal", () => {
+  const tokens = tokenize("true");
+
+  expect(tokens).toHaveLength(1);
+  expect(tokens[0]?.token).toBe(Token.TokenType.BoolLiteral);
+  expect((tokens[0] as Token.BoolLiteral)?.value).toBe(true);
+});
+
 test("number literal", () => {
   const tokens = tokenize("898");
 
   expect(tokens).toHaveLength(1);
   expect(tokens[0]?.token).toBe(Token.TokenType.NumberLiteral);
-  expect((tokens[0] as Token.NumberLiteral)?.value).toBe("898");
+  expect((tokens[0] as Token.NumberLiteral)?.value).toBe(898n);
 });
+
+test.todo("rational number literal");
+
+test.todo("hex number literal");
+
+test.todo("address literal");
 
 test("empty", () => {
   const tokens = tokenize("");

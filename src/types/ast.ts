@@ -75,10 +75,18 @@ export namespace Ast {
     right: Expression;
   };
 
+  // TODO(kyle) prefix or postfix
   export type UnaryOperation = {
     ast: AstType.UnaryOperation;
-    operator: Token.Increment | Token.Decrement | Token.Subtract | Token.Delete;
+    operator:
+      | Token.Increment
+      | Token.Decrement
+      | Token.Subtract
+      | Token.Delete
+      | Token.Not
+      | Token.BitwiseNot;
     expression: Expression;
+    prefix: boolean;
   };
 
   export type BinaryOperation = {
@@ -101,7 +109,6 @@ export namespace Ast {
       | Token.BitwiseAnd
       | Token.BitwiseOr
       | Token.BitwiseXOr
-      | Token.BitwiseNot
       | Token.ShiftRight
       | Token.ShiftLeft;
     left: Expression;
