@@ -4,114 +4,99 @@ import { createCursor } from "./utils/cursor";
 
 const isEmpty = (char: string) => char === " " || char === "\t" || char === "\n" || char === "";
 const isDigit = (char: string) => char >= "0" && char <= "9";
-const isChar = (char: string) =>
+const isIndentifierStart = (char: string) =>
   (char >= "a" && char <= "z") || (char >= "A" && char <= "Z") || char === "_";
-
-const symbolSet = new Set([
-  ".",
-  ",",
-  "?",
-  "(",
-  ")",
-  "{",
-  "}",
-  "[",
-  "]",
-  ":",
-  ";",
-  "=",
-  "+",
-  "-",
-  "*",
-  "/",
-  "%",
-  "&",
-  "^",
-  "|",
-  "~",
-  ">",
-  "<",
-  "!",
-  "-",
-]);
+const isIdentifier = (char: string) => isIndentifierStart(char) || isDigit(char);
 
 export const tokenize = (source: string): Token.Token[] => {
   const cursor = createCursor(source);
   const tokens: Token.Token[] = [];
 
-  for (const char of cursor) {
-    if (isEmpty(char)) continue;
-
-    // symbols
-    if (symbolSet.has(char)) {
-      if (char === ".") {
-        tokens.push({ token: Token.TokenType.Member, value: undefined });
-      } else if (char === ",") {
-        tokens.push({ token: Token.TokenType.Comma, value: undefined });
-      } else if (char === "?") {
-        tokens.push({ token: Token.TokenType.Question, value: undefined });
-      } else if (char === "(") {
-        tokens.push({ token: Token.TokenType.OpenParenthesis, value: undefined });
-      } else if (char === ")") {
-        tokens.push({ token: Token.TokenType.CloseParenthesis, value: undefined });
-      } else if (char === "{") {
-        tokens.push({ token: Token.TokenType.OpenCurlyBrace, value: undefined });
-      } else if (char === "}") {
-        tokens.push({ token: Token.TokenType.CloseCurlyBrace, value: undefined });
-      } else if (char === "[") {
-        tokens.push({ token: Token.TokenType.OpenBracket, value: undefined });
-      } else if (char === "]") {
-        tokens.push({ token: Token.TokenType.CloseBracket, value: undefined });
-      } else if (char === ":") {
+  const symbolMap = new Map<string, () => void>([
+    [".", () => tokens.push({ token: Token.TokenType.Member })],
+    [",", () => tokens.push({ token: Token.TokenType.Comma })],
+    ["?", () => tokens.push({ token: Token.TokenType.Question })],
+    ["(", () => tokens.push({ token: Token.TokenType.OpenParenthesis })],
+    [")", () => tokens.push({ token: Token.TokenType.CloseParenthesis })],
+    ["{", () => tokens.push({ token: Token.TokenType.OpenCurlyBrace })],
+    ["}", () => tokens.push({ token: Token.TokenType.CloseCurlyBrace })],
+    ["[", () => tokens.push({ token: Token.TokenType.OpenBracket })],
+    ["]", () => tokens.push({ token: Token.TokenType.CloseBracket })],
+    [";", () => tokens.push({ token: Token.TokenType.Semicolon })],
+    ["~", () => tokens.push({ token: Token.TokenType.BitwiseNot })],
+    [
+      ":",
+      () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.ColonAssign, value: undefined });
+          tokens.push({ token: Token.TokenType.ColonAssign });
         } else {
-          tokens.push({ token: Token.TokenType.Colon, value: undefined });
+          tokens.push({ token: Token.TokenType.Colon });
         }
-      } else if (char === ";") {
-        tokens.push({ token: Token.TokenType.Semicolon, value: undefined });
-      } else if (char === "=") {
+      },
+    ],
+    [
+      "=",
+      () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.Equal, value: undefined });
+          tokens.push({ token: Token.TokenType.Equal });
         } else if (cursor.peek() === ">") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.Arrow, value: undefined });
+          tokens.push({ token: Token.TokenType.Arrow });
         } else {
-          tokens.push({ token: Token.TokenType.Assign, value: undefined });
+          tokens.push({ token: Token.TokenType.Assign });
         }
-      } else if (char === "+") {
+      },
+    ],
+    [
+      "+",
+      () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.AddAssign, value: undefined });
+          tokens.push({ token: Token.TokenType.AddAssign });
         } else if (cursor.peek() === "+") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.Increment, value: undefined });
+          tokens.push({ token: Token.TokenType.Increment });
         } else {
-          tokens.push({ token: Token.TokenType.Add, value: undefined });
+          tokens.push({ token: Token.TokenType.Add });
         }
-      } else if (char === "-") {
+      },
+    ],
+    [
+      "-",
+      () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.SubtractAssign, value: undefined });
+          tokens.push({ token: Token.TokenType.SubtractAssign });
         } else if (cursor.peek() === "-") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.Decrement, value: undefined });
+          tokens.push({ token: Token.TokenType.Decrement });
+        } else if (cursor.peek() === ">") {
+          cursor.position++;
+          tokens.push({ token: Token.TokenType.YulArrow });
         } else {
-          tokens.push({ token: Token.TokenType.Subtract, value: undefined });
+          tokens.push({ token: Token.TokenType.Subtract });
         }
-      } else if (char === "*") {
+      },
+    ],
+    [
+      "*",
+      () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.MulAssign, value: undefined });
+          tokens.push({ token: Token.TokenType.MulAssign });
         } else if (cursor.peek() === "*") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.Power, value: undefined });
+          tokens.push({ token: Token.TokenType.Power });
         } else {
-          tokens.push({ token: Token.TokenType.Mul, value: undefined });
+          tokens.push({ token: Token.TokenType.Mul });
         }
-      } else if (char === "/") {
+      },
+    ],
+    [
+      "/",
+      () => {
         if (cursor.peek() === "/") {
           for (const char of cursor) {
             if (char === "\n") break;
@@ -125,96 +110,452 @@ export const tokenize = (source: string): Token.Token[] => {
           }
         } else if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.DivideAssign, value: undefined });
+          tokens.push({ token: Token.TokenType.DivideAssign });
         } else {
-          tokens.push({ token: Token.TokenType.Divide, value: undefined });
+          tokens.push({ token: Token.TokenType.Divide });
         }
-      } else if (char === "%") {
+      },
+    ],
+    [
+      "%",
+      () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.ModuloAssign, value: undefined });
+          tokens.push({ token: Token.TokenType.ModuloAssign });
         } else {
-          tokens.push({ token: Token.TokenType.Modulo, value: undefined });
+          tokens.push({ token: Token.TokenType.Modulo });
         }
-      } else if (char === "&") {
+      },
+    ],
+    [
+      "&",
+      () => {
         if (cursor.peek() === "&") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.And, value: undefined });
+          tokens.push({ token: Token.TokenType.And });
         } else if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.BitwiseAndAssign, value: undefined });
+          tokens.push({ token: Token.TokenType.BitwiseAndAssign });
         } else {
-          tokens.push({ token: Token.TokenType.BitwiseAnd, value: undefined });
+          tokens.push({ token: Token.TokenType.BitwiseAnd });
         }
-      } else if (char === "|") {
+      },
+    ],
+    [
+      "|",
+      () => {
         if (cursor.peek() === "|") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.Or, value: undefined });
+          tokens.push({ token: Token.TokenType.Or });
         } else if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.BitwiseOrAssign, value: undefined });
+          tokens.push({ token: Token.TokenType.BitwiseOrAssign });
         } else {
-          tokens.push({ token: Token.TokenType.BitwiseOr, value: undefined });
+          tokens.push({ token: Token.TokenType.BitwiseOr });
         }
-      } else if (char === "^") {
+      },
+    ],
+    [
+      "^",
+      () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.BitwiseXOrAssign, value: undefined });
+          tokens.push({ token: Token.TokenType.BitwiseXOrAssign });
         } else {
-          tokens.push({ token: Token.TokenType.BitwiseXOr, value: undefined });
+          tokens.push({ token: Token.TokenType.BitwiseXOr });
         }
-      } else if (char === "~") {
-        tokens.push({ token: Token.TokenType.BitwiseNot, value: undefined });
-      } else if (char === ">") {
+      },
+    ],
+
+    [
+      ">",
+      () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.MoreEqual, value: undefined });
+          tokens.push({ token: Token.TokenType.MoreEqual });
         } else if (cursor.peek() === ">") {
           cursor.position++;
           if (cursor.peek() === "=") {
             cursor.position++;
-            tokens.push({ token: Token.TokenType.ShiftRightAssign, value: undefined });
+            tokens.push({ token: Token.TokenType.ShiftRightAssign });
           } else {
-            tokens.push({ token: Token.TokenType.ShiftRight, value: undefined });
+            tokens.push({ token: Token.TokenType.ShiftRight });
           }
         } else {
-          tokens.push({ token: Token.TokenType.More, value: undefined });
+          tokens.push({ token: Token.TokenType.More });
         }
-      } else if (char === "<") {
+      },
+    ],
+    [
+      "<",
+      () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.LessEqual, value: undefined });
+          tokens.push({ token: Token.TokenType.LessEqual });
         } else if (cursor.peek() === "<") {
           cursor.position++;
           if (cursor.peek() === "=") {
             cursor.position++;
-            tokens.push({ token: Token.TokenType.ShiftLeftAssign, value: undefined });
+            tokens.push({ token: Token.TokenType.ShiftLeftAssign });
           } else {
-            tokens.push({ token: Token.TokenType.ShiftLeft, value: undefined });
+            tokens.push({ token: Token.TokenType.ShiftLeft });
           }
         } else {
-          tokens.push({ token: Token.TokenType.Less, value: undefined });
+          tokens.push({ token: Token.TokenType.Less });
         }
-      } else if (char === "!") {
+      },
+    ],
+    [
+      "!",
+      () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.NotEqual, value: undefined });
+          tokens.push({ token: Token.TokenType.NotEqual });
         } else {
-          tokens.push({ token: Token.TokenType.Not, value: undefined });
+          tokens.push({ token: Token.TokenType.Not });
         }
-      } else if (char === "-") {
-        if (cursor.peek() === ">") {
-          cursor.position++;
-          tokens.push({ token: Token.TokenType.YulArrow, value: undefined });
-        } else {
-          throw new UnrecognizedSymbolError({ symbol: char });
-        }
-      }
-    } else if (char === "\\") {
+      },
+    ],
+  ]);
+
+  const keywordMap = new Map<string, () => void>([
+    ["true", () => tokens.push({ token: Token.TokenType.BoolLiteral, value: true })],
+    ["false", () => tokens.push({ token: Token.TokenType.BoolLiteral, value: false })],
+    ["if", () => tokens.push({ token: Token.TokenType.If })],
+    ["else", () => tokens.push({ token: Token.TokenType.Else })],
+    ["while", () => tokens.push({ token: Token.TokenType.While })],
+    ["do", () => tokens.push({ token: Token.TokenType.Do })],
+    ["for", () => tokens.push({ token: Token.TokenType.For })],
+    ["break", () => tokens.push({ token: Token.TokenType.Break })],
+    ["continue", () => tokens.push({ token: Token.TokenType.Continue })],
+    ["switch", () => tokens.push({ token: Token.TokenType.Switch })],
+    ["case", () => tokens.push({ token: Token.TokenType.Case })],
+    ["default", () => tokens.push({ token: Token.TokenType.Default })],
+    ["return", () => tokens.push({ token: Token.TokenType.Return })],
+    ["calldata", () => tokens.push({ token: Token.TokenType.Calldata })],
+    ["memory", () => tokens.push({ token: Token.TokenType.Memory })],
+    ["storage", () => tokens.push({ token: Token.TokenType.Storage })],
+    ["immutable", () => tokens.push({ token: Token.TokenType.Immutable })],
+    ["constant", () => tokens.push({ token: Token.TokenType.Constant })],
+    ["contract", () => tokens.push({ token: Token.TokenType.Contract })],
+    ["abstract", () => tokens.push({ token: Token.TokenType.Abstract })],
+    ["interface", () => tokens.push({ token: Token.TokenType.Interface })],
+    ["library", () => tokens.push({ token: Token.TokenType.Library })],
+    ["pragma", () => tokens.push({ token: Token.TokenType.Pragma })],
+    ["import", () => tokens.push({ token: Token.TokenType.Import })],
+    ["from", () => tokens.push({ token: Token.TokenType.From })],
+    ["using", () => tokens.push({ token: Token.TokenType.Using })],
+    ["as", () => tokens.push({ token: Token.TokenType.As })],
+    ["is", () => tokens.push({ token: Token.TokenType.Is })],
+    ["function", () => tokens.push({ token: Token.TokenType.Function })],
+    ["external", () => tokens.push({ token: Token.TokenType.External })],
+    ["public", () => tokens.push({ token: Token.TokenType.Public })],
+    ["internal", () => tokens.push({ token: Token.TokenType.Internal })],
+    ["private", () => tokens.push({ token: Token.TokenType.Private })],
+    ["view", () => tokens.push({ token: Token.TokenType.View })],
+    ["pure", () => tokens.push({ token: Token.TokenType.Pure })],
+    ["returns", () => tokens.push({ token: Token.TokenType.Returns })],
+    ["payable", () => tokens.push({ token: Token.TokenType.Payable })],
+    ["nonpayable", () => tokens.push({ token: Token.TokenType.Nonpayable })],
+    ["virtual", () => tokens.push({ token: Token.TokenType.Virtual })],
+    ["override", () => tokens.push({ token: Token.TokenType.Override })],
+    ["constructor", () => tokens.push({ token: Token.TokenType.Constructor })],
+    ["modifier", () => tokens.push({ token: Token.TokenType.Modifier })],
+    ["receive", () => tokens.push({ token: Token.TokenType.Receive })],
+    ["fallback", () => tokens.push({ token: Token.TokenType.Fallback })],
+    ["unchecked", () => tokens.push({ token: Token.TokenType.Unchecked })],
+    ["revert", () => tokens.push({ token: Token.TokenType.Revert })],
+    ["assert", () => tokens.push({ token: Token.TokenType.Assert })],
+    ["throw", () => tokens.push({ token: Token.TokenType.Throw })],
+    ["try", () => tokens.push({ token: Token.TokenType.Try })],
+    ["catch", () => tokens.push({ token: Token.TokenType.Catch })],
+    ["event", () => tokens.push({ token: Token.TokenType.Event })],
+    ["emit", () => tokens.push({ token: Token.TokenType.Emit })],
+    ["indexed", () => tokens.push({ token: Token.TokenType.Indexed })],
+    ["anonymous", () => tokens.push({ token: Token.TokenType.Anonymous })],
+    ["new", () => tokens.push({ token: Token.TokenType.New })],
+    ["delete", () => tokens.push({ token: Token.TokenType.Delete })],
+    ["struct", () => tokens.push({ token: Token.TokenType.Struct })],
+    ["enum", () => tokens.push({ token: Token.TokenType.Enum })],
+    ["type", () => tokens.push({ token: Token.TokenType.Type })],
+    ["mapping", () => tokens.push({ token: Token.TokenType.Mapping })],
+    ["address", () => tokens.push({ token: Token.TokenType.Address })],
+    ["string", () => tokens.push({ token: Token.TokenType.String })],
+    ["bytes", () => tokens.push({ token: Token.TokenType.Bytes })],
+    ["bool", () => tokens.push({ token: Token.TokenType.Bool })],
+    ["assembly", () => tokens.push({ token: Token.TokenType.Assembly })],
+    ["let", () => tokens.push({ token: Token.TokenType.Let })],
+    ["leave", () => tokens.push({ token: Token.TokenType.Leave })],
+    ["int8", () => tokens.push({ token: Token.TokenType.Int, size: 8 })],
+    ["int16", () => tokens.push({ token: Token.TokenType.Int, size: 16 })],
+    ["int24", () => tokens.push({ token: Token.TokenType.Int, size: 24 })],
+    ["int32", () => tokens.push({ token: Token.TokenType.Int, size: 32 })],
+    ["int40", () => tokens.push({ token: Token.TokenType.Int, size: 40 })],
+    ["int48", () => tokens.push({ token: Token.TokenType.Int, size: 48 })],
+    ["int56", () => tokens.push({ token: Token.TokenType.Int, size: 56 })],
+    ["int64", () => tokens.push({ token: Token.TokenType.Int, size: 64 })],
+    ["int72", () => tokens.push({ token: Token.TokenType.Int, size: 72 })],
+    ["int80", () => tokens.push({ token: Token.TokenType.Int, size: 80 })],
+    ["int88", () => tokens.push({ token: Token.TokenType.Int, size: 88 })],
+    ["int96", () => tokens.push({ token: Token.TokenType.Int, size: 96 })],
+    ["int104", () => tokens.push({ token: Token.TokenType.Int, size: 104 })],
+    ["int112", () => tokens.push({ token: Token.TokenType.Int, size: 112 })],
+    ["int120", () => tokens.push({ token: Token.TokenType.Int, size: 120 })],
+    ["int128", () => tokens.push({ token: Token.TokenType.Int, size: 128 })],
+    ["int136", () => tokens.push({ token: Token.TokenType.Int, size: 136 })],
+    ["int144", () => tokens.push({ token: Token.TokenType.Int, size: 144 })],
+    ["int152", () => tokens.push({ token: Token.TokenType.Int, size: 152 })],
+    ["int160", () => tokens.push({ token: Token.TokenType.Int, size: 160 })],
+    ["int168", () => tokens.push({ token: Token.TokenType.Int, size: 168 })],
+    ["int176", () => tokens.push({ token: Token.TokenType.Int, size: 176 })],
+    ["int184", () => tokens.push({ token: Token.TokenType.Int, size: 184 })],
+    ["int192", () => tokens.push({ token: Token.TokenType.Int, size: 192 })],
+    ["int200", () => tokens.push({ token: Token.TokenType.Int, size: 200 })],
+    ["int208", () => tokens.push({ token: Token.TokenType.Int, size: 208 })],
+    ["int216", () => tokens.push({ token: Token.TokenType.Int, size: 216 })],
+    ["int224", () => tokens.push({ token: Token.TokenType.Int, size: 224 })],
+    ["int232", () => tokens.push({ token: Token.TokenType.Int, size: 232 })],
+    ["int240", () => tokens.push({ token: Token.TokenType.Int, size: 240 })],
+    ["int248", () => tokens.push({ token: Token.TokenType.Int, size: 248 })],
+    ["int256", () => tokens.push({ token: Token.TokenType.Int, size: 256 })],
+    ["uint8", () => tokens.push({ token: Token.TokenType.Uint, size: 8 })],
+    ["uint16", () => tokens.push({ token: Token.TokenType.Uint, size: 16 })],
+    ["uint24", () => tokens.push({ token: Token.TokenType.Uint, size: 24 })],
+    ["uint32", () => tokens.push({ token: Token.TokenType.Uint, size: 32 })],
+    ["uint40", () => tokens.push({ token: Token.TokenType.Uint, size: 40 })],
+    ["uint48", () => tokens.push({ token: Token.TokenType.Uint, size: 48 })],
+    ["uint56", () => tokens.push({ token: Token.TokenType.Uint, size: 56 })],
+    ["uint64", () => tokens.push({ token: Token.TokenType.Uint, size: 64 })],
+    ["uint72", () => tokens.push({ token: Token.TokenType.Uint, size: 72 })],
+    ["uint80", () => tokens.push({ token: Token.TokenType.Uint, size: 80 })],
+    ["uint88", () => tokens.push({ token: Token.TokenType.Uint, size: 88 })],
+    ["uint96", () => tokens.push({ token: Token.TokenType.Uint, size: 96 })],
+    ["uint104", () => tokens.push({ token: Token.TokenType.Uint, size: 104 })],
+    ["uint112", () => tokens.push({ token: Token.TokenType.Uint, size: 112 })],
+    ["uint120", () => tokens.push({ token: Token.TokenType.Uint, size: 120 })],
+    ["uint128", () => tokens.push({ token: Token.TokenType.Uint, size: 128 })],
+    ["uint136", () => tokens.push({ token: Token.TokenType.Uint, size: 136 })],
+    ["uint144", () => tokens.push({ token: Token.TokenType.Uint, size: 144 })],
+    ["uint152", () => tokens.push({ token: Token.TokenType.Uint, size: 152 })],
+    ["uint160", () => tokens.push({ token: Token.TokenType.Uint, size: 160 })],
+    ["uint168", () => tokens.push({ token: Token.TokenType.Uint, size: 168 })],
+    ["uint176", () => tokens.push({ token: Token.TokenType.Uint, size: 176 })],
+    ["uint184", () => tokens.push({ token: Token.TokenType.Uint, size: 184 })],
+    ["uint192", () => tokens.push({ token: Token.TokenType.Uint, size: 192 })],
+    ["uint200", () => tokens.push({ token: Token.TokenType.Uint, size: 200 })],
+    ["uint208", () => tokens.push({ token: Token.TokenType.Uint, size: 208 })],
+    ["uint216", () => tokens.push({ token: Token.TokenType.Uint, size: 216 })],
+    ["uint224", () => tokens.push({ token: Token.TokenType.Uint, size: 224 })],
+    ["uint232", () => tokens.push({ token: Token.TokenType.Uint, size: 232 })],
+    ["uint240", () => tokens.push({ token: Token.TokenType.Uint, size: 240 })],
+    ["uint248", () => tokens.push({ token: Token.TokenType.Uint, size: 248 })],
+    ["uint256", () => tokens.push({ token: Token.TokenType.Uint, size: 256 })],
+    ["bytes1", () => tokens.push({ token: Token.TokenType.Byte, size: 1 })],
+    ["bytes2", () => tokens.push({ token: Token.TokenType.Byte, size: 2 })],
+    ["bytes3", () => tokens.push({ token: Token.TokenType.Byte, size: 3 })],
+    ["bytes4", () => tokens.push({ token: Token.TokenType.Byte, size: 4 })],
+    ["bytes5", () => tokens.push({ token: Token.TokenType.Byte, size: 5 })],
+    ["bytes6", () => tokens.push({ token: Token.TokenType.Byte, size: 6 })],
+    ["bytes7", () => tokens.push({ token: Token.TokenType.Byte, size: 7 })],
+    ["bytes8", () => tokens.push({ token: Token.TokenType.Byte, size: 8 })],
+    ["bytes9", () => tokens.push({ token: Token.TokenType.Byte, size: 9 })],
+    ["bytes10", () => tokens.push({ token: Token.TokenType.Byte, size: 10 })],
+    ["bytes11", () => tokens.push({ token: Token.TokenType.Byte, size: 11 })],
+    ["bytes12", () => tokens.push({ token: Token.TokenType.Byte, size: 12 })],
+    ["bytes13", () => tokens.push({ token: Token.TokenType.Byte, size: 13 })],
+    ["bytes14", () => tokens.push({ token: Token.TokenType.Byte, size: 14 })],
+    ["bytes15", () => tokens.push({ token: Token.TokenType.Byte, size: 15 })],
+    ["bytes16", () => tokens.push({ token: Token.TokenType.Byte, size: 16 })],
+    ["bytes17", () => tokens.push({ token: Token.TokenType.Byte, size: 17 })],
+    ["bytes18", () => tokens.push({ token: Token.TokenType.Byte, size: 18 })],
+    ["bytes19", () => tokens.push({ token: Token.TokenType.Byte, size: 19 })],
+    ["bytes20", () => tokens.push({ token: Token.TokenType.Byte, size: 20 })],
+    ["bytes21", () => tokens.push({ token: Token.TokenType.Byte, size: 21 })],
+    ["bytes22", () => tokens.push({ token: Token.TokenType.Byte, size: 22 })],
+    ["bytes23", () => tokens.push({ token: Token.TokenType.Byte, size: 23 })],
+    ["bytes24", () => tokens.push({ token: Token.TokenType.Byte, size: 24 })],
+    ["bytes25", () => tokens.push({ token: Token.TokenType.Byte, size: 25 })],
+    ["bytes26", () => tokens.push({ token: Token.TokenType.Byte, size: 26 })],
+    ["bytes27", () => tokens.push({ token: Token.TokenType.Byte, size: 27 })],
+    ["bytes28", () => tokens.push({ token: Token.TokenType.Byte, size: 28 })],
+    ["bytes29", () => tokens.push({ token: Token.TokenType.Byte, size: 29 })],
+    ["bytes30", () => tokens.push({ token: Token.TokenType.Byte, size: 30 })],
+    ["bytes31", () => tokens.push({ token: Token.TokenType.Byte, size: 31 })],
+    ["bytes32", () => tokens.push({ token: Token.TokenType.Byte, size: 32 })],
+    [
+      "after",
+      () => {
+        throw new Error('"after" is a reserved keyword.');
+      },
+    ],
+    [
+      "alias",
+      () => {
+        throw new Error('"alias" is a reserved keyword.');
+      },
+    ],
+    [
+      "apply",
+      () => {
+        throw new Error('"apply" is a reserved keyword.');
+      },
+    ],
+    [
+      "auto",
+      () => {
+        throw new Error('"auto" is a reserved keyword.');
+      },
+    ],
+    [
+      "byte",
+      () => {
+        throw new Error('"byte" is a reserved keyword.');
+      },
+    ],
+    [
+      "copyof",
+      () => {
+        throw new Error('"copyof" is a reserved keyword.');
+      },
+    ],
+    [
+      "define",
+      () => {
+        throw new Error('"define" is a reserved keyword.');
+      },
+    ],
+    [
+      "final",
+      () => {
+        throw new Error('"final" is a reserved keyword.');
+      },
+    ],
+    [
+      "implements",
+      () => {
+        throw new Error('"implements" is a reserved keyword.');
+      },
+    ],
+    [
+      "in",
+      () => {
+        throw new Error('"in" is a reserved keyword.');
+      },
+    ],
+    [
+      "inline",
+      () => {
+        throw new Error('"inline" is a reserved keyword.');
+      },
+    ],
+    [
+      "macro",
+      () => {
+        throw new Error('"macro" is a reserved keyword.');
+      },
+    ],
+    [
+      "match",
+      () => {
+        throw new Error('"match" is a reserved keyword.');
+      },
+    ],
+    [
+      "mutable",
+      () => {
+        throw new Error('"mutable" is a reserved keyword.');
+      },
+    ],
+    [
+      "null",
+      () => {
+        throw new Error('"null" is a reserved keyword.');
+      },
+    ],
+    [
+      "of",
+      () => {
+        throw new Error('"of" is a reserved keyword.');
+      },
+    ],
+    [
+      "partial",
+      () => {
+        throw new Error('"partial" is a reserved keyword.');
+      },
+    ],
+    [
+      "promise",
+      () => {
+        throw new Error('"promise" is a reserved keyword.');
+      },
+    ],
+    [
+      "reference",
+      () => {
+        throw new Error('"reference" is a reserved keyword.');
+      },
+    ],
+    [
+      "relocatable",
+      () => {
+        throw new Error('"relocatable" is a reserved keyword.');
+      },
+    ],
+    [
+      "sealed",
+      () => {
+        throw new Error('"sealed" is a reserved keyword.');
+      },
+    ],
+    [
+      "sizeof",
+      () => {
+        throw new Error('"sizeof" is a reserved keyword.');
+      },
+    ],
+    [
+      "static",
+      () => {
+        throw new Error('"static" is a reserved keyword.');
+      },
+    ],
+    [
+      "supports",
+      () => {
+        throw new Error('"supports" is a reserved keyword.');
+      },
+    ],
+    [
+      "typedef",
+      () => {
+        throw new Error('"typedef" is a reserved keyword.');
+      },
+    ],
+    [
+      "typeof",
+      () => {
+        throw new Error('"typeof" is a reserved keyword.');
+      },
+    ],
+    [
+      "var",
+      () => {
+        throw new Error('"var" is a reserved keyword.');
+      },
+    ],
+  ]);
+
+  for (const char of cursor) {
+    if (isEmpty(char)) continue;
+
+    if (symbolMap.has(char)) {
+      symbolMap.get(char)!();
     } else if (char === '"') {
       // TODO(kyle) string literal
     } else if (isDigit(char)) {
-      // TODO(kyle) bytes literals
+      // TODO(kyle) rational number literal
+      // TODO(kyle) hex number literal
       let length = 1;
       for (const char of cursor) {
         if (isDigit(char)) length++;
@@ -228,334 +569,29 @@ export const tokenize = (source: string): Token.Token[] => {
         token: Token.TokenType.NumberLiteral,
         value: source.substring(cursor.position - length, cursor.position),
       });
-    } else if (isChar(char)) {
+    } else if (isIndentifierStart(char)) {
+      // TODO(kyle) hex literal
+
       let length = 1;
       for (const char of cursor) {
-        if (isChar(char) || isDigit(char)) length++;
+        if (isIdentifier(char)) length++;
         else {
           cursor.position--;
           break;
         }
       }
 
-      tokens.push(matchWord(source.substring(cursor.position - length, cursor.position)));
+      const lexeme = source.substring(cursor.position - length, cursor.position);
+
+      if (keywordMap.has(lexeme)) {
+        keywordMap.get(lexeme)!();
+      } else {
+        tokens.push({ token: Token.TokenType.Identifier, value: lexeme });
+      }
     } else {
       throw new UnrecognizedSymbolError({ symbol: char });
     }
   }
 
   return tokens;
-};
-
-const keywordSet = new Set([
-  "if",
-  "else",
-  "while",
-  "do",
-  "for",
-  "break",
-  "continue",
-  "switch",
-  "case",
-  "default",
-  "return",
-  "calldata",
-  "memory",
-  "storage",
-  "immutable",
-  "constant",
-  "contract",
-  "abstract",
-  "interface",
-  "library",
-  "pragma",
-  "import",
-  "from",
-  "using",
-  "as",
-  "is",
-  "function",
-  "external",
-  "public",
-  "internal",
-  "private",
-  "view",
-  "pure",
-  "returns",
-  "payable",
-  "nonpayable",
-  "virtual",
-  "override",
-  "constructor",
-  "modifier",
-  "receive",
-  "fallback",
-  "unchecked",
-  "revert",
-  "assert",
-  "throw",
-  "try",
-  "catch",
-  "event",
-  "emit",
-  "indexed",
-  "anonymous",
-  "new",
-  "delete",
-  "struct",
-  "enum",
-  "type",
-  "mapping",
-  "address",
-  "string",
-  "bytes",
-  "bool",
-  "assembly",
-  "let",
-  "leave",
-  "after",
-  "alias",
-  "apply",
-  "auto",
-  "byte",
-  "copyof",
-  "define",
-  "final",
-  "implements",
-  "in",
-  "inline",
-  "macro",
-  "match",
-  "mutable",
-  "null",
-  "of",
-  "partial",
-  "promise",
-  "reference",
-  "relocatable",
-  "sealed",
-  "sizeof",
-  "static",
-  "supports",
-  "typedef",
-  "typeof",
-  "var",
-]);
-
-const sizedTypesSet = new Set([
-  "int8",
-  "int16",
-  "int24",
-  "int32",
-  "int40",
-  "int48",
-  "int56",
-  "int64",
-  "int72",
-  "int80",
-  "int88",
-  "int96",
-  "int104",
-  "int112",
-  "int120",
-  "int128",
-  "int136",
-  "int144",
-  "int152",
-  "int160",
-  "int168",
-  "int176",
-  "int184",
-  "int192",
-  "int200",
-  "int208",
-  "int216",
-  "int224",
-  "int232",
-  "int240",
-  "int248",
-  "int256",
-  "uint8",
-  "uint16",
-  "uint24",
-  "uint32",
-  "uint40",
-  "uint48",
-  "uint56",
-  "uint64",
-  "uint72",
-  "uint80",
-  "uint88",
-  "uint96",
-  "uint104",
-  "uint112",
-  "uint120",
-  "uint128",
-  "uint136",
-  "uint144",
-  "uint152",
-  "uint160",
-  "uint168",
-  "uint176",
-  "uint184",
-  "uint192",
-  "uint200",
-  "uint208",
-  "uint216",
-  "uint224",
-  "uint232",
-  "uint240",
-  "uint248",
-  "uint256",
-  "bytes1",
-  "bytes2",
-  "bytes3",
-  "bytes4",
-  "bytes5",
-  "bytes6",
-  "bytes7",
-  "bytes8",
-  "bytes9",
-  "bytes10",
-  "bytes11",
-  "bytes12",
-  "bytes13",
-  "bytes14",
-  "bytes15",
-  "bytes16",
-  "bytes17",
-  "bytes18",
-  "bytes19",
-  "bytes20",
-  "bytes21",
-  "bytes22",
-  "bytes23",
-  "bytes24",
-  "bytes25",
-  "bytes26",
-  "bytes27",
-  "bytes28",
-  "bytes29",
-  "bytes30",
-  "bytes31",
-  "bytes32",
-]);
-
-const matchWord = (word: string): Token.Token => {
-  if (word.length === 1) return { token: Token.TokenType.Identifier, value: word };
-
-  // TODO(kyle) uppercase keywords?
-
-  if (sizedTypesSet.has(word)) {
-    if (word.startsWith("uint")) {
-      const size = Number(word.substring(4));
-      return { token: Token.TokenType.Uint, value: undefined, size };
-    }
-
-    if (word.startsWith("int")) {
-      const size = Number(word.substring(3));
-      return { token: Token.TokenType.Int, value: undefined, size };
-    }
-
-    // bytes
-    const size = Number(word.substring(5));
-    return { token: Token.TokenType.Bytes, value: undefined, size };
-  }
-
-  if (keywordSet.has(word)) {
-    if (word === "if") return { token: Token.TokenType.If, value: undefined };
-    if (word === "else") return { token: Token.TokenType.Else, value: undefined };
-    if (word === "while") return { token: Token.TokenType.While, value: undefined };
-    if (word === "do") return { token: Token.TokenType.Do, value: undefined };
-    if (word === "for") return { token: Token.TokenType.For, value: undefined };
-    if (word === "break") return { token: Token.TokenType.Break, value: undefined };
-    if (word === "continue") return { token: Token.TokenType.Continue, value: undefined };
-    if (word === "switch") return { token: Token.TokenType.Switch, value: undefined };
-    if (word === "case") return { token: Token.TokenType.Case, value: undefined };
-    if (word === "default") return { token: Token.TokenType.Default, value: undefined };
-    if (word === "return") return { token: Token.TokenType.Return, value: undefined };
-    if (word === "calldata") return { token: Token.TokenType.Calldata, value: undefined };
-    if (word === "memory") return { token: Token.TokenType.Memory, value: undefined };
-    if (word === "storage") return { token: Token.TokenType.Storage, value: undefined };
-    if (word === "immutable") return { token: Token.TokenType.Immutable, value: undefined };
-    if (word === "constant") return { token: Token.TokenType.Constant, value: undefined };
-    if (word === "contract") return { token: Token.TokenType.Contract, value: undefined };
-    if (word === "abstract") return { token: Token.TokenType.Abstract, value: undefined };
-    if (word === "interface") return { token: Token.TokenType.Interface, value: undefined };
-    if (word === "library") return { token: Token.TokenType.Library, value: undefined };
-    if (word === "pragma") return { token: Token.TokenType.Pragma, value: undefined };
-    if (word === "import") return { token: Token.TokenType.Import, value: undefined };
-    if (word === "from") return { token: Token.TokenType.From, value: undefined };
-    if (word === "using") return { token: Token.TokenType.Using, value: undefined };
-    if (word === "as") return { token: Token.TokenType.As, value: undefined };
-    if (word === "is") return { token: Token.TokenType.Is, value: undefined };
-    if (word === "function") return { token: Token.TokenType.Function, value: undefined };
-    if (word === "external") return { token: Token.TokenType.External, value: undefined };
-    if (word === "public") return { token: Token.TokenType.Public, value: undefined };
-    if (word === "internal") return { token: Token.TokenType.Internal, value: undefined };
-    if (word === "private") return { token: Token.TokenType.Private, value: undefined };
-    if (word === "view") return { token: Token.TokenType.View, value: undefined };
-    if (word === "pure") return { token: Token.TokenType.Pure, value: undefined };
-    if (word === "returns") return { token: Token.TokenType.Returns, value: undefined };
-    if (word === "payable") return { token: Token.TokenType.Payable, value: undefined };
-    if (word === "nonpayable") return { token: Token.TokenType.Nonpayable, value: undefined };
-    if (word === "virtual") return { token: Token.TokenType.Virtual, value: undefined };
-    if (word === "override") return { token: Token.TokenType.Override, value: undefined };
-    if (word === "constructor") return { token: Token.TokenType.Constructor, value: undefined };
-    if (word === "modifier") return { token: Token.TokenType.Modifier, value: undefined };
-    if (word === "receive") return { token: Token.TokenType.Receive, value: undefined };
-    if (word === "fallback") return { token: Token.TokenType.Fallback, value: undefined };
-    if (word === "unchecked") return { token: Token.TokenType.Unchecked, value: undefined };
-    if (word === "revert") return { token: Token.TokenType.Revert, value: undefined };
-    if (word === "assert") return { token: Token.TokenType.Assert, value: undefined };
-    if (word === "throw") return { token: Token.TokenType.Throw, value: undefined };
-    if (word === "try") return { token: Token.TokenType.Try, value: undefined };
-    if (word === "catch") return { token: Token.TokenType.Catch, value: undefined };
-    if (word === "event") return { token: Token.TokenType.Event, value: undefined };
-    if (word === "emit") return { token: Token.TokenType.Emit, value: undefined };
-    if (word === "indexed") return { token: Token.TokenType.Indexed, value: undefined };
-    if (word === "anonymous") return { token: Token.TokenType.Anonymous, value: undefined };
-    if (word === "new") return { token: Token.TokenType.New, value: undefined };
-    if (word === "delete") return { token: Token.TokenType.Delete, value: undefined };
-    if (word === "struct") return { token: Token.TokenType.Struct, value: undefined };
-    if (word === "enum") return { token: Token.TokenType.Enum, value: undefined };
-    if (word === "type") return { token: Token.TokenType.Type, value: undefined };
-    if (word === "mapping") return { token: Token.TokenType.Mapping, value: undefined };
-    if (word === "address") return { token: Token.TokenType.Address, value: undefined };
-    if (word === "string") return { token: Token.TokenType.String, value: undefined };
-    if (word === "bytes") return { token: Token.TokenType.Bytes, value: undefined };
-    if (word === "bool") return { token: Token.TokenType.Bool, value: undefined };
-    if (word === "assembly") return { token: Token.TokenType.Assembly, value: undefined };
-    if (word === "let") return { token: Token.TokenType.Let, value: undefined };
-    if (word === "leave") return { token: Token.TokenType.Leave, value: undefined };
-    if (word === "after") return { token: Token.TokenType.After, value: undefined };
-    if (word === "alias") return { token: Token.TokenType.Alias, value: undefined };
-    if (word === "apply") return { token: Token.TokenType.Apply, value: undefined };
-    if (word === "auto") return { token: Token.TokenType.Auto, value: undefined };
-    if (word === "byte") return { token: Token.TokenType.Byte_, value: undefined };
-    if (word === "copyof") return { token: Token.TokenType.Copyof, value: undefined };
-    if (word === "define") return { token: Token.TokenType.Define, value: undefined };
-    if (word === "final") return { token: Token.TokenType.Final, value: undefined };
-    if (word === "implements") return { token: Token.TokenType.Implements, value: undefined };
-    if (word === "in") return { token: Token.TokenType.In, value: undefined };
-    if (word === "inline") return { token: Token.TokenType.Inline, value: undefined };
-    if (word === "macro") return { token: Token.TokenType.Macro, value: undefined };
-    if (word === "match") return { token: Token.TokenType.Match, value: undefined };
-    if (word === "mutable") return { token: Token.TokenType.Mutable, value: undefined };
-    if (word === "null") return { token: Token.TokenType.Null, value: undefined };
-    if (word === "of") return { token: Token.TokenType.Of, value: undefined };
-    if (word === "partial") return { token: Token.TokenType.Partial, value: undefined };
-    if (word === "promise") return { token: Token.TokenType.Promise, value: undefined };
-    if (word === "reference") return { token: Token.TokenType.Reference, value: undefined };
-    if (word === "relocatable") return { token: Token.TokenType.Relocatable, value: undefined };
-    if (word === "sealed") return { token: Token.TokenType.Sealed, value: undefined };
-    if (word === "sizeof") return { token: Token.TokenType.Sizeof, value: undefined };
-    if (word === "static") return { token: Token.TokenType.Static, value: undefined };
-    if (word === "supports") return { token: Token.TokenType.Supports, value: undefined };
-    if (word === "typedef") return { token: Token.TokenType.Typedef, value: undefined };
-    if (word === "typeof") return { token: Token.TokenType.Typeof, value: undefined };
-    if (word === "var") return { token: Token.TokenType.Var, value: undefined };
-  }
-
-  return { token: Token.TokenType.Identifier, value: word };
 };

@@ -7,7 +7,7 @@ test("identifier", () => {
 
   expect(tokens).toHaveLength(1);
   expect(tokens[0]?.token).toBe(Token.TokenType.Identifier);
-  expect(tokens[0]?.value).toBe("hi");
+  expect((tokens[0] as Token.Identifier)?.value).toBe("hi");
 });
 
 test("number literal", () => {
@@ -15,7 +15,7 @@ test("number literal", () => {
 
   expect(tokens).toHaveLength(1);
   expect(tokens[0]?.token).toBe(Token.TokenType.NumberLiteral);
-  expect(tokens[0]?.value).toBe("898");
+  expect((tokens[0] as Token.NumberLiteral)?.value).toBe("898");
 });
 
 test("empty", () => {
@@ -29,7 +29,7 @@ test("whitespace", () => {
 
   expect(tokens).toHaveLength(1);
   expect(tokens[0]?.token).toBe(Token.TokenType.Identifier);
-  expect(tokens[0]?.value).toBe("hi");
+  expect((tokens[0] as Token.Identifier)?.value).toBe("hi");
 });
 
 test("comments", () => {
@@ -39,10 +39,5 @@ test("comments", () => {
 
   expect(tokens).toHaveLength(2);
   expect(tokens[0]?.token).toBe(Token.TokenType.Identifier);
-  expect(tokens[0]?.value).toBe("hi");
-});
-
-test("ERC20", async () => {
-  const source = await Bun.file("/Users/kylescott/src/allegedly/src/_sol/ERC20.sol").text();
-  tokenize(source);
+  expect((tokens[0] as Token.Identifier)?.value).toBe("hi");
 });
