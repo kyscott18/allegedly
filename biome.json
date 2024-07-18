@@ -13,7 +13,8 @@
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noShadowRestrictedNames": "off"
+        "noShadowRestrictedNames": "off",
+        "noExplicitAny": "off"
       },
       "style": {
         "noNonNullAssertion": "off",

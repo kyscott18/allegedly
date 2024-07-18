@@ -2,23 +2,19 @@ import { expect, test } from "bun:test";
 import { NotImplementedError } from "./errors/notImplemented.js";
 import { tokenize } from "./lexer.js";
 import {
-  tryParseAssignment,
   tryParseBlockStatement,
   tryParseBreakStatement,
-  tryParseConditionalExpression,
   tryParseContinueStatement,
   tryParseEmitStatement,
   tryParseExpression,
   tryParseExpressionStatement,
   tryParseFunctionCallExpression,
   tryParseIfStatement,
-  tryParseIndexAccessExpression,
   tryParseNewExpression,
   tryParsePlaceholderStatement,
   tryParseReturnStatement,
   tryParseRevertStatement,
   tryParseTupleExpression,
-  tryParseUnaryOperation,
   tryParseUncheckedBlockStatement,
   tryParseVariableDeclaration,
   tryParseWhileStatement,
@@ -143,59 +139,65 @@ test("literal", () => {
   // expect(boolLiteral!.ast).toBe(Ast.AstType.Literal);
 });
 
-test.todo("assignment", () => {
-  const assign = getAst("a = b", tryParseAssignment);
-  const addAssign = getAst("a += b", tryParseAssignment);
-  const subtractAssign = getAst("a -= b", tryParseAssignment);
-  const mulAssign = getAst("a *= b", tryParseAssignment);
-  const divideAssign = getAst("a /= b", tryParseAssignment);
-  const moduloAssign = getAst("a %= b", tryParseAssignment);
-  const bitwiseAndAssign = getAst("a &= b", tryParseAssignment);
-  const bitwiseOrAssign = getAst("a |= b", tryParseAssignment);
-  const bitwiseXOrAssign = getAst("a ^= b", tryParseAssignment);
-  const shiftRightAssign = getAst("a >>= b", tryParseAssignment);
-  const shiftLeftAssign = getAst("a <<= b", tryParseAssignment);
+test("assignment", () => {
+  const assign = tryParseExpression({ tokens: tokenize("a = b"), tokenIndex: 0 });
+  // const addAssign = tryParseExpression({tokens: tokenize("a += b"), tokenIndex: 0});
+  // const subtractAssign = tryParseExpression({tokens: tokenize("a -= b"), tokenIndex: 0});
+  // const mulAssign = tryParseExpression({tokens: tokenize("a *= b"), tokenIndex: 0});
+  // const divideAssign = tryParseExpression({tokens: tokenize("a /= b"), tokenIndex: 0});
+  // const moduloAssign = tryParseExpression({tokens: tokenize("a %= b"), tokenIndex: 0});
+  // const bitwiseAndAssign = tryParseExpression({tokens: tokenize("a &= b"), tokenIndex: 0});
+  // const bitwiseOrAssign = tryParseExpression({tokens: tokenize("a |= b"), tokenIndex: 0});
+  // const bitwiseXOrAssign = tryParseExpression({tokens: tokenize("a ^= b"), tokenIndex: 0});
+  // const shiftRightAssign = tryParseExpression({tokens: tokenize("a >>= b"), tokenIndex: 0});
+  // const shiftLeftAssign = tryParseExpression({tokens: tokenize("a <<= b"), tokenIndex: 0});
 
   expect(assign).toBeDefined();
-  expect(addAssign).toBeDefined();
-  expect(subtractAssign).toBeDefined();
-  expect(mulAssign).toBeDefined();
-  expect(divideAssign).toBeDefined();
-  expect(moduloAssign).toBeDefined();
-  expect(bitwiseAndAssign).toBeDefined();
-  expect(bitwiseOrAssign).toBeDefined();
-  expect(bitwiseXOrAssign).toBeDefined();
-  expect(shiftRightAssign).toBeDefined();
-  expect(shiftLeftAssign).toBeDefined();
+  // expect(addAssign).toBeDefined();
+  // expect(subtractAssign).toBeDefined();
+  // expect(mulAssign).toBeDefined();
+  // expect(divideAssign).toBeDefined();
+  // expect(moduloAssign).toBeDefined();
+  // expect(bitwiseAndAssign).toBeDefined();
+  // expect(bitwiseOrAssign).toBeDefined();
+  // expect(bitwiseXOrAssign).toBeDefined();
+  // expect(shiftRightAssign).toBeDefined();
+  // expect(shiftLeftAssign).toBeDefined();
 
   expect(assign!.ast).toBe(Ast.AstType.Assignment);
-  expect(addAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(subtractAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(mulAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(divideAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(moduloAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(bitwiseAndAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(bitwiseOrAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(bitwiseXOrAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(shiftRightAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(shiftLeftAssign!.ast).toBe(Ast.AstType.Assignment);
+  // expect(addAssign!.ast).toBe(Ast.AstType.Assignment);
+  // expect(subtractAssign!.ast).toBe(Ast.AstType.Assignment);
+  // expect(mulAssign!.ast).toBe(Ast.AstType.Assignment);
+  // expect(divideAssign!.ast).toBe(Ast.AstType.Assignment);
+  // expect(moduloAssign!.ast).toBe(Ast.AstType.Assignment);
+  // expect(bitwiseAndAssign!.ast).toBe(Ast.AstType.Assignment);
+  // expect(bitwiseOrAssign!.ast).toBe(Ast.AstType.Assignment);
+  // expect(bitwiseXOrAssign!.ast).toBe(Ast.AstType.Assignment);
+  // expect(shiftRightAssign!.ast).toBe(Ast.AstType.Assignment);
+  // expect(shiftLeftAssign!.ast).toBe(Ast.AstType.Assignment);
 });
 
-test.todo("unary operation", () => {
-  const [increment] = getAst("++id", tryParseUnaryOperation);
-  const [decrement] = getAst("--id", tryParseUnaryOperation);
-  const [subtract] = getAst("-id", tryParseUnaryOperation);
-  const [_delete] = getAst("delete id", tryParseUnaryOperation);
+test("unary operation", () => {
+  const incrementPostfix = tryParseExpression({ tokens: tokenize("id++"), tokenIndex: 0 });
+  const decrementPostfix = tryParseExpression({ tokens: tokenize("id--"), tokenIndex: 0 });
+  // const incrementPrefix = tryParseExpression({ tokens: tokenize("++id"), tokenIndex: 0 });
+  // const decrementPrefix = tryParseExpression({ tokens: tokenize("--id"), tokenIndex: 0 });
+  const subtract = tryParseExpression({ tokens: tokenize("-id"), tokenIndex: 0 });
+  // const _delete = tryParseExpression({tokens: tokenize("delete id"), tokenIndex: 0});
 
-  expect(increment).toBeDefined();
-  expect(decrement).toBeDefined();
+  expect(incrementPostfix).toBeDefined();
+  expect(decrementPostfix).toBeDefined();
+  // expect(incrementPrefix).toBeDefined();
+  // expect(decrementPrefix).toBeDefined();
   expect(subtract).toBeDefined();
-  expect(_delete).toBeDefined();
+  // expect(_delete).toBeDefined();
 
-  expect(increment!.ast).toBe(Ast.AstType.UnaryOperation);
-  expect(decrement!.ast).toBe(Ast.AstType.UnaryOperation);
+  expect(incrementPostfix!.ast).toBe(Ast.AstType.UnaryOperation);
+  expect(decrementPostfix!.ast).toBe(Ast.AstType.UnaryOperation);
+  // expect(incrementPrefix!.ast).toBe(Ast.AstType.UnaryOperation);
+  // expect(decrementPrefix!.ast).toBe(Ast.AstType.UnaryOperation);
   expect(subtract!.ast).toBe(Ast.AstType.UnaryOperation);
-  expect(_delete!.ast).toBe(Ast.AstType.UnaryOperation);
+  // expect(_delete!.ast).toBe(Ast.AstType.UnaryOperation);
 });
 
 test("binary operation", () => {
@@ -268,8 +270,8 @@ test("binary operation", () => {
   expect(expressionToString(expression)).toBe("(+ (+ a (* (* b c) d)) e)");
 });
 
-test.todo("conditional expression", () => {
-  const conditional = getAst("a ? b : c", tryParseConditionalExpression);
+test("conditional expression", () => {
+  const conditional = tryParseExpression({ tokens: tokenize("a ? b : c"), tokenIndex: 0 });
 
   expect(conditional).toBeDefined();
 
@@ -312,8 +314,10 @@ test("member access expression", () => {
   expect(expressionToString(expression)).toBe("(. (. a b) c)");
 });
 
-test.todo("index access expression", () => {
-  const [indexAccess] = getAst("a[0]", tryParseIndexAccessExpression);
+test("index access expression", () => {
+  const indexAccess = tryParseExpression({ tokens: tokenize("a[0]"), tokenIndex: 0 }) as
+    | Ast.IndexAccessExpression
+    | undefined;
 
   expect(indexAccess).toBeDefined();
   expect(indexAccess!.ast).toBe(Ast.AstType.IndexAccessExpression);
@@ -367,18 +371,9 @@ test.todo("variable declaration", () => {
 // statements
 
 test("expression statement", () => {
-  const identifier = tryParseExpressionStatement({
-    tokens: tokenize("a;"),
-    tokenIndex: 0,
-  });
-  const literal = tryParseExpressionStatement({
-    tokens: tokenize("52;"),
-    tokenIndex: 0,
-  });
-  // const assignment = tryParseExpressionStatement({
-  //   tokens: tokenize("a = 52;"),
-  //   tokenIndex: 0,
-  // });
+  const identifier = tryParseExpressionStatement({ tokens: tokenize("a;"), tokenIndex: 0 });
+  const literal = tryParseExpressionStatement({ tokens: tokenize("52;"), tokenIndex: 0 });
+  const assignment = tryParseExpressionStatement({ tokens: tokenize("a = 52;"), tokenIndex: 0 });
   // const unaryOperation = tryParseExpressionStatement({
   //   tokens: tokenize("delete a;"),
   //   tokenIndex: 0,
@@ -387,22 +382,16 @@ test("expression statement", () => {
     tokens: tokenize("a + b;"),
     tokenIndex: 0,
   });
-  // const conditional = tryParseExpressionStatement({
-  //   tokens: tokenize("a ? b : c;"),
-  //   tokenIndex: 0,
-  // });
+  const conditional = tryParseExpressionStatement({
+    tokens: tokenize("a ? b : c;"),
+    tokenIndex: 0,
+  });
   // const functionCall = tryParseExpressionStatement({
   //   tokens: tokenize("a();"),
   //   tokenIndex: 0,
   // });
-  const memberAccess = tryParseExpressionStatement({
-    tokens: tokenize("a.b;"),
-    tokenIndex: 0,
-  });
-  // const indexAccess = tryParseExpressionStatement({
-  //   tokens: tokenize("a[52];"),
-  //   tokenIndex: 0,
-  // });
+  const memberAccess = tryParseExpressionStatement({ tokens: tokenize("a.b;"), tokenIndex: 0 });
+  const indexAccess = tryParseExpressionStatement({ tokens: tokenize("a[52];"), tokenIndex: 0 });
   // const _new = tryParseExpressionStatement({
   //   tokens: tokenize("new a();"),
   //   tokenIndex: 0,
@@ -415,32 +404,38 @@ test("expression statement", () => {
   //   tokens: tokenize("uint256 a;"),
   //   tokenIndex: 0,
   // });
+  const parenthesized = tryParseExpressionStatement({
+    tokens: tokenize("(((a + b)));"),
+    tokenIndex: 0,
+  });
 
   expect(identifier).toBeDefined();
   expect(literal).toBeDefined();
-  // expect(assignment).toBeDefined();
+  expect(assignment).toBeDefined();
   // expect(unaryOperation).toBeDefined();
   expect(binaryOperation).toBeDefined();
-  // expect(conditional).toBeDefined();
+  expect(conditional).toBeDefined();
   // expect(functionCall).toBeDefined();
   expect(memberAccess).toBeDefined();
-  // expect(indexAccess).toBeDefined();
+  expect(indexAccess).toBeDefined();
   // expect(_new).toBeDefined();
   // expect(tuple).toBeDefined();
   // expect(variableDeclaration).toBeDefined();
+  expect(parenthesized).toBeDefined();
 
   expect(identifier!.ast).toBe(Ast.AstType.ExpressionStatement);
   expect(literal!.ast).toBe(Ast.AstType.ExpressionStatement);
-  // expect(assignment!.ast).toBe(Ast.AstType.ExpressionStatement);
+  expect(assignment!.ast).toBe(Ast.AstType.ExpressionStatement);
   // expect(unaryOperation!.ast).toBe(Ast.AstType.ExpressionStatement);
   expect(binaryOperation!.ast).toBe(Ast.AstType.ExpressionStatement);
-  // expect(conditional!.ast).toBe(Ast.AstType.ExpressionStatement);
+  expect(conditional!.ast).toBe(Ast.AstType.ExpressionStatement);
   // expect(functionCall!.ast).toBe(Ast.AstType.ExpressionStatement);
   expect(memberAccess!.ast).toBe(Ast.AstType.ExpressionStatement);
-  // expect(indexAccess!.ast).toBe(Ast.AstType.ExpressionStatement);
+  expect(indexAccess!.ast).toBe(Ast.AstType.ExpressionStatement);
   // expect(_new!.ast).toBe(Ast.AstType.ExpressionStatement);
   // expect(tuple!.ast).toBe(Ast.AstType.ExpressionStatement);
   // expect(variableDeclaration!.ast).toBe(Ast.AstType.ExpressionStatement);
+  expect(parenthesized!.ast).toBe(Ast.AstType.ExpressionStatement);
 });
 
 test("block statement", () => {
