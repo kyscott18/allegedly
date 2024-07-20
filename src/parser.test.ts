@@ -8,15 +8,11 @@ import {
   tryParseEmitStatement,
   tryParseExpression,
   tryParseExpressionStatement,
-  tryParseFunctionCallExpression,
   tryParseIfStatement,
-  tryParseNewExpression,
   tryParsePlaceholderStatement,
   tryParseReturnStatement,
   tryParseRevertStatement,
-  tryParseTupleExpression,
   tryParseUncheckedBlockStatement,
-  tryParseVariableDeclaration,
   tryParseWhileStatement,
 } from "./parser.js";
 import { Ast } from "./types/ast.js";
@@ -336,10 +332,16 @@ test("conditional expression", () => {
   expect(conditional!.ast).toBe(Ast.AstType.ConditionalExpression);
 });
 
-test.todo("function call expression", () => {
-  const [emptyFunction] = getAst("fn()", tryParseFunctionCallExpression);
-  const [singleFunction] = getAst("fn(a)", tryParseFunctionCallExpression);
-  const [manyFunction] = getAst("fn(a,b,c)", tryParseFunctionCallExpression);
+test("function call expression", () => {
+  const emptyFunction = tryParseExpression({ tokens: tokenize("fn()"), tokenIndex: 0 }) as
+    | Ast.FunctionCallExpression
+    | undefined;
+  const singleFunction = tryParseExpression({ tokens: tokenize("fn(a)"), tokenIndex: 0 }) as
+    | Ast.FunctionCallExpression
+    | undefined;
+  const manyFunction = tryParseExpression({ tokens: tokenize("fn(a,b,c)"), tokenIndex: 0 }) as
+    | Ast.FunctionCallExpression
+    | undefined;
 
   expect(emptyFunction).toBeDefined();
   expect(singleFunction).toBeDefined();
@@ -383,47 +385,21 @@ test("index access expression", () => {
   expect(indexAccess!.index.ast).toBe(Ast.AstType.Literal);
 });
 
-test.todo("new expression", () => {
-  const [_new] = getAst("new Contract()", tryParseNewExpression);
+test("new expression", () => {
+  const _new = tryParseExpression({ tokens: tokenize("new Contract()"), tokenIndex: 0 });
 
   expect(_new).toBeDefined();
   expect(_new!.ast).toBe(Ast.AstType.NewExpression);
 });
 
-test.todo("tuple expression", () => {
-  const [emptyTuple] = getAst("()", tryParseTupleExpression);
-  const [singleTuple] = getAst("(a)", tryParseTupleExpression);
-  const [manyTuple] = getAst("(a,b,c)", tryParseTupleExpression);
-  //
-  expect(emptyTuple).toBeDefined();
-  expect(singleTuple).toBeDefined();
-  expect(manyTuple).toBeDefined();
+test("tuple expression", () => {
+  const tuple = tryParseExpression({ tokens: tokenize("(a,b,c)"), tokenIndex: 0 }) as
+    | Ast.TupleExpression
+    | undefined;
 
-  expect(emptyTuple!.ast).toBe(Ast.AstType.TupleExpression);
-  expect(singleTuple!.ast).toBe(Ast.AstType.TupleExpression);
-  expect(manyTuple!.ast).toBe(Ast.AstType.TupleExpression);
-
-  expect(emptyTuple!.elements).toHaveLength(0);
-  expect(singleTuple!.elements).toHaveLength(1);
-  expect(manyTuple!.elements).toHaveLength(3);
-});
-
-test.todo("variable declaration", () => {
-  const [noInitializer] = getAst("uint256 a", tryParseVariableDeclaration);
-  const [initializer] = getAst("uint256 a = 0", tryParseVariableDeclaration);
-  const [location] = getAst("uint256 memory a", tryParseVariableDeclaration);
-
-  // TODO(kyle) attributes
-
-  expect(noInitializer).toBeDefined();
-  expect(initializer).toBeDefined();
-  expect(location).toBeDefined();
-
-  expect(noInitializer!.ast).toBe(Ast.AstType.VariableDeclaration);
-  expect(initializer!.ast).toBe(Ast.AstType.VariableDeclaration);
-  expect(location!.ast).toBe(Ast.AstType.VariableDeclaration);
-
-  expect(initializer!.initializer).toBeDefined();
+  expect(tuple).toBeDefined();
+  expect(tuple!.ast).toBe(Ast.AstType.TupleExpression);
+  expect(tuple!.elements).toHaveLength(3);
 });
 
 // statements
@@ -444,24 +420,20 @@ test("expression statement", () => {
     tokens: tokenize("a ? b : c;"),
     tokenIndex: 0,
   });
-  // const functionCall = tryParseExpressionStatement({
-  //   tokens: tokenize("a();"),
-  //   tokenIndex: 0,
-  // });
+  const functionCall = tryParseExpressionStatement({
+    tokens: tokenize("a();"),
+    tokenIndex: 0,
+  });
   const memberAccess = tryParseExpressionStatement({ tokens: tokenize("a.b;"), tokenIndex: 0 });
   const indexAccess = tryParseExpressionStatement({ tokens: tokenize("a[52];"), tokenIndex: 0 });
-  // const _new = tryParseExpressionStatement({
-  //   tokens: tokenize("new a();"),
-  //   tokenIndex: 0,
-  // });
-  // const tuple = tryParseExpressionStatement({
-  //   tokens: tokenize("(a,b);"),
-  //   tokenIndex: 0,
-  // });
-  // const variableDeclaration = tryParseExpressionStatement({
-  //   tokens: tokenize("uint256 a;"),
-  //   tokenIndex: 0,
-  // });
+  const _new = tryParseExpressionStatement({
+    tokens: tokenize("new a();"),
+    tokenIndex: 0,
+  });
+  const tuple = tryParseExpressionStatement({
+    tokens: tokenize("(a,b);"),
+    tokenIndex: 0,
+  });
   const parenthesized = tryParseExpressionStatement({
     tokens: tokenize("(((a + b)));"),
     tokenIndex: 0,
@@ -473,12 +445,11 @@ test("expression statement", () => {
   expect(unaryOperation).toBeDefined();
   expect(binaryOperation).toBeDefined();
   expect(conditional).toBeDefined();
-  // expect(functionCall).toBeDefined();
+  expect(functionCall).toBeDefined();
   expect(memberAccess).toBeDefined();
   expect(indexAccess).toBeDefined();
-  // expect(_new).toBeDefined();
-  // expect(tuple).toBeDefined();
-  // expect(variableDeclaration).toBeDefined();
+  expect(_new).toBeDefined();
+  expect(tuple).toBeDefined();
   expect(parenthesized).toBeDefined();
 
   expect(identifier!.ast).toBe(Ast.AstType.ExpressionStatement);
@@ -487,12 +458,11 @@ test("expression statement", () => {
   expect(unaryOperation!.ast).toBe(Ast.AstType.ExpressionStatement);
   expect(binaryOperation!.ast).toBe(Ast.AstType.ExpressionStatement);
   expect(conditional!.ast).toBe(Ast.AstType.ExpressionStatement);
-  // expect(functionCall!.ast).toBe(Ast.AstType.ExpressionStatement);
+  expect(functionCall!.ast).toBe(Ast.AstType.ExpressionStatement);
   expect(memberAccess!.ast).toBe(Ast.AstType.ExpressionStatement);
   expect(indexAccess!.ast).toBe(Ast.AstType.ExpressionStatement);
-  // expect(_new!.ast).toBe(Ast.AstType.ExpressionStatement);
-  // expect(tuple!.ast).toBe(Ast.AstType.ExpressionStatement);
-  // expect(variableDeclaration!.ast).toBe(Ast.AstType.ExpressionStatement);
+  expect(_new!.ast).toBe(Ast.AstType.ExpressionStatement);
+  expect(tuple!.ast).toBe(Ast.AstType.ExpressionStatement);
   expect(parenthesized!.ast).toBe(Ast.AstType.ExpressionStatement);
 });
 
@@ -583,7 +553,7 @@ test("continue statement", () => {
   expect(_continue!.ast).toBe(Ast.AstType.ContinueStatement);
 });
 
-test.todo("emit statement", () => {
+test("emit statement", () => {
   const emit = tryParseEmitStatement({ tokens: tokenize("emit Log();"), tokenIndex: 0 });
 
   expect(emit).toBeDefined();
@@ -591,7 +561,7 @@ test.todo("emit statement", () => {
   expect(emit!.ast).toBe(Ast.AstType.EmitStatement);
 });
 
-test.todo("revert statement", () => {
+test("revert statement", () => {
   const revert = tryParseRevertStatement({ tokens: tokenize("revert Error();"), tokenIndex: 0 });
 
   expect(revert).toBeDefined();
@@ -599,7 +569,7 @@ test.todo("revert statement", () => {
   expect(revert!.ast).toBe(Ast.AstType.RevertStatement);
 });
 
-test.todo("return statement", () => {
+test("return statement", () => {
   const _return = tryParseReturnStatement({ tokens: tokenize("return;"), tokenIndex: 0 });
   const _returnExpression = tryParseReturnStatement({
     tokens: tokenize("return a;"),
@@ -620,3 +590,21 @@ test.todo("placehoder statement", () => {
 
   expect(placeholder!.ast).toBe(Ast.AstType.PlaceholderStatement);
 });
+
+// test.todo("variable declaration", () => {
+//   const [noInitializer] = getAst("uint256 a", tryParseVariableDeclaration);
+//   const [initializer] = getAst("uint256 a = 0", tryParseVariableDeclaration);
+//   const [location] = getAst("uint256 memory a", tryParseVariableDeclaration);
+
+//   // TODO(kyle) attributes
+
+//   expect(noInitializer).toBeDefined();
+//   expect(initializer).toBeDefined();
+//   expect(location).toBeDefined();
+
+//   expect(noInitializer!.ast).toBe(Ast.AstType.VariableDeclaration);
+//   expect(initializer!.ast).toBe(Ast.AstType.VariableDeclaration);
+//   expect(location!.ast).toBe(Ast.AstType.VariableDeclaration);
+
+//   expect(initializer!.initializer).toBeDefined();
+// });
