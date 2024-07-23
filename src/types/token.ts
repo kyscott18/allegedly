@@ -53,6 +53,7 @@ export namespace Token {
     Receive,
     Fallback,
     Unchecked,
+    Error,
     Revert,
     Assert,
     Throw,
@@ -221,6 +222,7 @@ export namespace Token {
   export type Fallback = { token: TokenType.Fallback };
   export type Unchecked = { token: TokenType.Unchecked };
 
+  export type Error = { token: TokenType.Error };
   export type Revert = { token: TokenType.Revert };
   export type Assert = { token: TokenType.Assert };
   export type Throw = { token: TokenType.Throw };
@@ -387,6 +389,7 @@ export namespace Token {
     | Receive
     | Fallback
     | Unchecked
+    | Error
     | Revert
     | Assert
     | Throw

@@ -265,6 +265,7 @@ export const tokenize = (source: string): Token.Token[] => {
     ["fallback", () => tokens.push({ token: Token.TokenType.Fallback })],
     ["unchecked", () => tokens.push({ token: Token.TokenType.Unchecked })],
     ["revert", () => tokens.push({ token: Token.TokenType.Revert })],
+    ["error", () => tokens.push({ token: Token.TokenType.Error })],
     ["assert", () => tokens.push({ token: Token.TokenType.Assert })],
     ["throw", () => tokens.push({ token: Token.TokenType.Throw })],
     ["try", () => tokens.push({ token: Token.TokenType.Try })],

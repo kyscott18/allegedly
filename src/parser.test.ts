@@ -2,18 +2,21 @@ import { expect, test } from "bun:test";
 import { NotImplementedError } from "./errors/notImplemented.js";
 import { tokenize } from "./lexer.js";
 import {
-  tryParseBlockStatement,
-  tryParseBreakStatement,
-  tryParseContinueStatement,
-  tryParseEmitStatement,
-  tryParseExpression,
-  tryParseExpressionStatement,
-  tryParseIfStatement,
-  tryParsePlaceholderStatement,
-  tryParseReturnStatement,
-  tryParseRevertStatement,
-  tryParseUncheckedBlockStatement,
-  tryParseWhileStatement,
+  parseBlockStatement,
+  parseBreakStatement,
+  parseContinueStatement,
+  parseEmitStatement,
+  parseErrorDefinition,
+  parseEventDefinition,
+  parseExpression,
+  parseExpressionStatement,
+  parseIfStatement,
+  parsePlaceholderStatement,
+  parseReturnStatement,
+  parseRevertStatement,
+  parseUncheckedBlockStatement,
+  parseVariableDeclaration,
+  parseWhileStatement,
 } from "./parser.js";
 import { Ast } from "./types/ast.js";
 import { Token } from "./types/token.js";
@@ -141,7 +144,7 @@ const expressionToString = (expression: Ast.Expression): string => {
 // expressions
 
 test("identifier", () => {
-  const identifier = tryParseExpression({
+  const identifier = parseExpression({
     tokens: tokenize("id"),
     tokenIndex: 0,
   }) as Ast.Identifier | undefined;
@@ -152,25 +155,25 @@ test("identifier", () => {
 });
 
 test("literal", () => {
-  // const stringLiteral = tryParseExpression({
+  // const stringLiteral = parseExpression({
   //   tokens: tokenize(`"stringLiteral"`),
   //   tokenIndex: 0,
   // }) as Ast.Literal | undefined;
-  // const addressLiteral = tryParseExpression({
+  // const addressLiteral = parseExpression({
   //   tokens: tokenize("0x0000000000000000000000000000"),
   //   tokenIndex: 0,
   // }) as Ast.Literal | undefined;
-  // const hexLiteral = tryParseExpression({ tokens: tokenize(`hex"0x0"`), tokenIndex: 0 }) as
+  // const hexLiteral = parseExpression({ tokens: tokenize(`hex"0x0"`), tokenIndex: 0 }) as
   //   | Ast.Literal
   //   | undefined;
-  const numberLiteral = tryParseExpression({ tokens: tokenize("52"), tokenIndex: 0 }) as
+  const numberLiteral = parseExpression({ tokens: tokenize("52"), tokenIndex: 0 }) as
     | Ast.Literal
     | undefined;
-  // const rationalNumberLiteral = tryParseExpression({ tokens: tokenize("52.0"), tokenIndex: 0 }) as
+  // const rationalNumberLiteral = parseExpression({ tokens: tokenize("52.0"), tokenIndex: 0 }) as
   //   | Ast.Literal
   //   | undefined;
   // TODO(kyle): hexNumberLiteral
-  const boolLiteral = tryParseExpression({ tokens: tokenize("true"), tokenIndex: 0 }) as
+  const boolLiteral = parseExpression({ tokens: tokenize("true"), tokenIndex: 0 }) as
     | Ast.Literal
     | undefined;
 
@@ -190,17 +193,17 @@ test("literal", () => {
 });
 
 test("assignment", () => {
-  const assign = tryParseExpression({ tokens: tokenize("a = b"), tokenIndex: 0 });
-  const addAssign = tryParseExpression({ tokens: tokenize("a += b"), tokenIndex: 0 });
-  const subtractAssign = tryParseExpression({ tokens: tokenize("a -= b"), tokenIndex: 0 });
-  const mulAssign = tryParseExpression({ tokens: tokenize("a *= b"), tokenIndex: 0 });
-  const divideAssign = tryParseExpression({ tokens: tokenize("a /= b"), tokenIndex: 0 });
-  const moduloAssign = tryParseExpression({ tokens: tokenize("a %= b"), tokenIndex: 0 });
-  const bitwiseAndAssign = tryParseExpression({ tokens: tokenize("a &= b"), tokenIndex: 0 });
-  const bitwiseOrAssign = tryParseExpression({ tokens: tokenize("a |= b"), tokenIndex: 0 });
-  const bitwiseXOrAssign = tryParseExpression({ tokens: tokenize("a ^= b"), tokenIndex: 0 });
-  const shiftRightAssign = tryParseExpression({ tokens: tokenize("a >>= b"), tokenIndex: 0 });
-  const shiftLeftAssign = tryParseExpression({ tokens: tokenize("a <<= b"), tokenIndex: 0 });
+  const assign = parseExpression({ tokens: tokenize("a = b"), tokenIndex: 0 });
+  const addAssign = parseExpression({ tokens: tokenize("a += b"), tokenIndex: 0 });
+  const subtractAssign = parseExpression({ tokens: tokenize("a -= b"), tokenIndex: 0 });
+  const mulAssign = parseExpression({ tokens: tokenize("a *= b"), tokenIndex: 0 });
+  const divideAssign = parseExpression({ tokens: tokenize("a /= b"), tokenIndex: 0 });
+  const moduloAssign = parseExpression({ tokens: tokenize("a %= b"), tokenIndex: 0 });
+  const bitwiseAndAssign = parseExpression({ tokens: tokenize("a &= b"), tokenIndex: 0 });
+  const bitwiseOrAssign = parseExpression({ tokens: tokenize("a |= b"), tokenIndex: 0 });
+  const bitwiseXOrAssign = parseExpression({ tokens: tokenize("a ^= b"), tokenIndex: 0 });
+  const shiftRightAssign = parseExpression({ tokens: tokenize("a >>= b"), tokenIndex: 0 });
+  const shiftLeftAssign = parseExpression({ tokens: tokenize("a <<= b"), tokenIndex: 0 });
 
   expect(assign).toBeDefined();
   expect(addAssign).toBeDefined();
@@ -228,14 +231,14 @@ test("assignment", () => {
 });
 
 test("unary operation", () => {
-  const incrementPostfix = tryParseExpression({ tokens: tokenize("id++"), tokenIndex: 0 });
-  const decrementPostfix = tryParseExpression({ tokens: tokenize("id--"), tokenIndex: 0 });
-  const incrementPrefix = tryParseExpression({ tokens: tokenize("++id"), tokenIndex: 0 });
-  const decrementPrefix = tryParseExpression({ tokens: tokenize("--id"), tokenIndex: 0 });
-  const subtract = tryParseExpression({ tokens: tokenize("-id"), tokenIndex: 0 });
-  const _delete = tryParseExpression({ tokens: tokenize("delete id"), tokenIndex: 0 });
-  const not = tryParseExpression({ tokens: tokenize("!id"), tokenIndex: 0 });
-  const bitwiseNot = tryParseExpression({ tokens: tokenize("~id"), tokenIndex: 0 });
+  const incrementPostfix = parseExpression({ tokens: tokenize("id++"), tokenIndex: 0 });
+  const decrementPostfix = parseExpression({ tokens: tokenize("id--"), tokenIndex: 0 });
+  const incrementPrefix = parseExpression({ tokens: tokenize("++id"), tokenIndex: 0 });
+  const decrementPrefix = parseExpression({ tokens: tokenize("--id"), tokenIndex: 0 });
+  const subtract = parseExpression({ tokens: tokenize("-id"), tokenIndex: 0 });
+  const _delete = parseExpression({ tokens: tokenize("delete id"), tokenIndex: 0 });
+  const not = parseExpression({ tokens: tokenize("!id"), tokenIndex: 0 });
+  const bitwiseNot = parseExpression({ tokens: tokenize("~id"), tokenIndex: 0 });
 
   expect(incrementPostfix).toBeDefined();
   expect(decrementPostfix).toBeDefined();
@@ -257,25 +260,25 @@ test("unary operation", () => {
 });
 
 test("binary operation", () => {
-  const add = tryParseExpression({ tokens: tokenize("a + b"), tokenIndex: 0 });
-  const subtract = tryParseExpression({ tokens: tokenize("a - b"), tokenIndex: 0 });
-  const mul = tryParseExpression({ tokens: tokenize("a * b"), tokenIndex: 0 });
-  const divide = tryParseExpression({ tokens: tokenize("a / b"), tokenIndex: 0 });
-  const modulo = tryParseExpression({ tokens: tokenize("a % b"), tokenIndex: 0 });
-  const power = tryParseExpression({ tokens: tokenize("a ** b"), tokenIndex: 0 });
-  const and = tryParseExpression({ tokens: tokenize("a && b"), tokenIndex: 0 });
-  const or = tryParseExpression({ tokens: tokenize("a || b"), tokenIndex: 0 });
-  const equal = tryParseExpression({ tokens: tokenize("a == b"), tokenIndex: 0 });
-  const notEqual = tryParseExpression({ tokens: tokenize("a != b"), tokenIndex: 0 });
-  const less = tryParseExpression({ tokens: tokenize("a < b"), tokenIndex: 0 });
-  const lessEqual = tryParseExpression({ tokens: tokenize("a <= b"), tokenIndex: 0 });
-  const more = tryParseExpression({ tokens: tokenize("a > b"), tokenIndex: 0 });
-  const moreEqual = tryParseExpression({ tokens: tokenize("a >= b"), tokenIndex: 0 });
-  const bitwiseAnd = tryParseExpression({ tokens: tokenize("a & b"), tokenIndex: 0 });
-  const bitwiseOr = tryParseExpression({ tokens: tokenize("a | b"), tokenIndex: 0 });
-  const bitwiseXOr = tryParseExpression({ tokens: tokenize("a ^ b"), tokenIndex: 0 });
-  const shiftRight = tryParseExpression({ tokens: tokenize("a >> b"), tokenIndex: 0 });
-  const shiftLeft = tryParseExpression({ tokens: tokenize("a << b"), tokenIndex: 0 });
+  const add = parseExpression({ tokens: tokenize("a + b"), tokenIndex: 0 });
+  const subtract = parseExpression({ tokens: tokenize("a - b"), tokenIndex: 0 });
+  const mul = parseExpression({ tokens: tokenize("a * b"), tokenIndex: 0 });
+  const divide = parseExpression({ tokens: tokenize("a / b"), tokenIndex: 0 });
+  const modulo = parseExpression({ tokens: tokenize("a % b"), tokenIndex: 0 });
+  const power = parseExpression({ tokens: tokenize("a ** b"), tokenIndex: 0 });
+  const and = parseExpression({ tokens: tokenize("a && b"), tokenIndex: 0 });
+  const or = parseExpression({ tokens: tokenize("a || b"), tokenIndex: 0 });
+  const equal = parseExpression({ tokens: tokenize("a == b"), tokenIndex: 0 });
+  const notEqual = parseExpression({ tokens: tokenize("a != b"), tokenIndex: 0 });
+  const less = parseExpression({ tokens: tokenize("a < b"), tokenIndex: 0 });
+  const lessEqual = parseExpression({ tokens: tokenize("a <= b"), tokenIndex: 0 });
+  const more = parseExpression({ tokens: tokenize("a > b"), tokenIndex: 0 });
+  const moreEqual = parseExpression({ tokens: tokenize("a >= b"), tokenIndex: 0 });
+  const bitwiseAnd = parseExpression({ tokens: tokenize("a & b"), tokenIndex: 0 });
+  const bitwiseOr = parseExpression({ tokens: tokenize("a | b"), tokenIndex: 0 });
+  const bitwiseXOr = parseExpression({ tokens: tokenize("a ^ b"), tokenIndex: 0 });
+  const shiftRight = parseExpression({ tokens: tokenize("a >> b"), tokenIndex: 0 });
+  const shiftLeft = parseExpression({ tokens: tokenize("a << b"), tokenIndex: 0 });
 
   expect(add).toBeDefined();
   expect(subtract).toBeDefined();
@@ -319,27 +322,27 @@ test("binary operation", () => {
 
   let expression: Ast.Expression;
 
-  expression = tryParseExpression({ tokens: tokenize("a + b + c"), tokenIndex: 0 })!;
+  expression = parseExpression({ tokens: tokenize("a + b + c"), tokenIndex: 0 })!;
   expect(expressionToString(expression)).toBe("(+ (+ a b) c)");
 
-  expression = tryParseExpression({ tokens: tokenize("a + b * c * d + e"), tokenIndex: 0 })!;
+  expression = parseExpression({ tokens: tokenize("a + b * c * d + e"), tokenIndex: 0 })!;
   expect(expressionToString(expression)).toBe("(+ (+ a (* (* b c) d)) e)");
 });
 
 test("conditional expression", () => {
-  const conditional = tryParseExpression({ tokens: tokenize("a ? b : c"), tokenIndex: 0 });
+  const conditional = parseExpression({ tokens: tokenize("a ? b : c"), tokenIndex: 0 });
   expect(conditional).toBeDefined();
   expect(conditional!.ast).toBe(Ast.AstType.ConditionalExpression);
 });
 
 test("function call expression", () => {
-  const emptyFunction = tryParseExpression({ tokens: tokenize("fn()"), tokenIndex: 0 }) as
+  const emptyFunction = parseExpression({ tokens: tokenize("fn()"), tokenIndex: 0 }) as
     | Ast.FunctionCallExpression
     | undefined;
-  const singleFunction = tryParseExpression({ tokens: tokenize("fn(a)"), tokenIndex: 0 }) as
+  const singleFunction = parseExpression({ tokens: tokenize("fn(a)"), tokenIndex: 0 }) as
     | Ast.FunctionCallExpression
     | undefined;
-  const manyFunction = tryParseExpression({ tokens: tokenize("fn(a,b,c)"), tokenIndex: 0 }) as
+  const manyFunction = parseExpression({ tokens: tokenize("fn(a,b,c)"), tokenIndex: 0 }) as
     | Ast.FunctionCallExpression
     | undefined;
 
@@ -361,7 +364,7 @@ test("function call expression", () => {
 });
 
 test("member access expression", () => {
-  const memberAccess = tryParseExpression({ tokens: tokenize("a.b"), tokenIndex: 0 }) as
+  const memberAccess = parseExpression({ tokens: tokenize("a.b"), tokenIndex: 0 }) as
     | Ast.MemberAccessExpression
     | undefined;
 
@@ -370,12 +373,12 @@ test("member access expression", () => {
   expect(memberAccess!.expression.ast).toBe(Ast.AstType.Identifier);
   expect(memberAccess!.member.ast).toBe(Ast.AstType.Identifier);
 
-  const expression = tryParseExpression({ tokens: tokenize("a.b.c"), tokenIndex: 0 })!;
+  const expression = parseExpression({ tokens: tokenize("a.b.c"), tokenIndex: 0 })!;
   expect(expressionToString(expression)).toBe("(. (. a b) c)");
 });
 
 test("index access expression", () => {
-  const indexAccess = tryParseExpression({ tokens: tokenize("a[0]"), tokenIndex: 0 }) as
+  const indexAccess = parseExpression({ tokens: tokenize("a[0]"), tokenIndex: 0 }) as
     | Ast.IndexAccessExpression
     | undefined;
 
@@ -386,14 +389,14 @@ test("index access expression", () => {
 });
 
 test("new expression", () => {
-  const _new = tryParseExpression({ tokens: tokenize("new Contract()"), tokenIndex: 0 });
+  const _new = parseExpression({ tokens: tokenize("new Contract()"), tokenIndex: 0 });
 
   expect(_new).toBeDefined();
   expect(_new!.ast).toBe(Ast.AstType.NewExpression);
 });
 
 test("tuple expression", () => {
-  const tuple = tryParseExpression({ tokens: tokenize("(a,b,c)"), tokenIndex: 0 }) as
+  const tuple = parseExpression({ tokens: tokenize("(a,b,c)"), tokenIndex: 0 }) as
     | Ast.TupleExpression
     | undefined;
 
@@ -405,36 +408,36 @@ test("tuple expression", () => {
 // statements
 
 test("expression statement", () => {
-  const identifier = tryParseExpressionStatement({ tokens: tokenize("a;"), tokenIndex: 0 });
-  const literal = tryParseExpressionStatement({ tokens: tokenize("52;"), tokenIndex: 0 });
-  const assignment = tryParseExpressionStatement({ tokens: tokenize("a = 52;"), tokenIndex: 0 });
-  const unaryOperation = tryParseExpressionStatement({
+  const identifier = parseExpressionStatement({ tokens: tokenize("a;"), tokenIndex: 0 });
+  const literal = parseExpressionStatement({ tokens: tokenize("52;"), tokenIndex: 0 });
+  const assignment = parseExpressionStatement({ tokens: tokenize("a = 52;"), tokenIndex: 0 });
+  const unaryOperation = parseExpressionStatement({
     tokens: tokenize("delete a;"),
     tokenIndex: 0,
   });
-  const binaryOperation = tryParseExpressionStatement({
+  const binaryOperation = parseExpressionStatement({
     tokens: tokenize("a + b;"),
     tokenIndex: 0,
   });
-  const conditional = tryParseExpressionStatement({
+  const conditional = parseExpressionStatement({
     tokens: tokenize("a ? b : c;"),
     tokenIndex: 0,
   });
-  const functionCall = tryParseExpressionStatement({
+  const functionCall = parseExpressionStatement({
     tokens: tokenize("a();"),
     tokenIndex: 0,
   });
-  const memberAccess = tryParseExpressionStatement({ tokens: tokenize("a.b;"), tokenIndex: 0 });
-  const indexAccess = tryParseExpressionStatement({ tokens: tokenize("a[52];"), tokenIndex: 0 });
-  const _new = tryParseExpressionStatement({
+  const memberAccess = parseExpressionStatement({ tokens: tokenize("a.b;"), tokenIndex: 0 });
+  const indexAccess = parseExpressionStatement({ tokens: tokenize("a[52];"), tokenIndex: 0 });
+  const _new = parseExpressionStatement({
     tokens: tokenize("new a();"),
     tokenIndex: 0,
   });
-  const tuple = tryParseExpressionStatement({
+  const tuple = parseExpressionStatement({
     tokens: tokenize("(a,b);"),
     tokenIndex: 0,
   });
-  const parenthesized = tryParseExpressionStatement({
+  const parenthesized = parseExpressionStatement({
     tokens: tokenize("(((a + b)));"),
     tokenIndex: 0,
   });
@@ -467,9 +470,9 @@ test("expression statement", () => {
 });
 
 test("block statement", () => {
-  const emptyBlock = tryParseBlockStatement({ tokens: tokenize("{}"), tokenIndex: 0 });
-  const singleBlock = tryParseBlockStatement({ tokens: tokenize("{a;}"), tokenIndex: 0 });
-  const manyBlock = tryParseBlockStatement({ tokens: tokenize("{a; b;}"), tokenIndex: 0 });
+  const emptyBlock = parseBlockStatement({ tokens: tokenize("{}"), tokenIndex: 0 });
+  const singleBlock = parseBlockStatement({ tokens: tokenize("{a;}"), tokenIndex: 0 });
+  const manyBlock = parseBlockStatement({ tokens: tokenize("{a; b;}"), tokenIndex: 0 });
 
   expect(emptyBlock).toBeDefined();
   expect(singleBlock).toBeDefined();
@@ -485,15 +488,15 @@ test("block statement", () => {
 });
 
 test("unchecked block statement", () => {
-  const emptyBlock = tryParseUncheckedBlockStatement({
+  const emptyBlock = parseUncheckedBlockStatement({
     tokens: tokenize("unchecked {}"),
     tokenIndex: 0,
   });
-  const singleBlock = tryParseUncheckedBlockStatement({
+  const singleBlock = parseUncheckedBlockStatement({
     tokens: tokenize("unchecked {a;}"),
     tokenIndex: 0,
   });
-  const manyBlock = tryParseUncheckedBlockStatement({
+  const manyBlock = parseUncheckedBlockStatement({
     tokens: tokenize("unchecked { a; b; }"),
     tokenIndex: 0,
   });
@@ -512,8 +515,8 @@ test("unchecked block statement", () => {
 });
 
 test.todo("if statement", () => {
-  const _if = tryParseIfStatement({ tokens: tokenize("if (a) { b; }"), tokenIndex: 0 });
-  const _ifElse = tryParseIfStatement({
+  const _if = parseIfStatement({ tokens: tokenize("if (a) { b; }"), tokenIndex: 0 });
+  const _ifElse = parseIfStatement({
     tokens: tokenize("if (a) { b; } else { c; }"),
     tokenIndex: 0,
   });
@@ -528,7 +531,7 @@ test.todo("if statement", () => {
 test.todo("for statement", () => {});
 
 test.todo("while statement", () => {
-  const _while = tryParseWhileStatement({ tokens: tokenize("while (a) { b; }"), tokenIndex: 0 });
+  const _while = parseWhileStatement({ tokens: tokenize("while (a) { b; }"), tokenIndex: 0 });
 
   expect(_while).toBeDefined();
 
@@ -538,7 +541,7 @@ test.todo("while statement", () => {
 test.todo("do while statement");
 
 test("break statement", () => {
-  const _break = tryParseBreakStatement({ tokens: tokenize("break;"), tokenIndex: 0 });
+  const _break = parseBreakStatement({ tokens: tokenize("break;"), tokenIndex: 0 });
 
   expect(_break).toBeDefined();
 
@@ -546,7 +549,7 @@ test("break statement", () => {
 });
 
 test("continue statement", () => {
-  const _continue = tryParseContinueStatement({ tokens: tokenize("continue;"), tokenIndex: 0 });
+  const _continue = parseContinueStatement({ tokens: tokenize("continue;"), tokenIndex: 0 });
 
   expect(_continue).toBeDefined();
 
@@ -554,7 +557,7 @@ test("continue statement", () => {
 });
 
 test("emit statement", () => {
-  const emit = tryParseEmitStatement({ tokens: tokenize("emit Log();"), tokenIndex: 0 });
+  const emit = parseEmitStatement({ tokens: tokenize("emit Log();"), tokenIndex: 0 });
 
   expect(emit).toBeDefined();
 
@@ -562,7 +565,7 @@ test("emit statement", () => {
 });
 
 test("revert statement", () => {
-  const revert = tryParseRevertStatement({ tokens: tokenize("revert Error();"), tokenIndex: 0 });
+  const revert = parseRevertStatement({ tokens: tokenize("revert Error();"), tokenIndex: 0 });
 
   expect(revert).toBeDefined();
 
@@ -570,8 +573,8 @@ test("revert statement", () => {
 });
 
 test("return statement", () => {
-  const _return = tryParseReturnStatement({ tokens: tokenize("return;"), tokenIndex: 0 });
-  const _returnExpression = tryParseReturnStatement({
+  const _return = parseReturnStatement({ tokens: tokenize("return;"), tokenIndex: 0 });
+  const _returnExpression = parseReturnStatement({
     tokens: tokenize("return a;"),
     tokenIndex: 0,
   });
@@ -584,27 +587,44 @@ test("return statement", () => {
 });
 
 test.todo("placehoder statement", () => {
-  const placeholder = tryParsePlaceholderStatement({ tokens: tokenize("_;"), tokenIndex: 0 });
-
+  const placeholder = parsePlaceholderStatement({ tokens: tokenize("_;"), tokenIndex: 0 });
   expect(placeholder).toBeDefined();
-
   expect(placeholder!.ast).toBe(Ast.AstType.PlaceholderStatement);
 });
 
-// test.todo("variable declaration", () => {
-//   const [noInitializer] = getAst("uint256 a", tryParseVariableDeclaration);
-//   const [initializer] = getAst("uint256 a = 0", tryParseVariableDeclaration);
-//   const [location] = getAst("uint256 memory a", tryParseVariableDeclaration);
+test("variable declaration", () => {
+  const noInitializer = parseVariableDeclaration({
+    tokens: tokenize("uint256 a"),
+    tokenIndex: 0,
+  }) as Ast.VariableDeclaration | undefined;
+  const initializer = parseVariableDeclaration({
+    tokens: tokenize("uint256 a = 0"),
+    tokenIndex: 0,
+  }) as Ast.VariableDeclaration | undefined;
+  const location = parseVariableDeclaration({
+    tokens: tokenize("uint256 memory a"),
+    tokenIndex: 0,
+  }) as Ast.VariableDeclaration | undefined;
 
-//   // TODO(kyle) attributes
+  // TODO(kyle) attributes
 
-//   expect(noInitializer).toBeDefined();
-//   expect(initializer).toBeDefined();
-//   expect(location).toBeDefined();
+  expect(noInitializer).toBeDefined();
+  expect(initializer).toBeDefined();
+  expect(location).toBeDefined();
 
-//   expect(noInitializer!.ast).toBe(Ast.AstType.VariableDeclaration);
-//   expect(initializer!.ast).toBe(Ast.AstType.VariableDeclaration);
-//   expect(location!.ast).toBe(Ast.AstType.VariableDeclaration);
+  expect(noInitializer!.ast).toBe(Ast.AstType.VariableDeclaration);
+  expect(initializer!.ast).toBe(Ast.AstType.VariableDeclaration);
+  expect(location!.ast).toBe(Ast.AstType.VariableDeclaration);
 
-//   expect(initializer!.initializer).toBeDefined();
-// });
+  expect(initializer!.initializer).toBeDefined();
+});
+
+test("event definition", () => {
+  const event = parseEventDefinition({ tokens: tokenize("event Event();"), tokenIndex: 0 });
+  expect(event.ast).toBe(Ast.AstType.EventDefinition);
+});
+
+test("error definition", () => {
+  const error = parseErrorDefinition({ tokens: tokenize("error Error();"), tokenIndex: 0 });
+  expect(error.ast).toBe(Ast.AstType.ErrorDefinition);
+});

@@ -255,9 +255,9 @@ export namespace Ast {
   export type Mapping = {
     ast: AstType.Mapping;
     keyType: Type;
-    keyName: Identifier | undefined;
+    keyName: Token.Identifier | undefined;
     valueType: Type;
-    valueName: Identifier | undefined;
+    valueName: Token.Identifier | undefined;
   };
 
   // defintions
@@ -275,7 +275,7 @@ export namespace Ast {
   type Parameter = {
     type: Expression;
     storage: Token.Memory | Token.Storage | Token.Calldata | undefined;
-    name: Identifier | undefined;
+    name: Token.Identifier | undefined;
   };
 
   type ParameterList = (Parameter | undefined)[];
@@ -306,25 +306,25 @@ export namespace Ast {
 
   export type EventDefinition = {
     ast: AstType.EventDefinition;
-    name: Identifier;
-    parameters: ParameterList;
+    name: Token.Identifier;
+    parameters: VariableDeclaration[];
   };
 
   export type ErrorDefinition = {
     ast: AstType.ErrorDefinition;
-    name: Identifier;
-    parameters: ParameterList;
+    name: Token.Identifier;
+    parameters: VariableDeclaration[];
   };
 
   export type StructDefinition = {
     ast: AstType.StructDefinition;
-    name: Identifier;
+    name: Token.Identifier;
     members: VariableDeclaration[];
   };
 
   export type ModifierDefinition = {
     ast: AstType.ModifierDefinition;
-    name: Identifier;
+    name: Token.Identifier;
     body: BlockStatement;
     visibility: Visibility;
     parameters: ParameterList;
