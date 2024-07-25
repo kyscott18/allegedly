@@ -270,8 +270,6 @@ export namespace Ast {
     args: Expression[];
   };
 
-  type FunctionAttribute = Visibility | Mutability | Token.Virtual | Token.Override | Base;
-
   type Parameter = {
     type: Expression;
     storage: Token.Memory | Token.Storage | Token.Calldata | undefined;
@@ -283,17 +281,19 @@ export namespace Ast {
   export type FunctionDefinition = {
     ast: Ast.AstType.FunctionDefinition;
     kind: Token.Function | Token.Receive | Token.Constructor | Token.Fallback;
-    attributes: FunctionAttribute[];
-    parameters: ParameterList;
-    returns: ParameterList;
-    name: Identifier | undefined;
+    visibility: Visibility;
+    mutability: Mutability;
+    modifiers: Base[];
+    parameters: VariableDeclaration[];
+    returns: VariableDeclaration[];
+    name: Token.Identifier | undefined;
     body: BlockStatement;
   };
 
   export type ContractDefinition = {
     ast: Ast.AstType.ContractDefinition;
-    name: Identifier;
     kind: Token.Contract | Token.Interface | Token.Library;
+    name: Token.Identifier;
     nodes: (
       | FunctionDefinition
       | StructDefinition
@@ -330,8 +330,8 @@ export namespace Ast {
     parameters: ParameterList;
   };
 
-  type Visibility = Token.External | Token.Public | Token.Internal | Token.Private;
-  type Mutability = Token.Pure | Token.View | Token.Payable;
+  export type Visibility = Token.External | Token.Public | Token.Internal | Token.Private;
+  export type Mutability = Token.Pure | Token.View | Token.Payable | Token.Nonpayable;
 
   export type Expression =
     | Identifier

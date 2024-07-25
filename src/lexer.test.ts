@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import path from "node:path";
 import { tokenize } from "./lexer";
 import { Token } from "./types/token";
 
@@ -56,4 +57,9 @@ test("comments", () => {
   expect(tokens).toHaveLength(2);
   expect(tokens[0]?.token).toBe(Token.TokenType.Identifier);
   expect((tokens[0] as Token.Identifier)?.value).toBe("hi");
+});
+
+test("integration", async () => {
+  tokenize(await Bun.file(path.join(import.meta.dir, "_sol", "SimpleStorage.sol")).text());
+  // tokenize(await Bun.file(path.join(import.meta.dir, "_sol", "Erc20.sol")).text());
 });

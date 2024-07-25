@@ -130,7 +130,7 @@ abstract contract ERC20 {
             address recoveredAddress = ecrecover(
                 keccak256(
                     abi.encodePacked(
-                        "\x19\x01",
+                        // "\x19\x01",
                         DOMAIN_SEPARATOR(),
                         keccak256(
                             abi.encode(

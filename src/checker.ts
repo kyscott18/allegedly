@@ -10,7 +10,7 @@ export const check = (program: Ast.Program): void => {
 
   for (const definition of program) {
     checkDefinition(definition, context);
-    context.symbols[0]!.set(definition.name!.token.value, definition);
+    // context.symbols[0]!.set(definition.name!.token.value, definition);
   }
 };
 
