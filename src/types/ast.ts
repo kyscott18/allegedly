@@ -13,7 +13,6 @@ export namespace Ast {
     IndexAccessExpression,
     NewExpression,
     TupleExpression,
-    VariableDeclaration,
     ExpressionStatement,
     BlockStatement,
     UncheckedBlockStatement,
@@ -30,6 +29,9 @@ export namespace Ast {
     ElementaryType,
     ArrayType,
     Mapping,
+    VariableDefinition,
+    VariableDeclaration,
+    Parameter,
     FunctionDefinition,
     ContractDefinition,
     EventDefinition,
@@ -150,17 +152,6 @@ export namespace Ast {
     elements: Expression[];
   };
 
-  type VariableAttributes = Visibility | Token.Constant | Token.Override;
-
-  export type VariableDeclaration = {
-    ast: AstType.VariableDeclaration;
-    type: Type;
-    location: Token.Storage | Token.Memory | Token.Calldata | undefined;
-    attributes: VariableAttributes[];
-    identifier: Token.Identifier;
-    initializer: Expression | undefined;
-  };
-
   // statements
 
   export type ExpressionStatement = {
@@ -270,13 +261,30 @@ export namespace Ast {
     args: Expression[];
   };
 
-  type Parameter = {
-    type: Expression;
-    storage: Token.Memory | Token.Storage | Token.Calldata | undefined;
-    name: Token.Identifier | undefined;
+  export type VariableDefintion = {
+    ast: AstType.VariableDefinition;
+    type: Type;
+    identifier: Token.Identifier;
+    isConstant: boolean;
+    isImmutable: boolean;
+    visibility: Visibility | undefined;
   };
 
-  type ParameterList = (Parameter | undefined)[];
+  export type VariableDeclaration = {
+    ast: AstType.VariableDeclaration;
+    type: Type;
+    identifier: Token.Identifier;
+    location: Token.Storage | Token.Memory | Token.Calldata | undefined;
+    initializer: Expression | undefined;
+  };
+
+  export type Parameter = {
+    ast: AstType.Parameter;
+    type: Type;
+    identifier: Token.Identifier | undefined;
+    location: Token.Storage | Token.Memory | Token.Calldata | undefined;
+    isIndexed: boolean;
+  };
 
   export type FunctionDefinition = {
     ast: Ast.AstType.FunctionDefinition;
@@ -284,8 +292,8 @@ export namespace Ast {
     visibility: Visibility;
     mutability: Mutability;
     modifiers: Base[];
-    parameters: VariableDeclaration[];
-    returns: VariableDeclaration[];
+    parameters: Parameter[];
+    returns: Parameter[];
     name: Token.Identifier | undefined;
     body: BlockStatement;
   };
@@ -297,7 +305,7 @@ export namespace Ast {
     nodes: (
       | FunctionDefinition
       | StructDefinition
-      | VariableDeclaration
+      | VariableDefintion
       | EventDefinition
       | ErrorDefinition
       | ModifierDefinition
@@ -307,19 +315,19 @@ export namespace Ast {
   export type EventDefinition = {
     ast: AstType.EventDefinition;
     name: Token.Identifier;
-    parameters: VariableDeclaration[];
+    parameters: Parameter[];
   };
 
   export type ErrorDefinition = {
     ast: AstType.ErrorDefinition;
     name: Token.Identifier;
-    parameters: VariableDeclaration[];
+    parameters: Parameter[];
   };
 
   export type StructDefinition = {
     ast: AstType.StructDefinition;
     name: Token.Identifier;
-    members: VariableDeclaration[];
+    members: Parameter[];
   };
 
   export type ModifierDefinition = {
@@ -327,7 +335,7 @@ export namespace Ast {
     name: Token.Identifier;
     body: BlockStatement;
     visibility: Visibility;
-    parameters: ParameterList;
+    parameters: Parameter[];
   };
 
   export type Visibility = Token.External | Token.Public | Token.Internal | Token.Private;
@@ -347,6 +355,7 @@ export namespace Ast {
     | TupleExpression;
 
   export type Statement =
+    | VariableDeclaration
     | ExpressionStatement
     | BlockStatement
     | UncheckedBlockStatement
@@ -364,7 +373,7 @@ export namespace Ast {
   export type Type = ElementaryType | ArrayType | Mapping;
 
   export type Definition =
-    | VariableDeclaration
+    | VariableDefintion
     | FunctionDefinition
     | ContractDefinition
     | EventDefinition

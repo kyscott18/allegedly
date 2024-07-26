@@ -4,23 +4,12 @@ import { NotImplementedError } from "./errors/notImplemented.js";
 import { tokenize } from "./lexer.js";
 import {
   parse,
-  parseBlockStatement,
-  parseBreakStatement,
-  parseContinueStatement,
   parseContractDefinition,
-  parseEmitStatement,
   parseErrorDefinition,
   parseEventDefinition,
   parseExpression,
-  parseExpressionStatement,
   parseFunctionDefinition,
-  parseIfStatement,
-  parsePlaceholderStatement,
-  parseReturnStatement,
-  parseRevertStatement,
-  parseUncheckedBlockStatement,
-  parseVariableDeclaration,
-  parseWhileStatement,
+  parseStatement,
 } from "./parser.js";
 import { Ast } from "./types/ast.js";
 import { Token } from "./types/token.js";
@@ -350,36 +339,36 @@ test("tuple expression", () => {
 // statements
 
 test("expression statement", () => {
-  const identifier = parseExpressionStatement({ tokens: tokenize("a;"), tokenIndex: 0 });
-  const literal = parseExpressionStatement({ tokens: tokenize("52;"), tokenIndex: 0 });
-  const assignment = parseExpressionStatement({ tokens: tokenize("a = 52;"), tokenIndex: 0 });
-  const unaryOperation = parseExpressionStatement({
+  const identifier = parseStatement({ tokens: tokenize("a;"), tokenIndex: 0 });
+  const literal = parseStatement({ tokens: tokenize("52;"), tokenIndex: 0 });
+  const assignment = parseStatement({ tokens: tokenize("a = 52;"), tokenIndex: 0 });
+  const unaryOperation = parseStatement({
     tokens: tokenize("delete a;"),
     tokenIndex: 0,
   });
-  const binaryOperation = parseExpressionStatement({
+  const binaryOperation = parseStatement({
     tokens: tokenize("a + b;"),
     tokenIndex: 0,
   });
-  const conditional = parseExpressionStatement({
+  const conditional = parseStatement({
     tokens: tokenize("a ? b : c;"),
     tokenIndex: 0,
   });
-  const functionCall = parseExpressionStatement({
+  const functionCall = parseStatement({
     tokens: tokenize("a();"),
     tokenIndex: 0,
   });
-  const memberAccess = parseExpressionStatement({ tokens: tokenize("a.b;"), tokenIndex: 0 });
-  const indexAccess = parseExpressionStatement({ tokens: tokenize("a[52];"), tokenIndex: 0 });
-  const _new = parseExpressionStatement({
+  const memberAccess = parseStatement({ tokens: tokenize("a.b;"), tokenIndex: 0 });
+  const indexAccess = parseStatement({ tokens: tokenize("a[52];"), tokenIndex: 0 });
+  const _new = parseStatement({
     tokens: tokenize("new a();"),
     tokenIndex: 0,
   });
-  const tuple = parseExpressionStatement({
+  const tuple = parseStatement({
     tokens: tokenize("(a,b);"),
     tokenIndex: 0,
   });
-  const parenthesized = parseExpressionStatement({
+  const parenthesized = parseStatement({
     tokens: tokenize("(((a + b)));"),
     tokenIndex: 0,
   });
@@ -399,9 +388,18 @@ test("expression statement", () => {
 });
 
 test("block statement", () => {
-  const emptyBlock = parseBlockStatement({ tokens: tokenize("{}"), tokenIndex: 0 });
-  const singleBlock = parseBlockStatement({ tokens: tokenize("{a;}"), tokenIndex: 0 });
-  const manyBlock = parseBlockStatement({ tokens: tokenize("{a; b;}"), tokenIndex: 0 });
+  const emptyBlock = parseStatement({
+    tokens: tokenize("{}"),
+    tokenIndex: 0,
+  }) as Ast.BlockStatement;
+  const singleBlock = parseStatement({
+    tokens: tokenize("{a;}"),
+    tokenIndex: 0,
+  }) as Ast.BlockStatement;
+  const manyBlock = parseStatement({
+    tokens: tokenize("{a; b;}"),
+    tokenIndex: 0,
+  }) as Ast.BlockStatement;
 
   expect(emptyBlock!.ast).toBe(Ast.AstType.BlockStatement);
   expect(singleBlock!.ast).toBe(Ast.AstType.BlockStatement);
@@ -413,18 +411,18 @@ test("block statement", () => {
 });
 
 test("unchecked block statement", () => {
-  const emptyBlock = parseUncheckedBlockStatement({
+  const emptyBlock = parseStatement({
     tokens: tokenize("unchecked {}"),
     tokenIndex: 0,
-  });
-  const singleBlock = parseUncheckedBlockStatement({
+  }) as Ast.UncheckedBlockStatement;
+  const singleBlock = parseStatement({
     tokens: tokenize("unchecked {a;}"),
     tokenIndex: 0,
-  });
-  const manyBlock = parseUncheckedBlockStatement({
+  }) as Ast.UncheckedBlockStatement;
+  const manyBlock = parseStatement({
     tokens: tokenize("unchecked { a; b; }"),
     tokenIndex: 0,
-  });
+  }) as Ast.UncheckedBlockStatement;
 
   expect(emptyBlock!.ast).toBe(Ast.AstType.UncheckedBlockStatement);
   expect(singleBlock!.ast).toBe(Ast.AstType.UncheckedBlockStatement);
@@ -436,8 +434,8 @@ test("unchecked block statement", () => {
 });
 
 test.todo("if statement", () => {
-  const _if = parseIfStatement({ tokens: tokenize("if (a) { b; }"), tokenIndex: 0 });
-  const _ifElse = parseIfStatement({
+  const _if = parseStatement({ tokens: tokenize("if (a) { b; }"), tokenIndex: 0 });
+  const _ifElse = parseStatement({
     tokens: tokenize("if (a) { b; } else { c; }"),
     tokenIndex: 0,
   });
@@ -449,35 +447,35 @@ test.todo("if statement", () => {
 test.todo("for statement", () => {});
 
 test.todo("while statement", () => {
-  const _while = parseWhileStatement({ tokens: tokenize("while (a) { b; }"), tokenIndex: 0 });
+  const _while = parseStatement({ tokens: tokenize("while (a) { b; }"), tokenIndex: 0 });
   expect(_while!.ast).toBe(Ast.AstType.WhileStatement);
 });
 
 test.todo("do while statement");
 
 test("break statement", () => {
-  const _break = parseBreakStatement({ tokens: tokenize("break;"), tokenIndex: 0 });
+  const _break = parseStatement({ tokens: tokenize("break;"), tokenIndex: 0 });
   expect(_break!.ast).toBe(Ast.AstType.BreakStatement);
 });
 
 test("continue statement", () => {
-  const _continue = parseContinueStatement({ tokens: tokenize("continue;"), tokenIndex: 0 });
+  const _continue = parseStatement({ tokens: tokenize("continue;"), tokenIndex: 0 });
   expect(_continue!.ast).toBe(Ast.AstType.ContinueStatement);
 });
 
 test("emit statement", () => {
-  const emit = parseEmitStatement({ tokens: tokenize("emit Log();"), tokenIndex: 0 });
+  const emit = parseStatement({ tokens: tokenize("emit Log();"), tokenIndex: 0 });
   expect(emit!.ast).toBe(Ast.AstType.EmitStatement);
 });
 
 test("revert statement", () => {
-  const revert = parseRevertStatement({ tokens: tokenize("revert Error();"), tokenIndex: 0 });
+  const revert = parseStatement({ tokens: tokenize("revert Error();"), tokenIndex: 0 });
   expect(revert!.ast).toBe(Ast.AstType.RevertStatement);
 });
 
 test("return statement", () => {
-  const _return = parseReturnStatement({ tokens: tokenize("return;"), tokenIndex: 0 });
-  const _returnExpression = parseReturnStatement({
+  const _return = parseStatement({ tokens: tokenize("return;"), tokenIndex: 0 });
+  const _returnExpression = parseStatement({
     tokens: tokenize("return a;"),
     tokenIndex: 0,
   });
@@ -487,21 +485,21 @@ test("return statement", () => {
 });
 
 test.todo("placehoder statement", () => {
-  const placeholder = parsePlaceholderStatement({ tokens: tokenize("_;"), tokenIndex: 0 });
+  const placeholder = parseStatement({ tokens: tokenize("_;"), tokenIndex: 0 });
   expect(placeholder!.ast).toBe(Ast.AstType.PlaceholderStatement);
 });
 
 test("variable declaration", () => {
-  const noInitializer = parseVariableDeclaration({
-    tokens: tokenize("uint256 a"),
+  const noInitializer = parseStatement({
+    tokens: tokenize("uint256 a;"),
     tokenIndex: 0,
   }) as Ast.VariableDeclaration | undefined;
-  const initializer = parseVariableDeclaration({
-    tokens: tokenize("uint256 a = 0"),
+  const initializer = parseStatement({
+    tokens: tokenize("uint256 a = 0;"),
     tokenIndex: 0,
   }) as Ast.VariableDeclaration | undefined;
-  const location = parseVariableDeclaration({
-    tokens: tokenize("uint256 memory a"),
+  const location = parseStatement({
+    tokens: tokenize("uint256 memory a;"),
     tokenIndex: 0,
   }) as Ast.VariableDeclaration | undefined;
 

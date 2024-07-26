@@ -43,7 +43,7 @@ export const parse = (tokens: Token.Token[]): Ast.Program => {
       case Token.TokenType.Bytes:
       case Token.TokenType.Bool:
       case Token.TokenType.Mapping:
-        program.push(parseVariableDeclaration(context));
+        program.push(parseVariableDefinition(context));
         expect(context, Token.TokenType.Semicolon);
         break;
 
@@ -119,7 +119,7 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
       context,
       Token.TokenType.OpenParenthesis,
       Token.TokenType.CloseParenthesis,
-      parseVariableDeclaration,
+      parseParameter,
     );
 
     let visibility: Ast.Visibility | undefined;
@@ -168,7 +168,7 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
         context,
         Token.TokenType.OpenParenthesis,
         Token.TokenType.CloseParenthesis,
-        parseVariableDeclaration,
+        parseParameter,
       );
 
       return {
@@ -236,7 +236,7 @@ export const parseContractDefinition = (context: ParseContext): Ast.ContractDefi
       case Token.TokenType.Bytes:
       case Token.TokenType.Bool:
       case Token.TokenType.Mapping:
-        nodes.push(parseVariableDeclaration(context));
+        nodes.push(parseVariableDefinition(context));
         expect(context, Token.TokenType.Semicolon);
         break;
 
@@ -259,7 +259,7 @@ export const parseEventDefinition = (context: ParseContext): Ast.EventDefinition
     context,
     Token.TokenType.OpenParenthesis,
     Token.TokenType.CloseParenthesis,
-    parseVariableDeclaration,
+    parseParameter,
   );
 
   expect(context, Token.TokenType.Semicolon);
@@ -277,7 +277,7 @@ export const parseErrorDefinition = (context: ParseContext): Ast.ErrorDefinition
     context,
     Token.TokenType.OpenParenthesis,
     Token.TokenType.CloseParenthesis,
-    parseVariableDeclaration,
+    parseParameter,
   );
 
   expect(context, Token.TokenType.Semicolon);
@@ -295,6 +295,22 @@ export const parseModifierDefinition = (
   // @ts-expect-error
 ): Ast.ModifierDefinition => {};
 
+export const parseVariableDefinition = (context: ParseContext): Ast.VariableDefintion => {
+  const type = parseType(context);
+
+  const identifier = peek(context) as Token.Identifier;
+  expect(context, Token.TokenType.Identifier);
+
+  return {
+    ast: Ast.AstType.VariableDefinition,
+    type,
+    identifier,
+    isConstant: false,
+    isImmutable: false,
+    visibility: undefined,
+  };
+};
+
 export const parseVariableDeclaration = (context: ParseContext): Ast.VariableDeclaration => {
   const type = parseType(context);
 
@@ -311,24 +327,47 @@ export const parseVariableDeclaration = (context: ParseContext): Ast.VariableDec
   expect(context, Token.TokenType.Identifier);
 
   if (eat(context, Token.TokenType.Assign) === false) {
+    expect(context, Token.TokenType.Semicolon);
     return {
       ast: Ast.AstType.VariableDeclaration,
       type,
-      location: maybeLocation,
-      attributes: [],
       identifier,
+      location: maybeLocation,
       initializer: undefined,
     };
   }
 
   const initializer = parseExpression(context);
+  expect(context, Token.TokenType.Semicolon);
   return {
     ast: Ast.AstType.VariableDeclaration,
     type,
-    location: maybeLocation,
-    attributes: [],
     identifier,
+    location: maybeLocation,
     initializer,
+  };
+};
+
+export const parseParameter = (context: ParseContext): Ast.Parameter => {
+  const type = parseType(context);
+
+  let maybeLocation = peek(context) as Token.Storage | Token.Memory | Token.Calldata | undefined;
+  if (
+    eat(context, Token.TokenType.Storage) === false &&
+    eat(context, Token.TokenType.Memory) === false &&
+    eat(context, Token.TokenType.Calldata) === false
+  ) {
+    maybeLocation = undefined;
+  }
+
+  const identifier = peek(context) as Token.Identifier;
+
+  return {
+    ast: Ast.AstType.Parameter,
+    type,
+    identifier: eat(context, Token.TokenType.Identifier) ? identifier : undefined,
+    location: maybeLocation,
+    isIndexed: false,
   };
 };
 
@@ -338,6 +377,15 @@ export const parseStatement = (context: ParseContext): Ast.Statement => {
   const token = peek(context);
 
   switch (token?.token) {
+    case Token.TokenType.Address:
+    case Token.TokenType.String:
+    case Token.TokenType.Uint:
+    case Token.TokenType.Int:
+    case Token.TokenType.Byte:
+    case Token.TokenType.Bytes:
+    case Token.TokenType.Bool:
+      return parseVariableDeclaration(context);
+
     case Token.TokenType.OpenCurlyBrace:
       return parseBlockStatement(context);
 

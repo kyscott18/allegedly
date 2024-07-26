@@ -5,7 +5,7 @@ contract SimpleStorage {
         storedData = x;
     }
 
-    function get() public view returns (uint256 a) {
+    function get() public view returns (uint256) {
         return storedData;
     }
 }
