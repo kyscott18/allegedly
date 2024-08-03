@@ -373,7 +373,6 @@ export namespace Ast {
   export type Type = ElementaryType | ArrayType | Mapping;
 
   export type Definition =
-    | VariableDefintion
     | FunctionDefinition
     | ContractDefinition
     | EventDefinition

@@ -35,18 +35,6 @@ export const parse = (tokens: Token.Token[]): Ast.Program => {
         program.push(parseErrorDefinition(context));
         break;
 
-      case Token.TokenType.Address:
-      case Token.TokenType.String:
-      case Token.TokenType.Uint:
-      case Token.TokenType.Int:
-      case Token.TokenType.Byte:
-      case Token.TokenType.Bytes:
-      case Token.TokenType.Bool:
-      case Token.TokenType.Mapping:
-        program.push(parseVariableDefinition(context));
-        expect(context, Token.TokenType.Semicolon);
-        break;
-
       default:
         throw new UnexpectTokenError(peek(context)!);
     }
