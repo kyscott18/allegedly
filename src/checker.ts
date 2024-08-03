@@ -100,21 +100,34 @@ export const checkDefinition = (context: CheckContext, definition: Ast.Definitio
     case Ast.AstType.FunctionDefinition:
       checkStatement(context, definition.body);
       break;
+
+    case Ast.AstType.ContractDefinition:
+      // TODO
+      break;
+
+    case Ast.AstType.EventDefinition:
+      // TODO
+      break;
+
+    case Ast.AstType.ErrorDefinition:
+      // TODO
+      break;
+
+    case Ast.AstType.StructDefinition:
+      // TODO
+      break;
+
+    case Ast.AstType.ModifierDefinition:
+      // TODO
+      break;
+
+    default:
+      never(definition);
   }
 };
 
 export const checkStatement = (context: CheckContext, statement: Ast.Statement): void => {
   switch (statement.ast) {
-    case Ast.AstType.ExpressionStatement:
-      checkExpression(context, statement.expression);
-      break;
-    case Ast.AstType.BlockStatement:
-      enterScope(context);
-      for (const _statement of statement.statements) {
-        checkStatement(context, _statement);
-      }
-      exitScope(context);
-      break;
     case Ast.AstType.VariableDeclaration:
       addSymbol(context, statement.identifier.value, statement.type.type);
       if (statement.initializer) {
@@ -127,6 +140,41 @@ export const checkStatement = (context: CheckContext, statement: Ast.Statement):
         }
       }
       break;
+
+    case Ast.AstType.ExpressionStatement:
+      checkExpression(context, statement.expression);
+      break;
+
+    case Ast.AstType.BlockStatement:
+      enterScope(context);
+      for (const _statement of statement.statements) {
+        checkStatement(context, _statement);
+      }
+      exitScope(context);
+      break;
+
+    case Ast.AstType.UncheckedBlockStatement:
+      enterScope(context);
+      for (const _statement of statement.statements) {
+        checkStatement(context, _statement);
+      }
+      exitScope(context);
+      break;
+
+    case Ast.AstType.IfStatement:
+    case Ast.AstType.ForStatement:
+    case Ast.AstType.WhileStatement:
+    case Ast.AstType.DoWhileStatement:
+    case Ast.AstType.BreakStatement:
+    case Ast.AstType.ContinueStatement:
+    case Ast.AstType.EmitStatement:
+    case Ast.AstType.RevertStatement:
+    case Ast.AstType.ReturnStatement:
+    case Ast.AstType.PlaceholderStatement:
+      break;
+
+    default:
+      never(statement);
   }
 };
 
@@ -178,7 +226,30 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
     }
 
     case Ast.AstType.UnaryOperation:
-      return checkExpression(context, expression.expression);
+      {
+        const _expression = checkExpression(context, expression.expression);
+
+        switch (expression.operator.token) {
+          case Token.TokenType.Increment:
+          case Token.TokenType.Decrement:
+            break;
+
+          case Token.TokenType.Subtract:
+            if (_expression.token !== Token.TokenType.Int) {
+              throw new TypeError(
+                `Built-in unary operator ${expression.operator} cannot be applied to type ${_expression.token}`,
+                4907,
+              );
+            }
+            break;
+
+          case Token.TokenType.Delete:
+          case Token.TokenType.Not:
+          case Token.TokenType.BitwiseNot:
+            break;
+        }
+      }
+      break;
 
     case Ast.AstType.BinaryOperation: {
       const left = checkExpression(context, expression.left);
@@ -204,25 +275,20 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       return trueExpression;
     }
 
-    case Ast.AstType.FunctionCallExpression: {
+    case Ast.AstType.FunctionCallExpression:
       throw new NotImplementedError({ source: "f()" });
-    }
 
-    case Ast.AstType.MemberAccessExpression: {
+    case Ast.AstType.MemberAccessExpression:
       throw new NotImplementedError({ source: "a.i" });
-    }
 
-    case Ast.AstType.IndexAccessExpression: {
+    case Ast.AstType.IndexAccessExpression:
       throw new NotImplementedError({ source: "a[i]" });
-    }
 
-    case Ast.AstType.NewExpression: {
+    case Ast.AstType.NewExpression:
       throw new NotImplementedError({ source: "new A()" });
-    }
 
-    case Ast.AstType.TupleExpression: {
+    case Ast.AstType.TupleExpression:
       throw new NotImplementedError({ source: "a[i]" });
-    }
 
     default:
       never(expression);

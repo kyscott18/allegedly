@@ -542,5 +542,7 @@ test.todo("modifier definition");
 
 test("integration", async () => {
   parse(tokenize(await Bun.file(path.join(import.meta.dir, "_sol", "SimpleStorage.sol")).text()));
+  parse(tokenize(await Bun.file(path.join(import.meta.dir, "_sol", "GetBalance.sol")).text()));
+
   // tokenize(await Bun.file(path.join(import.meta.dir, "_sol", "Erc20.sol")).text());
 });

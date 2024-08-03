@@ -61,6 +61,21 @@ test("2333", () => {
   expect(error!.code).toBe(2333);
 });
 
+test("4907", () => {
+  const error = getError(
+    `
+  {
+    uint256 a;
+    -a;
+  }`,
+    parseBlockStatement,
+    checkStatement,
+  );
+
+  expect(error).toBeDefined();
+  expect(error!.code).toBe(4907);
+});
+
 test("7407", () => {
   let error = getError(
     `
