@@ -1,121 +1,92 @@
-import type {
-  Abi,
-  AbiError,
-  AbiEvent,
-  AbiFunction,
-  AbiType,
-  SolidityBytes,
-  SolidityInt,
-} from "abitype";
+import { concat, numberToHex, toHex } from "viem";
 import { NotImplementedError } from "./errors/notImplemented";
 import { Ast } from "./types/ast";
 import { Token } from "./types/token";
-import type { Hex, Mutable } from "./types/utils";
+import type { Hex } from "./types/utils";
 import { never } from "./utils/never";
 
-type CompileAbiContext = {
-  // TODO(kyle) symbol table
+type CompileBytecodeContext = {
+  symbols: Map<
+    string,
+    {
+      /** Memory location for identifiers */
+      location: Hex;
+    }
+  >[];
+  functionSelectors: Map<Hex, Hex>;
+  freeMemoryPointer: number;
 };
 
-export type Contract = { name: string; abi: Abi };
+const enterScope = (context: CompileBytecodeContext) => {
+  context.symbols.push(new Map());
+};
+
+const exitScope = (context: CompileBytecodeContext) => {
+  context.symbols.pop();
+};
+
+const addSymbol = (context: CompileBytecodeContext, symbol: string): Hex => {
+  const scope = context.symbols[context.symbols.length - 1]!;
+  const location = numberToHex(context.freeMemoryPointer);
+
+  scope.set(symbol, { location: numberToHex(context.freeMemoryPointer) });
+  context.freeMemoryPointer += 0x20;
+
+  return location;
+};
+
+const resolveSymbol = (context: CompileBytecodeContext, symbol: string): Hex => {
+  for (let i = context.symbols.length - 1; i >= 0; i--) {
+    const scope = context.symbols[i];
+    if (scope?.has(symbol)) return scope.get(symbol)!.location;
+  }
+
+  throw "unreachable";
+};
 
 /**
- * Compiles a solidity program into the application-byte-interface.
+ * Compiles a valid Solidity program represented by an abstract
+ * syntax tree into EVM bytecode.
  */
-export const compileAbi = (program: Ast.Program): Contract => {
-  const context: CompileAbiContext = {};
-  const abi: Mutable<Abi> = [];
+export const compile = (program: Ast.Program): Hex => {
+  const context: CompileBytecodeContext = {
+    symbols: [new Map()],
+    functionSelectors: new Map(),
+    freeMemoryPointer: 0x80,
+  };
 
   for (const defintion of program) {
     switch (defintion.ast) {
       case Ast.AstType.FunctionDefinition:
-        abi.push(compileFunctionAbi(context, defintion));
+        compileFunction(context, defintion);
         break;
 
-      case Ast.AstType.ContractDefinition: {
-        const contract = compileContractAbi(context, defintion);
-        return contract as Contract;
-      }
+      case Ast.AstType.ContractDefinition:
+        return compileContract(context, defintion);
 
       case Ast.AstType.EventDefinition:
-        abi.push(compileEventAbi(context, defintion));
-        break;
-
       case Ast.AstType.ErrorDefinition:
-        abi.push(compileErrorAbi(context, defintion));
-        break;
-
       case Ast.AstType.StructDefinition:
       case Ast.AstType.ModifierDefinition:
-        throw new NotImplementedError({ source: JSON.stringify(defintion, null, 2) });
+        break;
 
       default:
         never(defintion);
     }
   }
-
-  throw new Error("no contract found");
+  throw "unreachables";
 };
 
-const elementaryTypeToAbi = (type: Ast.ElementaryType): AbiType => {
-  switch (type.type.token) {
-    case Token.TokenType.Address:
-      return "address";
-
-    case Token.TokenType.String:
-      return "string";
-
-    case Token.TokenType.Uint:
-      return `uint${type.type.size}` as SolidityInt;
-
-    case Token.TokenType.Int:
-      return `int${type.type.size}` as SolidityInt;
-
-    case Token.TokenType.Byte:
-      return `bytes${type.type.size}` as SolidityBytes;
-
-    case Token.TokenType.Bytes:
-      throw "unreachable";
-
-    case Token.TokenType.Bool:
-      return "bool";
-
-    default:
-      never(type.type);
-      throw "unreachable";
-  }
-};
-
-const compileFunctionAbi = (
-  context: CompileAbiContext,
-  node: Ast.FunctionDefinition,
-): AbiFunction => {};
-
-const compileContractAbi = (
-  context: CompileAbiContext,
-  node: Ast.ContractDefinition,
-): { name: string; abi: Mutable<Abi> } => {
-  const name = node.name.value;
-  const abi: Mutable<Abi> = [];
-
+const compileContract = (context: CompileBytecodeContext, node: Ast.ContractDefinition): Hex => {
   for (const _node of node.nodes) {
     switch (_node.ast) {
       case Ast.AstType.FunctionDefinition:
-        abi.push(compileFunctionAbi(context, _node));
+        compileFunction(context, _node);
         break;
 
       case Ast.AstType.VariableDefinition:
-        abi.push(compileVariableAbi(context, _node));
-        break;
-
       case Ast.AstType.EventDefinition:
-        abi.push(compileEventAbi(context, _node));
-        break;
-
       case Ast.AstType.ErrorDefinition:
-        abi.push(compileErrorAbi(context, _node));
-        break;
-
       case Ast.AstType.StructDefinition:
       case Ast.AstType.ModifierDefinition:
         throw new NotImplementedError({ source: JSON.stringify(_node, null, 2) });
@@ -125,70 +96,68 @@ const compileContractAbi = (
     }
   }
 
-  return { name, abi };
+  return context.functionSelectors.get("0x00")!;
 };
 
-const compileVariableAbi = (
-  _context: CompileAbiContext,
-  node: Ast.VariableDefintion,
-): AbiFunction => {
-  return {
-    type: "function",
-    inputs: [],
-    name: node.identifier.value,
-    outputs: [
-      {
-        type: elementaryTypeToAbi(node.type),
-      },
-    ],
-    stateMutability: "view",
-  };
-};
+const compileFunction = (context: CompileBytecodeContext, node: Ast.FunctionDefinition) => {
+  enterScope(context);
 
-const compileEventAbi = (context: CompileAbiContext, node: Ast.EventDefinition): AbiEvent => {
-  return {
-    type: "event",
-    inputs: [],
-    name: node.name.value,
-  };
-};
+  let code: Hex = "0x";
 
-const compileErrorAbi = (context: CompileAbiContext, node: Ast.ErrorDefinition): AbiError => {};
-
-type Context = {
-  code: Hex;
-  /** Memory location for identifiers */
-  identifierLocation: Map<string, string>;
-};
-
-/**
- * Compiles a valid Solidity program represented by an abstract
- * syntax tree into EVM bytecode.
- */
-export const compileCode = (program: Ast.Program): Hex => {
-  const context = {
-    code: "0x",
-    identifierLocation: new Map<string, string>(),
-  } as const;
-
-  for (const statement of program) {
-    if (statement.type === "expressionStatement") {
-      if (statement.expression.type === "identifier") {
-        compileIdentifier(context, statement.expression);
-      }
-    }
+  for (const statement of node.body.statements) {
+    code = concat([code, compileStatement(context, statement)]);
   }
 
-  return context.code;
+  if (
+    node.visibility.token === Token.TokenType.External ||
+    node.visibility.token === Token.TokenType.Public
+  ) {
+    // compute selector
+    // add to context
+
+    context.functionSelectors.set("0x00", code);
+  }
+
+  exitScope(context);
 };
 
-const compileIdentifier = (context: Context, identifier: Ast.Identifier) => {
-  // PUSH32 memory location [location]
-  const location = context.identifierLocation.get(identifier.token.lexeme)!;
+const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement): Hex => {
+  switch (node.ast) {
+    case Ast.AstType.VariableDeclaration: {
+      const location = addSymbol(context, node.identifier.value);
+      if (node.initializer) {
+        const code = compileExpression(context, node.initializer);
+        return concat([code, MSTORE, location]);
+      }
+      return "0x00";
+    }
 
-  // PUSH32 [location]: [location]
-  context.code += `7f${location}`;
-
-  // MLOAD            : [value]
-  context.code += "51";
+    case Ast.AstType.ExpressionStatement:
+      return compileExpression(context, node.expression);
+  }
 };
+
+const compileExpression = (context: CompileBytecodeContext, node: Ast.Expression): Hex => {
+  switch (node.ast) {
+    case Ast.AstType.Literal: {
+      switch (node.token.token) {
+        case Token.TokenType.NumberLiteral:
+          return toHex(node.token.value);
+      }
+      break;
+    }
+    case Ast.AstType.Identifier: {
+      return compileIdentifier(context, node);
+    }
+  }
+};
+
+const compileIdentifier = (context: CompileBytecodeContext, identifier: Ast.Identifier): Hex => {
+  const location = resolveSymbol(context, identifier.token.value);
+
+  return concat([PUSH32, location, MLOAD]);
+};
+
+const PUSH32 = "0x7f";
+const MLOAD = "0x51";
+const MSTORE = "0x52";

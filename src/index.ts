@@ -1,13 +1,15 @@
 import type { Abi } from "abitype";
+import { compileAbi } from "./abiCompiler";
 import { check } from "./checker";
-import { compileAbi, compileCode } from "./compiler";
+import { compile } from "./compiler";
 import { tokenize } from "./lexer";
 import { parse } from "./parser";
 import type { Hex } from "./types/utils";
 
 export type SolReturnType<source extends string> = {
-  code: Hex;
+  name: string;
   abi: Abi;
+  code: Hex;
 };
 
 /**
@@ -26,17 +28,14 @@ export const sol = <const source extends string>(source: source): SolReturnType<
   check(program);
 
   // abi generation
-  const abi = compileAbi(program);
+  const { name, abi } = compileAbi(program);
 
   // Bytecode generation
-  const code = compileCode(program);
+  const code = compile(program);
 
-  return { code, abi };
+  return { name, abi, code };
 };
 
 export { Ast } from "./types/ast";
 export { Token } from "./types/token";
-export { tokenize } from "./lexer";
-export { parse } from "./parser";
-export { check } from "./checker";
-export { compileAbi, compileCode } from "./compiler";
+export { tokenize, parse, check, compileAbi, compile };
