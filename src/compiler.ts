@@ -3,9 +3,10 @@ import { NotImplementedError } from "./errors/notImplemented";
 import { Ast } from "./types/ast";
 import { Token } from "./types/token";
 import type { Hex } from "./types/utils";
+import { Code, pad, push } from "./utils/code";
 import { never } from "./utils/never";
 
-type CompileBytecodeContext = {
+export type CompileBytecodeContext = {
   symbols: Map<
     string,
     {
@@ -15,33 +16,6 @@ type CompileBytecodeContext = {
   >[];
   functionSelectors: Map<Hex, Hex>;
   freeMemoryPointer: number;
-};
-
-const enterScope = (context: CompileBytecodeContext) => {
-  context.symbols.push(new Map());
-};
-
-const exitScope = (context: CompileBytecodeContext) => {
-  context.symbols.pop();
-};
-
-const addSymbol = (context: CompileBytecodeContext, symbol: string): Hex => {
-  const scope = context.symbols[context.symbols.length - 1]!;
-  const location = numberToHex(context.freeMemoryPointer);
-
-  scope.set(symbol, { location: numberToHex(context.freeMemoryPointer) });
-  context.freeMemoryPointer += 0x20;
-
-  return location;
-};
-
-const resolveSymbol = (context: CompileBytecodeContext, symbol: string): Hex => {
-  for (let i = context.symbols.length - 1; i >= 0; i--) {
-    const scope = context.symbols[i];
-    if (scope?.has(symbol)) return scope.get(symbol)!.location;
-  }
-
-  throw "unreachable";
 };
 
 /**
@@ -74,7 +48,34 @@ export const compile = (program: Ast.Program): Hex => {
         never(defintion);
     }
   }
-  throw "unreachables";
+  throw "unreachable";
+};
+
+const enterScope = (context: CompileBytecodeContext) => {
+  context.symbols.push(new Map());
+};
+
+const exitScope = (context: CompileBytecodeContext) => {
+  context.symbols.pop();
+};
+
+const addSymbol = (context: CompileBytecodeContext, symbol: string): Hex => {
+  const scope = context.symbols[context.symbols.length - 1]!;
+  const location = numberToHex(context.freeMemoryPointer);
+
+  scope.set(symbol, { location: numberToHex(context.freeMemoryPointer) });
+  context.freeMemoryPointer += 0x20;
+
+  return location;
+};
+
+const resolveSymbol = (context: CompileBytecodeContext, symbol: string): Hex => {
+  for (let i = context.symbols.length - 1; i >= 0; i--) {
+    const scope = context.symbols[i];
+    if (scope?.has(symbol)) return scope.get(symbol)!.location;
+  }
+
+  throw "unreachable";
 };
 
 const compileContract = (context: CompileBytecodeContext, node: Ast.ContractDefinition): Hex => {
@@ -126,10 +127,9 @@ const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement):
     case Ast.AstType.VariableDeclaration: {
       const location = addSymbol(context, node.identifier.value);
       if (node.initializer) {
-        const code = compileExpression(context, node.initializer);
-        return concat([code, MSTORE, location]);
+        return concat([compileExpression(context, node.initializer), push(location), Code.MSTORE]);
       }
-      return "0x00";
+      return "0x";
     }
 
     case Ast.AstType.ExpressionStatement:
@@ -142,7 +142,7 @@ const compileExpression = (context: CompileBytecodeContext, node: Ast.Expression
     case Ast.AstType.Literal: {
       switch (node.token.token) {
         case Token.TokenType.NumberLiteral:
-          return toHex(node.token.value);
+          return push(pad(toHex(node.token.value)));
       }
       break;
     }
@@ -155,9 +155,5 @@ const compileExpression = (context: CompileBytecodeContext, node: Ast.Expression
 const compileIdentifier = (context: CompileBytecodeContext, identifier: Ast.Identifier): Hex => {
   const location = resolveSymbol(context, identifier.token.value);
 
-  return concat([PUSH32, location, MLOAD]);
+  return concat([push(location), Code.MLOAD]);
 };
-
-const PUSH32 = "0x7f";
-const MLOAD = "0x51";
-const MSTORE = "0x52";
