@@ -1,6 +1,6 @@
 # Allegedly
 
-A fast [Solidity](https://soliditylang.org) compiler optimized for EVM simulations, written in TypeScript.
+A fast [Solidity](https://soliditylang.org) compiler for EVM simulations, written in TypeScript.
 
 ## Overview
 
