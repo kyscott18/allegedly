@@ -35,6 +35,7 @@ export enum Code {
   PUSH30 = "0x7d",
   PUSH31 = "0x7e",
   PUSH32 = "0x7f",
+  RETURN = "0xf3",
 }
 
 export const push = (x: Hex): Hex => {

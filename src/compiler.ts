@@ -134,6 +134,24 @@ const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement):
 
     case Ast.AstType.ExpressionStatement:
       return compileExpression(context, node.expression);
+
+    case Ast.AstType.ReturnStatement: {
+      if (node.expression === undefined) {
+        return concat([push("0x0"), push("0x0"), Code.RETURN]);
+      }
+      // TODO(kyle) determine size of data from function signature
+      const expression = compileExpression(context, node.expression);
+      const location = numberToHex(context.freeMemoryPointer);
+
+      return concat([
+        expression,
+        push(location),
+        Code.MSTORE,
+        push("0x20"),
+        push(location),
+        Code.RETURN,
+      ]);
+    }
   }
 };
 

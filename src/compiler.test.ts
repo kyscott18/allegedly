@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { EVM } from "@ethereumjs/evm";
 import { hexToBytes } from "viem";
+import { bytesToBigint } from "viem/utils";
 import { compile } from "./compiler";
 import { tokenize } from "./lexer";
 import { parse } from "./parser";
@@ -13,18 +14,15 @@ const getCode = async (source: string) => {
   return { code, result };
 };
 
-test.skip("empty block", async () => {
+test("empty block", async () => {
   const { result, code } = await getCode(`
 contract C {
   function run() external {
   }
 }`);
 
-  console.log(code);
-
-  console.log(result.runState?.stack);
-
-  expect(code).not.toBe("0x");
+  expect(result.exceptionError).toBeUndefined();
+  expect(code).toBe("0x");
 });
 
 test("literal", async () => {
@@ -57,6 +55,19 @@ contract C {
     x;
   }
 }`);
+
+  expect(result.exceptionError).toBeUndefined();
+});
+
+test("return", async () => {
+  const { result } = await getCode(`
+contract C {
+  function run() external returns (uint256) {
+    return 10;
+  }
+}`);
+
+  expect(bytesToBigint(result.returnValue)).toBe(10n);
 
   expect(result.exceptionError).toBeUndefined();
 });
