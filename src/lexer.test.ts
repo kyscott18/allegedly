@@ -33,7 +33,15 @@ test.todo("rational number literal");
 
 test.todo("hex number literal");
 
-test.todo("address literal");
+test("address literal", () => {
+  const tokens = tokenize("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
+
+  expect(tokens).toHaveLength(1);
+  expect(tokens[0]?.token).toBe(Token.TokenType.AddressLiteral);
+  expect((tokens[0] as Token.AddressLiteral)?.value).toBe(
+    "0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5",
+  );
+});
 
 test("empty", () => {
   const tokens = tokenize("");

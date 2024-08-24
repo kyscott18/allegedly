@@ -1,3 +1,4 @@
+import type { Hex } from "viem";
 import { UnrecognizedSymbolError } from "./errors/unrecognizedSymbol";
 import { Token } from "./types/token";
 import { createCursor } from "./utils/cursor";
@@ -7,6 +8,8 @@ const isDigit = (char: string) => char >= "0" && char <= "9";
 const isIndentifierStart = (char: string) =>
   (char >= "a" && char <= "z") || (char >= "A" && char <= "Z") || char === "_";
 const isIdentifier = (char: string) => isIndentifierStart(char) || isDigit(char);
+const isHex = (char: string) =>
+  (char >= "a" && char <= "f") || (char >= "A" && char <= "F") || (char >= "0" && char <= "9");
 
 export const tokenize = (source: string): Token.Token[] => {
   const cursor = createCursor(source);
@@ -557,20 +560,40 @@ export const tokenize = (source: string): Token.Token[] => {
     } else if (isDigit(char)) {
       // TODO(kyle) rational number literal
       // TODO(kyle) hex number literal
-      // TODO(kyle) address literal
-      let length = 1;
-      for (const char of cursor) {
-        if (isDigit(char)) length++;
-        else {
-          cursor.position--;
-          break;
-        }
-      }
 
-      tokens.push({
-        token: Token.TokenType.NumberLiteral,
-        value: BigInt(source.substring(cursor.position - length, cursor.position)),
-      });
+      if (char === "0" && cursor.peek() === "x") {
+        cursor.next();
+
+        let length = 2;
+        for (const char of cursor) {
+          if (isHex(char)) length++;
+          else {
+            cursor.position--;
+            break;
+          }
+        }
+
+        if (length === 42) {
+          tokens.push({
+            token: Token.TokenType.AddressLiteral,
+            value: source.substring(cursor.position - length, cursor.position) as Hex,
+          });
+        }
+      } else {
+        let length = 1;
+        for (const char of cursor) {
+          if (isDigit(char)) length++;
+          else {
+            cursor.position--;
+            break;
+          }
+        }
+
+        tokens.push({
+          token: Token.TokenType.NumberLiteral,
+          value: BigInt(source.substring(cursor.position - length, cursor.position)),
+        });
+      }
     } else if (isIndentifierStart(char)) {
       // TODO(kyle) hex literal
 
