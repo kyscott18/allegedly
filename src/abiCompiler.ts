@@ -3,6 +3,8 @@ import type {
   AbiError,
   AbiEvent,
   AbiFunction,
+  AbiParameter,
+  AbiStateMutability,
   AbiType,
   SolidityBytes,
   SolidityInt,
@@ -57,7 +59,7 @@ export const compileAbi = (program: Ast.Program): Contract => {
   throw new Error("no contract found");
 };
 
-const elementaryTypeToAbi = (type: Ast.ElementaryType): AbiType => {
+const compileElementaryType = (type: Ast.ElementaryType): AbiType => {
   switch (type.type.token) {
     case Token.TokenType.Address:
       return "address";
@@ -86,10 +88,18 @@ const elementaryTypeToAbi = (type: Ast.ElementaryType): AbiType => {
   }
 };
 
-const compileFunctionAbi = (
+export const compileFunctionAbi = (
   context: CompileAbiContext,
   node: Ast.FunctionDefinition,
-): AbiFunction => {};
+): AbiFunction => {
+  return {
+    type: "function",
+    name: node.name!.value,
+    inputs: node.parameters.map(compileParameters),
+    outputs: node.returns.map(compileParameters),
+    stateMutability: compileMutability(node.mutability),
+  };
+};
 
 const compileContractAbi = (
   context: CompileAbiContext,
@@ -138,7 +148,7 @@ const compileVariableAbi = (
     name: node.identifier.value,
     outputs: [
       {
-        type: elementaryTypeToAbi(node.type),
+        type: compileElementaryType(node.type as Ast.ElementaryType),
       },
     ],
     stateMutability: "view",
@@ -156,3 +166,26 @@ const compileEventAbi = (context: CompileAbiContext, node: Ast.EventDefinition):
 
 // @ts-ignore
 const compileErrorAbi = (context: CompileAbiContext, node: Ast.ErrorDefinition): AbiError => {};
+
+const compileParameters = (node: Ast.Parameter): AbiParameter => {
+  return {
+    name: node.identifier ? node.identifier.value : undefined,
+    type: compileElementaryType(node.type as Ast.ElementaryType),
+  };
+};
+
+const compileMutability = (node: Ast.Mutability): AbiStateMutability => {
+  switch (node.token) {
+    case Token.TokenType.View:
+      return "view";
+
+    case Token.TokenType.Pure:
+      return "pure";
+
+    case Token.TokenType.Nonpayable:
+      return "nonpayable";
+
+    case Token.TokenType.Payable:
+      return "payable";
+  }
+};
