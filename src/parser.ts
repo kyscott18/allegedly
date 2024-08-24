@@ -553,6 +553,9 @@ const getPostfixBindingPower = (operator: Token.Token): number | undefined => {
     case Token.TokenType.OpenBracket:
       return 29;
 
+    case Token.TokenType.OpenParenthesis:
+      return 29;
+
     default:
       return undefined;
   }
@@ -628,17 +631,6 @@ const getInfixBindingPower = (operator: Token.Token): [number, number] | undefin
 // expressions
 
 export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expression => {
-  const left = _parseExpression(context, minBp);
-  const index = context.tokenIndex;
-  try {
-    return parseFunctionCallExpression(context, left);
-  } catch {
-    context.tokenIndex = index;
-    return left;
-  }
-};
-
-const _parseExpression = (context: ParseContext, minBp: number): Ast.Expression => {
   const token = next(context);
 
   let left: Ast.Expression | undefined;
@@ -721,6 +713,15 @@ const _parseExpression = (context: ParseContext, minBp: number): Ast.Expression 
         const right = parseExpression(context, 0);
         expect(context, Token.TokenType.CloseBracket);
         left = { ast: Ast.AstType.IndexAccessExpression, base: left, index: right };
+      } else if (operator.token === Token.TokenType.OpenParenthesis) {
+        context.tokenIndex--;
+        const right = parseList(
+          context,
+          Token.TokenType.OpenParenthesis,
+          Token.TokenType.CloseParenthesis,
+          parseExpression,
+        );
+        left = { ast: Ast.AstType.FunctionCallExpression, expression: left, arguments: right };
       } else {
         left = {
           ast: Ast.AstType.UnaryOperation,
@@ -809,20 +810,6 @@ const parseTupleExpression = (
     expect(context, Token.TokenType.Comma);
     elements.push(parseExpression(context));
   }
-};
-
-const parseFunctionCallExpression = (
-  context: ParseContext,
-  expression: Ast.Expression,
-): Ast.FunctionCallExpression => {
-  const _arguments = parseList(
-    context,
-    Token.TokenType.OpenParenthesis,
-    Token.TokenType.CloseParenthesis,
-    parseExpression,
-  );
-
-  return { ast: Ast.AstType.FunctionCallExpression, expression, arguments: _arguments };
 };
 
 // types
