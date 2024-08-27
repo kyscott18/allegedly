@@ -5,67 +5,150 @@ import { Token } from "./types/token";
 import { never } from "./utils/never";
 
 export type CheckContext = {
-  symbols: Map<string, Type | Map<string, Type>>[];
+  symbols: Map<string, Type>[];
+  isContractScope: boolean;
 };
 
-type Type = Ast.ElementaryType["type"];
+type ElementaryType = {
+  _type: "elementary";
+  type: Ast.ElementaryType["type"];
+  isLiteral?: boolean;
+};
 
-const isEqual = (a: Type, b: Type): boolean => {
-  switch (a.token) {
-    case Token.TokenType.Address:
-    case Token.TokenType.String:
-    case Token.TokenType.Bytes:
-    case Token.TokenType.Bool:
-      return a.token === b.token;
+type FunctionType = {
+  _type: "function";
+  parameterTypes: Type[];
+  returnTypes: Type[];
+  isConversion: boolean;
+};
 
-    case Token.TokenType.Uint:
-    case Token.TokenType.Int:
-    case Token.TokenType.Byte:
-      return a.token === b.token && a.size === b.size;
+type ContractType = {
+  _type: "contract";
+  functions: [string, FunctionType][];
+};
+
+type StructType = {
+  _type: "struct";
+  members: Map<string, ElementaryType | FunctionType>;
+};
+
+type TupleType = {
+  _type: "tuple";
+  elements: Type[];
+};
+
+export type Type = ElementaryType | FunctionType | ContractType | StructType | TupleType;
+
+/** Convert `Ast.Type` to internal representation */
+const toType = (type: Ast.Type): Type => {
+  return { _type: "elementary", type: (type as Ast.ElementaryType).type, isLiteral: false };
+};
+
+const unwrap = (type: Type): Type => {
+  if (type._type === "tuple" && type.elements.length === 1) return type.elements[0]!;
+  return type;
+};
+
+const isEqual = (a: Type, _b: Type): boolean => {
+  if (a._type !== _b._type) return false;
+
+  if (a._type === "elementary") {
+    const b = _b as Extract<Type, { _type: "elementary" }>;
+
+    switch (a.type.token) {
+      case Token.TokenType.Address:
+      case Token.TokenType.String:
+      case Token.TokenType.Bytes:
+      case Token.TokenType.Bool:
+        return a.type.token === b.type.token;
+
+      case Token.TokenType.Uint:
+      case Token.TokenType.Int:
+      case Token.TokenType.Byte:
+        return a.type.token === b.type.token && a.type.size === b.type.size;
+    }
   }
+
+  return false;
 };
 
-export const check = (program: Ast.Program): void => {
+export const check = (program: Ast.Program): CheckContext["symbols"] => {
   const context: CheckContext = {
     symbols: [
       new Map([
         [
           "block",
-          new Map([
-            ["basefee", { token: Token.TokenType.Uint, size: 256 }],
-            ["blobbasefee", { token: Token.TokenType.Uint, size: 256 }],
-            ["chainid", { token: Token.TokenType.Uint, size: 256 }],
-            ["coinbase", { token: Token.TokenType.Address }],
-            ["difficulty", { token: Token.TokenType.Uint, size: 256 }],
-            ["gaslimit", { token: Token.TokenType.Uint, size: 256 }],
-            ["number", { token: Token.TokenType.Uint, size: 256 }],
-            ["prevrandao", { token: Token.TokenType.Uint, size: 256 }],
-            ["timestamp", { token: Token.TokenType.Uint, size: 256 }],
-          ]),
+          {
+            _type: "struct",
+            members: new Map([
+              [
+                "basefee",
+                { _type: "elementary", type: { token: Token.TokenType.Uint, size: 256 } },
+              ],
+              [
+                "blobbasefee",
+                { _type: "elementary", type: { token: Token.TokenType.Uint, size: 256 } },
+              ],
+              [
+                "chainid",
+                { _type: "elementary", type: { token: Token.TokenType.Uint, size: 256 } },
+              ],
+              ["coinbase", { _type: "elementary", type: { token: Token.TokenType.Address } }],
+              [
+                "difficulty",
+                { _type: "elementary", type: { token: Token.TokenType.Uint, size: 256 } },
+              ],
+              [
+                "gaslimit",
+                { _type: "elementary", type: { token: Token.TokenType.Uint, size: 256 } },
+              ],
+              ["number", { _type: "elementary", type: { token: Token.TokenType.Uint, size: 256 } }],
+              [
+                "prevrandao",
+                { _type: "elementary", type: { token: Token.TokenType.Uint, size: 256 } },
+              ],
+              [
+                "timestamp",
+                { _type: "elementary", type: { token: Token.TokenType.Uint, size: 256 } },
+              ],
+            ]),
+          },
         ],
         [
           "msg",
-          new Map([
-            ["data", { token: Token.TokenType.Bytes }],
-            ["sender", { token: Token.TokenType.Address }],
-            ["sig", { token: Token.TokenType.Byte, size: 4 }],
-            ["value", { token: Token.TokenType.Uint, size: 256 }],
-          ]),
+          {
+            _type: "struct",
+            members: new Map([
+              ["data", { _type: "elementary", type: { token: Token.TokenType.Bytes } }],
+              ["sender", { _type: "elementary", type: { token: Token.TokenType.Address } }],
+              ["sig", { _type: "elementary", type: { token: Token.TokenType.Byte, size: 4 } }],
+              ["value", { _type: "elementary", type: { token: Token.TokenType.Uint, size: 256 } }],
+            ]),
+          },
         ],
         [
           "tx",
-          new Map([
-            ["gasprice", { token: Token.TokenType.Uint, size: 256 }],
-            ["origin", { token: Token.TokenType.Address }],
-          ]),
+          {
+            _type: "struct",
+            members: new Map([
+              [
+                "gasprice",
+                { _type: "elementary", type: { token: Token.TokenType.Uint, size: 256 } },
+              ],
+              ["origin", { _type: "elementary", type: { token: Token.TokenType.Address } }],
+            ]),
+          },
         ],
       ]),
     ],
+    isContractScope: false,
   };
 
   for (const definition of program) {
     checkDefinition(context, definition);
   }
+
+  return context.symbols;
 };
 
 const addSymbol = (context: CheckContext, symbol: string, type: Type) => {
@@ -81,7 +164,8 @@ const addSymbol = (context: CheckContext, symbol: string, type: Type) => {
 const resolveSymbol = (context: CheckContext, symbol: string): Type => {
   for (let i = context.symbols.length - 1; i >= 0; i--) {
     const scope = context.symbols[i];
-    if (scope?.has(symbol)) return scope.get(symbol)!;
+    // TODO(kyle)
+    if (scope?.has(symbol)) return scope.get(symbol)! as Type;
   }
 
   throw new TypeError("Undeclared identifier", 7576);
@@ -97,12 +181,36 @@ const exitScope = (context: CheckContext) => {
 
 export const checkDefinition = (context: CheckContext, definition: Ast.Definition): void => {
   switch (definition.ast) {
+    case Ast.AstType.VariableDefinition:
+      // TODO
+      break;
+
     case Ast.AstType.FunctionDefinition:
-      checkStatement(context, definition.body);
+      if (definition.body !== undefined) checkStatement(context, definition.body);
       break;
 
     case Ast.AstType.ContractDefinition:
-      // TODO
+      context.isContractScope = true;
+      for (const _definition of definition.nodes) {
+        checkDefinition(context, _definition);
+      }
+      context.isContractScope = false;
+      addSymbol(context, definition.name.value, {
+        _type: "contract",
+        functions: definition.nodes
+          .filter(
+            (node): node is Ast.FunctionDefinition => node.ast === Ast.AstType.FunctionDefinition,
+          )
+          .map((node) => [
+            node.name!.value,
+            {
+              _type: "function",
+              parameterTypes: node.parameters.map((param) => toType(param.type)),
+              returnTypes: node.returns.map((param) => toType(param.type)),
+              isConversion: false,
+            },
+          ]),
+      });
       break;
 
     case Ast.AstType.EventDefinition:
@@ -129,12 +237,12 @@ export const checkDefinition = (context: CheckContext, definition: Ast.Definitio
 export const checkStatement = (context: CheckContext, statement: Ast.Statement): void => {
   switch (statement.ast) {
     case Ast.AstType.VariableDeclaration:
-      addSymbol(context, statement.identifier.value, statement.type.type);
+      addSymbol(context, statement.identifier.value, toType(statement.type));
       if (statement.initializer) {
         const initializer = checkExpression(context, statement.initializer);
-        if (isEqual(statement.type.type, initializer) === false) {
+        if (isImplicitlyConvertibleTo(initializer, toType(statement.type)) === false) {
           throw new TypeError(
-            `Type ${initializer} is not implicitly convertable to expected type ${statement.type}`,
+            `Type ${initializer} is not implicitly convertible to expected type ${statement.type}`,
             9574,
           );
         }
@@ -181,30 +289,63 @@ export const checkStatement = (context: CheckContext, statement: Ast.Statement):
 export const checkExpression = (context: CheckContext, expression: Ast.Expression): Type => {
   switch (expression.ast) {
     case Ast.AstType.Identifier:
-      return resolveSymbol(context, expression.token.value);
+      if (expression.token.token === Token.TokenType.Identifier) {
+        const symbol = resolveSymbol(context, expression.token.value);
+
+        // TODO(kyle) handle native conversions better
+
+        if (symbol._type === "contract") {
+          return {
+            _type: "function",
+            parameterTypes: [symbol],
+            returnTypes: [symbol],
+            isConversion: true,
+          };
+        }
+        return symbol;
+      }
+
+      return {
+        _type: "function",
+        parameterTypes: [{ _type: "elementary", type: expression.token }],
+        returnTypes: [{ _type: "elementary", type: expression.token }],
+        isConversion: true,
+      };
 
     case Ast.AstType.Literal:
       switch (expression.token.token) {
         case Token.TokenType.AddressLiteral:
-          return { token: Token.TokenType.Address };
+          return { _type: "elementary", type: { token: Token.TokenType.Address }, isLiteral: true };
 
         case Token.TokenType.StringLiteral:
-          return { token: Token.TokenType.String };
+          return { _type: "elementary", type: { token: Token.TokenType.String }, isLiteral: true };
 
         case Token.TokenType.HexLiteral:
-          return { token: Token.TokenType.Bytes };
+          return { _type: "elementary", type: { token: Token.TokenType.Bytes }, isLiteral: true };
 
         case Token.TokenType.NumberLiteral:
-          return { token: Token.TokenType.Uint, size: 256 };
+          return {
+            _type: "elementary",
+            type: { token: Token.TokenType.Uint, size: 256 },
+            isLiteral: true,
+          };
 
         case Token.TokenType.RationalNumberLiteral:
-          return { token: Token.TokenType.Uint, size: 256 };
+          return {
+            _type: "elementary",
+            type: { token: Token.TokenType.Uint, size: 256 },
+            isLiteral: true,
+          };
 
         case Token.TokenType.HexNumberLiteral:
-          return { token: Token.TokenType.Uint, size: 256 };
+          return {
+            _type: "elementary",
+            type: { token: Token.TokenType.Uint, size: 256 },
+            isLiteral: true,
+          };
 
         case Token.TokenType.BoolLiteral:
-          return { token: Token.TokenType.Bool };
+          return { _type: "elementary", type: { token: Token.TokenType.Bool }, isLiteral: true };
 
         default:
           never(expression.token);
@@ -215,9 +356,9 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       const left = checkExpression(context, expression.left);
       const right = checkExpression(context, expression.right);
 
-      if (isEqual(left, right) === false) {
+      if (isImplicitlyConvertibleTo(left, right) === false) {
         throw new TypeError(
-          `Type ${left} is not implicitly convertable to expected type ${right}`,
+          `Type ${left} is not implicitly convertible to expected type ${right}`,
           7407,
         );
       }
@@ -235,9 +376,12 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             break;
 
           case Token.TokenType.Subtract:
-            if (_expression.token !== Token.TokenType.Int) {
+            if (
+              _expression._type !== "elementary" ||
+              _expression.type.token !== Token.TokenType.Int
+            ) {
               throw new TypeError(
-                `Built-in unary operator ${expression.operator} cannot be applied to type ${_expression.token}`,
+                `Built-in unary operator ${expression.operator} cannot be applied to type ${_expression}`,
                 4907,
               );
             }
@@ -255,7 +399,7 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       const left = checkExpression(context, expression.left);
       const right = checkExpression(context, expression.right);
 
-      if (isEqual(left, right) === false)
+      if (isImplicitlyConvertibleTo(left, right) === false)
         throw new TypeError(
           `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
           2271,
@@ -269,17 +413,81 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       const trueExpression = checkExpression(context, expression.trueExpression);
       const falseExpression = checkExpression(context, expression.falseExpression);
 
-      if (isEqual(condition.token, Token.TokenType.Bool) === false) throw new Error("bad!");
-      if (isEqual(trueExpression, falseExpression) === false) throw new Error("bad!");
+      if (
+        isImplicitlyConvertibleTo(condition, {
+          _type: "elementary",
+          type: { token: Token.TokenType.Bool },
+          isLiteral: false,
+        }) === false
+      )
+        throw new Error("bad!");
+      if (isImplicitlyConvertibleTo(trueExpression, falseExpression) === false)
+        throw new Error("bad!");
 
       return trueExpression;
     }
 
-    case Ast.AstType.FunctionCallExpression:
-      throw new NotImplementedError({ source: "f()" });
+    case Ast.AstType.FunctionCallExpression: {
+      const _expression = checkExpression(context, expression.expression);
 
-    case Ast.AstType.MemberAccessExpression:
-      throw new NotImplementedError({ source: "a.i" });
+      if (_expression._type === "function") {
+        if (_expression.parameterTypes.length !== expression.arguments.length) {
+          throw new TypeError(
+            `Wrong argument count for function call: ${expression.arguments.length} arguments given but expected ${_expression.parameterTypes.length}.`,
+            6160,
+          );
+        }
+
+        for (let i = 0; i < expression.arguments.length; i++) {
+          const _argument = checkExpression(context, expression.arguments[i]!);
+
+          if (_expression.isConversion) {
+            if (isExplicitlyConvertibleTo(_argument, _expression.returnTypes[0]!) === false) {
+              throw new TypeError(
+                `Explicit type conversion is not allowed from "${_argument}" to "${_expression.returnTypes[0]!}".`,
+                9640,
+              );
+            }
+          } else {
+            if (isImplicitlyConvertibleTo(_argument, _expression.parameterTypes[i]!) === false) {
+              throw new TypeError(
+                `Invalid type for argument in function call. Invalid implicit conversion from ${_argument} to ${_expression.parameterTypes[i]!} requested.`,
+                9553,
+              );
+            }
+          }
+        }
+
+        return unwrap({ _type: "tuple", elements: _expression.returnTypes });
+      }
+
+      throw new TypeError("This expression is not callable", 5704);
+    }
+
+    case Ast.AstType.MemberAccessExpression: {
+      const _expression = checkExpression(context, expression.expression);
+
+      if (expression.member.token.token !== Token.TokenType.Identifier) {
+        throw new TypeError(`Expected identifer but got ${expression.member.token}`, 2314);
+      }
+
+      if (_expression._type === "contract") {
+        // TODO(kyle) fn overloading
+        // @ts-ignore
+        return _expression.functions.find((fn) => fn[0] === expression.member.token.value)![1];
+      }
+
+      if (_expression._type === "struct") {
+        if (_expression.members.has(expression.member.token.value)) {
+          return _expression.members.get(expression.member.token.value)!;
+        }
+      }
+
+      throw new TypeError(
+        `Member "${expression.member.token.value}" not found or not visible after argument-dependent lookup in ${_expression}`,
+        9582,
+      );
+    }
 
     case Ast.AstType.IndexAccessExpression:
       throw new NotImplementedError({ source: "a[i]" });
@@ -295,4 +503,140 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
   }
 
   throw "unreachable";
+};
+
+const isExplicitlyConvertibleTo = (from: Type, to: Type): boolean => {
+  if (isImplicitlyConvertibleTo(from, to)) return true;
+
+  if (from._type === "elementary" && to._type === "elementary") {
+    if (from.type.token === to.type.token) return true;
+
+    // integer to integer
+    if (
+      (from.type.token === Token.TokenType.Uint &&
+        to.type.token === Token.TokenType.Int &&
+        from.type.size === to.type.size) ||
+      (from.type.token === Token.TokenType.Int &&
+        to.type.token === Token.TokenType.Uint &&
+        from.type.size === to.type.size)
+    ) {
+      return true;
+    }
+
+    // integer to address
+    if (
+      from.type.token === Token.TokenType.Uint &&
+      to.type.token === Token.TokenType.Address &&
+      from.type.size === 160
+    ) {
+      return true;
+    }
+
+    // address to integer
+    if (
+      from.type.token === Token.TokenType.Address &&
+      to.type.token === Token.TokenType.Uint &&
+      to.type.size === 160
+    ) {
+      return true;
+    }
+
+    // integer to fixed bytes
+    if (
+      from.type.token === Token.TokenType.Uint &&
+      to.type.token === Token.TokenType.Byte &&
+      from.type.size === to.type.size * 8
+    ) {
+      return true;
+    }
+
+    // fixed bytes to integer
+    if (
+      from.type.token === Token.TokenType.Byte &&
+      to.type.token === Token.TokenType.Uint &&
+      from.type.size * 8 === to.type.size
+    ) {
+      return true;
+    }
+
+    // fixed bytes to address
+    if (
+      from.type.token === Token.TokenType.Byte &&
+      to.type.token === Token.TokenType.Address &&
+      from.type.size === 20
+    ) {
+      return true;
+    }
+
+    // address to fixed bytes
+    if (
+      from.type.token === Token.TokenType.Address &&
+      to.type.token === Token.TokenType.Byte &&
+      to.type.size === 20
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // address to contract
+  if (
+    from._type === "elementary" &&
+    to._type === "contract" &&
+    from.type.token === Token.TokenType.Address
+  ) {
+    return true;
+  }
+
+  // contract to address
+  if (
+    from._type === "contract" &&
+    to._type === "elementary" &&
+    to.type.token === Token.TokenType.Address
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+const isImplicitlyConvertibleTo = (from: Type, _to: Type): boolean => {
+  if (isEqual(from, _to)) return true;
+  if (from._type !== _to._type) return false;
+
+  if (from._type === "elementary") {
+    const to = _to as Extract<Type, { _type: "elementary" }>;
+
+    // integer to integer
+    if (
+      (from.type.token === Token.TokenType.Uint &&
+        to.type.token === Token.TokenType.Uint &&
+        from.type.size <= to.type.size) ||
+      (from.type.token === Token.TokenType.Int &&
+        to.type.token === Token.TokenType.Int &&
+        from.type.size <= to.type.size)
+    ) {
+      return true;
+    }
+
+    // integer literal
+    if (
+      from.type.token === Token.TokenType.Uint &&
+      from.isLiteral &&
+      (to.type.token === Token.TokenType.Uint || to.type.token === Token.TokenType.Int)
+    ) {
+      return true;
+    }
+
+    // fixed bytes to fixed bytes
+    if (
+      from.type.token === Token.TokenType.Byte &&
+      to.type.token === Token.TokenType.Byte &&
+      from.type.size <= to.type.size
+    ) {
+      return true;
+    }
+  }
+  return false;
 };

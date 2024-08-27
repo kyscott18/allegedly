@@ -44,7 +44,7 @@ export namespace Ast {
 
   export type Identifier = {
     ast: AstType.Identifier;
-    token: Token.Identifier;
+    token: Token.Identifier | ElementaryType["type"];
   };
 
   export type Literal = {
@@ -295,7 +295,7 @@ export namespace Ast {
     parameters: Parameter[];
     returns: Parameter[];
     name: Token.Identifier | undefined;
-    body: BlockStatement;
+    body: BlockStatement | undefined;
   };
 
   export type ContractDefinition = {
@@ -373,6 +373,7 @@ export namespace Ast {
   export type Type = ElementaryType | ArrayType | Mapping;
 
   export type Definition =
+    | VariableDefintion
     | FunctionDefinition
     | ContractDefinition
     | EventDefinition

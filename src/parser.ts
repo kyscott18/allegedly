@@ -20,6 +20,8 @@ export const parse = (tokens: Token.Token[]): Ast.Program => {
 
     switch (token?.token) {
       case Token.TokenType.Contract:
+      case Token.TokenType.Interface:
+      case Token.TokenType.Library:
         program.push(parseContractDefinition(context));
         break;
 
@@ -159,6 +161,11 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
         parseParameter,
       );
 
+      let body: Ast.BlockStatement | undefined;
+      if (eat(context, Token.TokenType.Semicolon) === false) {
+        body = parseBlockStatement(context);
+      }
+
       return {
         ast: Ast.AstType.FunctionDefinition,
         kind,
@@ -168,7 +175,7 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
         parameters,
         returns,
         name,
-        body: parseBlockStatement(context),
+        body,
       };
     }
 
@@ -189,8 +196,15 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
 };
 
 export const parseContractDefinition = (context: ParseContext): Ast.ContractDefinition => {
-  const kind = peek(context) as Ast.ContractDefinition["kind"];
-  expect(context, Token.TokenType.Contract);
+  const kind = next(context) as Ast.ContractDefinition["kind"];
+
+  if (
+    kind.token !== Token.TokenType.Contract &&
+    kind.token !== Token.TokenType.Interface &&
+    kind.token !== Token.TokenType.Library
+  ) {
+    throw new UnexpectTokenError(kind);
+  }
 
   const name = peek(context) as Token.Identifier;
   expect(context, Token.TokenType.Identifier);
@@ -371,8 +385,15 @@ export const parseStatement = (context: ParseContext): Ast.Statement => {
     case Token.TokenType.Int:
     case Token.TokenType.Byte:
     case Token.TokenType.Bytes:
-    case Token.TokenType.Bool:
-      return parseVariableDeclaration(context);
+    case Token.TokenType.Bool: {
+      const index = context.tokenIndex;
+      try {
+        return parseVariableDeclaration(context);
+      } catch {
+        context.tokenIndex = index;
+        return parseExpressionStatement(context);
+      }
+    }
 
     case Token.TokenType.OpenCurlyBrace:
       return parseBlockStatement(context);
@@ -646,6 +667,13 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
       break;
 
     case Token.TokenType.Identifier:
+    case Token.TokenType.Address:
+    case Token.TokenType.String:
+    case Token.TokenType.Uint:
+    case Token.TokenType.Int:
+    case Token.TokenType.Byte:
+    case Token.TokenType.Bytes:
+    case Token.TokenType.Bool:
       left = { ast: Ast.AstType.Identifier, token } satisfies Ast.Identifier;
       break;
 

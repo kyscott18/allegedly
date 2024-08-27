@@ -12,6 +12,7 @@ export enum Code {
   MSTORE = "0x52",
   JUMP = "0x56",
   JUMPI = "0x57",
+  GAS = "0x5a",
   JUMPDEST = "0x5b",
   PUSH1 = "0x60",
   PUSH2 = "0x61",
@@ -46,6 +47,8 @@ export enum Code {
   PUSH31 = "0x7e",
   PUSH32 = "0x7f",
   DUP1 = "0x80",
+  SWAP5 = "0x94",
+  CALL = "0xf1",
   RETURN = "0xf3",
   INVALID = "0xfe",
 }

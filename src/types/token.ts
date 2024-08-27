@@ -1,3 +1,4 @@
+import type { Hex } from "viem";
 import type { TODO } from "./utils";
 
 export namespace Token {
@@ -164,7 +165,7 @@ export namespace Token {
   // literals
 
   export type StringLiteral = { token: TokenType.StringLiteral; value: TODO };
-  export type AddressLiteral = { token: TokenType.AddressLiteral; value: TODO };
+  export type AddressLiteral = { token: TokenType.AddressLiteral; value: Hex };
   export type HexLiteral = { token: TokenType.HexLiteral; value: TODO };
   export type NumberLiteral = { token: TokenType.NumberLiteral; value: bigint };
   export type RationalNumberLiteral = { token: TokenType.RationalNumberLiteral; value: TODO };

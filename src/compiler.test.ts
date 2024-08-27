@@ -2,13 +2,16 @@ import { expect, test } from "bun:test";
 import { EVM, type ExecResult } from "@ethereumjs/evm";
 import { type Hex, concat, hexToBytes, padHex, toFunctionSelector, toHex } from "viem";
 import { bytesToBigint } from "viem/utils";
+import { check } from "./checker";
 import { compile } from "./compiler";
 import { tokenize } from "./lexer";
 import { parse } from "./parser";
 
 const getCode = async (source: string, input?: Hex) => {
   const evm = await EVM.create();
-  const code = compile(parse(tokenize(source)));
+  const ast = parse(tokenize(source));
+  const symbols = check(ast);
+  const code = compile(ast, symbols);
   const result = await evm.runCode({
     code: hexToBytes(code),
     data: input ? hexToBytes(input) : undefined,
@@ -100,8 +103,6 @@ contract C {
     toFunctionSelector("function bun()"),
   );
 
-  // printStack(result);
-
   expect(result.exceptionError).toBeDefined();
 });
 
@@ -137,7 +138,7 @@ contract C {
   expect(result.exceptionError).toBeUndefined();
 });
 
-test("identifier", async () => {
+test.only("identifier", async () => {
   const { result } = await getCode(
     `
 contract C {
@@ -150,4 +151,26 @@ contract C {
   );
 
   expect(result.exceptionError).toBeUndefined();
+});
+
+test("function call expression", async () => {
+  const { result } = await getCode(
+    `
+contract Identity {
+  function identity(uint256 a) external view returns (uint256) {
+    return 10;
+  }
+}
+
+contract C {
+  function run() external {
+    return Identity(0x0000000000000000000000000000000000000004).identity(10);
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+
+  expect(bytesToBigint(result.returnValue)).toBe(10n);
 });
