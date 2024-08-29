@@ -7,9 +7,13 @@ import { never } from "./utils/never";
 
 export type CheckContext = {
   symbols: Map<string, Type.Type>[];
+  annotations: Map<Ast.Expression, Type.Type>;
   isContractScope: boolean;
 };
-export const check = (program: Ast.Program) => {
+
+export type TypeAnnotations = CheckContext["annotations"];
+
+export const check = (program: Ast.Program): TypeAnnotations => {
   const context: CheckContext = {
     symbols: [
       new Map([
@@ -54,12 +58,15 @@ export const check = (program: Ast.Program) => {
         ],
       ]),
     ],
+    annotations: new Map(),
     isContractScope: false,
   };
 
   for (const definition of program) {
     checkDefinition(context, definition);
   }
+
+  return context.annotations;
 };
 
 const addSymbol = (context: CheckContext, symbol: string, type: Type.Type) => {
@@ -559,3 +566,4 @@ const isElementaryTypeEqual = (a: Type.Elementary, b: Type.Elementary): boolean 
       return a.value.token === b.value.token && a.value.size === b.value.size;
   }
 };
+export { Type };

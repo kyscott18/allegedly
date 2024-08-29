@@ -1,20 +1,8 @@
 import { expect, test } from "bun:test";
-import {
-  type CheckContext,
-  check,
-  checkDefinition,
-  checkExpression,
-  checkStatement,
-} from "./checker";
+import { type CheckContext, checkExpression, checkStatement } from "./checker";
 import type { TypeError } from "./errors/type";
 import { tokenize } from "./lexer";
-import {
-  type ParseContext,
-  parse,
-  parseBlockStatement,
-  parseContractDefinition,
-  parseExpression,
-} from "./parser";
+import { type ParseContext, parseBlockStatement, parseExpression } from "./parser";
 import type { Ast } from "./types/ast";
 
 const getError = <ast extends Ast.Statement | Ast.Definition | Ast.Expression>(
@@ -25,7 +13,10 @@ const getError = <ast extends Ast.Statement | Ast.Definition | Ast.Expression>(
   try {
     const tokens = tokenize(source);
 
-    checker({ symbols: [], isContractScope: false }, parser({ tokens, tokenIndex: 0 }));
+    checker(
+      { symbols: [], annotations: new Map(), isContractScope: false },
+      parser({ tokens, tokenIndex: 0 }),
+    );
 
     return undefined;
   } catch (error) {

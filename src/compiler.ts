@@ -1,6 +1,6 @@
 import { concat, numberToHex, padHex, size, toFunctionSelector, toHex } from "viem";
 import { compileFunctionAbi } from "./abiCompiler";
-import type { CheckContext, Type } from "./checker";
+import type { TypeAnnotations } from "./checker";
 import { NotImplementedError } from "./errors/notImplemented";
 import { Ast } from "./types/ast";
 import { Token } from "./types/token";
@@ -9,7 +9,6 @@ import { Code, push } from "./utils/code";
 import { never } from "./utils/never";
 
 export type CompileBytecodeContext = {
-  typeSymbols: CheckContext["symbols"];
   symbols: Map<
     string,
     {
@@ -25,15 +24,12 @@ export type CompileBytecodeContext = {
  * Compiles a valid Solidity program represented by an abstract
  * syntax tree into EVM bytecode.
  */
-export const compile = (program: Ast.Program, symbols: CheckContext["symbols"]): Hex => {
+export const compile = (program: Ast.Program, annotations: TypeAnnotations): Hex => {
   const context: CompileBytecodeContext = {
-    typeSymbols: symbols,
     symbols: [new Map()],
     functions: new Map(),
     freeMemoryPointer: 0x80,
   };
-
-  let code: Hex;
 
   for (const defintion of program) {
     switch (defintion.ast) {
@@ -42,8 +38,7 @@ export const compile = (program: Ast.Program, symbols: CheckContext["symbols"]):
         break;
 
       case Ast.disc.ContractDefinition:
-        code = compileContract(context, defintion);
-        break;
+        return compileContract(context, defintion);
 
       case Ast.disc.VariableDefinition:
       case Ast.disc.EventDefinition:
@@ -57,9 +52,7 @@ export const compile = (program: Ast.Program, symbols: CheckContext["symbols"]):
     }
   }
 
-  return code!;
-
-  // throw "unreachable";
+  throw "unreachable";
 };
 
 const enterScope = (context: CompileBytecodeContext) => {

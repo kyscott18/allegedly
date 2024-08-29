@@ -25,13 +25,13 @@ export const sol = <const source extends string>(source: source): SolReturnType<
   const program = parse(tokens);
 
   // Semantic analysis
-  const symbols = check(program);
+  const annotations = check(program);
 
   // abi generation
   const { name, abi } = compileAbi(program);
 
   // Bytecode generation
-  const code = compile(program, symbols);
+  const code = compile(program, annotations);
 
   return { name, abi, code };
 };
