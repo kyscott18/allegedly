@@ -16,25 +16,25 @@ export const tokenize = (source: string): Token.Token[] => {
   const tokens: Token.Token[] = [];
 
   const symbolMap = new Map<string, () => void>([
-    [".", () => tokens.push({ token: Token.TokenType.Member })],
-    [",", () => tokens.push({ token: Token.TokenType.Comma })],
-    ["?", () => tokens.push({ token: Token.TokenType.Question })],
-    ["(", () => tokens.push({ token: Token.TokenType.OpenParenthesis })],
-    [")", () => tokens.push({ token: Token.TokenType.CloseParenthesis })],
-    ["{", () => tokens.push({ token: Token.TokenType.OpenCurlyBrace })],
-    ["}", () => tokens.push({ token: Token.TokenType.CloseCurlyBrace })],
-    ["[", () => tokens.push({ token: Token.TokenType.OpenBracket })],
-    ["]", () => tokens.push({ token: Token.TokenType.CloseBracket })],
-    [";", () => tokens.push({ token: Token.TokenType.Semicolon })],
-    ["~", () => tokens.push({ token: Token.TokenType.BitwiseNot })],
+    [".", () => tokens.push({ token: Token.disc.Member })],
+    [",", () => tokens.push({ token: Token.disc.Comma })],
+    ["?", () => tokens.push({ token: Token.disc.Question })],
+    ["(", () => tokens.push({ token: Token.disc.OpenParenthesis })],
+    [")", () => tokens.push({ token: Token.disc.CloseParenthesis })],
+    ["{", () => tokens.push({ token: Token.disc.OpenCurlyBrace })],
+    ["}", () => tokens.push({ token: Token.disc.CloseCurlyBrace })],
+    ["[", () => tokens.push({ token: Token.disc.OpenBracket })],
+    ["]", () => tokens.push({ token: Token.disc.CloseBracket })],
+    [";", () => tokens.push({ token: Token.disc.Semicolon })],
+    ["~", () => tokens.push({ token: Token.disc.BitwiseNot })],
     [
       ":",
       () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.ColonAssign });
+          tokens.push({ token: Token.disc.ColonAssign });
         } else {
-          tokens.push({ token: Token.TokenType.Colon });
+          tokens.push({ token: Token.disc.Colon });
         }
       },
     ],
@@ -43,12 +43,12 @@ export const tokenize = (source: string): Token.Token[] => {
       () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.Equal });
+          tokens.push({ token: Token.disc.Equal });
         } else if (cursor.peek() === ">") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.Arrow });
+          tokens.push({ token: Token.disc.Arrow });
         } else {
-          tokens.push({ token: Token.TokenType.Assign });
+          tokens.push({ token: Token.disc.Assign });
         }
       },
     ],
@@ -57,12 +57,12 @@ export const tokenize = (source: string): Token.Token[] => {
       () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.AddAssign });
+          tokens.push({ token: Token.disc.AddAssign });
         } else if (cursor.peek() === "+") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.Increment });
+          tokens.push({ token: Token.disc.Increment });
         } else {
-          tokens.push({ token: Token.TokenType.Add });
+          tokens.push({ token: Token.disc.Add });
         }
       },
     ],
@@ -71,15 +71,15 @@ export const tokenize = (source: string): Token.Token[] => {
       () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.SubtractAssign });
+          tokens.push({ token: Token.disc.SubtractAssign });
         } else if (cursor.peek() === "-") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.Decrement });
+          tokens.push({ token: Token.disc.Decrement });
         } else if (cursor.peek() === ">") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.YulArrow });
+          tokens.push({ token: Token.disc.YulArrow });
         } else {
-          tokens.push({ token: Token.TokenType.Subtract });
+          tokens.push({ token: Token.disc.Subtract });
         }
       },
     ],
@@ -88,12 +88,12 @@ export const tokenize = (source: string): Token.Token[] => {
       () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.MulAssign });
+          tokens.push({ token: Token.disc.MulAssign });
         } else if (cursor.peek() === "*") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.Power });
+          tokens.push({ token: Token.disc.Power });
         } else {
-          tokens.push({ token: Token.TokenType.Mul });
+          tokens.push({ token: Token.disc.Mul });
         }
       },
     ],
@@ -113,9 +113,9 @@ export const tokenize = (source: string): Token.Token[] => {
           }
         } else if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.DivideAssign });
+          tokens.push({ token: Token.disc.DivideAssign });
         } else {
-          tokens.push({ token: Token.TokenType.Divide });
+          tokens.push({ token: Token.disc.Divide });
         }
       },
     ],
@@ -124,9 +124,9 @@ export const tokenize = (source: string): Token.Token[] => {
       () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.ModuloAssign });
+          tokens.push({ token: Token.disc.ModuloAssign });
         } else {
-          tokens.push({ token: Token.TokenType.Modulo });
+          tokens.push({ token: Token.disc.Modulo });
         }
       },
     ],
@@ -135,12 +135,12 @@ export const tokenize = (source: string): Token.Token[] => {
       () => {
         if (cursor.peek() === "&") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.And });
+          tokens.push({ token: Token.disc.And });
         } else if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.BitwiseAndAssign });
+          tokens.push({ token: Token.disc.BitwiseAndAssign });
         } else {
-          tokens.push({ token: Token.TokenType.BitwiseAnd });
+          tokens.push({ token: Token.disc.BitwiseAnd });
         }
       },
     ],
@@ -149,12 +149,12 @@ export const tokenize = (source: string): Token.Token[] => {
       () => {
         if (cursor.peek() === "|") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.Or });
+          tokens.push({ token: Token.disc.Or });
         } else if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.BitwiseOrAssign });
+          tokens.push({ token: Token.disc.BitwiseOrAssign });
         } else {
-          tokens.push({ token: Token.TokenType.BitwiseOr });
+          tokens.push({ token: Token.disc.BitwiseOr });
         }
       },
     ],
@@ -163,9 +163,9 @@ export const tokenize = (source: string): Token.Token[] => {
       () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.BitwiseXOrAssign });
+          tokens.push({ token: Token.disc.BitwiseXOrAssign });
         } else {
-          tokens.push({ token: Token.TokenType.BitwiseXOr });
+          tokens.push({ token: Token.disc.BitwiseXOr });
         }
       },
     ],
@@ -175,17 +175,17 @@ export const tokenize = (source: string): Token.Token[] => {
       () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.MoreEqual });
+          tokens.push({ token: Token.disc.MoreEqual });
         } else if (cursor.peek() === ">") {
           cursor.position++;
           if (cursor.peek() === "=") {
             cursor.position++;
-            tokens.push({ token: Token.TokenType.ShiftRightAssign });
+            tokens.push({ token: Token.disc.ShiftRightAssign });
           } else {
-            tokens.push({ token: Token.TokenType.ShiftRight });
+            tokens.push({ token: Token.disc.ShiftRight });
           }
         } else {
-          tokens.push({ token: Token.TokenType.More });
+          tokens.push({ token: Token.disc.More });
         }
       },
     ],
@@ -194,17 +194,17 @@ export const tokenize = (source: string): Token.Token[] => {
       () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.LessEqual });
+          tokens.push({ token: Token.disc.LessEqual });
         } else if (cursor.peek() === "<") {
           cursor.position++;
           if (cursor.peek() === "=") {
             cursor.position++;
-            tokens.push({ token: Token.TokenType.ShiftLeftAssign });
+            tokens.push({ token: Token.disc.ShiftLeftAssign });
           } else {
-            tokens.push({ token: Token.TokenType.ShiftLeft });
+            tokens.push({ token: Token.disc.ShiftLeft });
           }
         } else {
-          tokens.push({ token: Token.TokenType.Less });
+          tokens.push({ token: Token.disc.Less });
         }
       },
     ],
@@ -213,179 +213,179 @@ export const tokenize = (source: string): Token.Token[] => {
       () => {
         if (cursor.peek() === "=") {
           cursor.position++;
-          tokens.push({ token: Token.TokenType.NotEqual });
+          tokens.push({ token: Token.disc.NotEqual });
         } else {
-          tokens.push({ token: Token.TokenType.Not });
+          tokens.push({ token: Token.disc.Not });
         }
       },
     ],
   ]);
 
   const keywordMap = new Map<string, () => void>([
-    ["true", () => tokens.push({ token: Token.TokenType.BoolLiteral, value: true })],
-    ["false", () => tokens.push({ token: Token.TokenType.BoolLiteral, value: false })],
-    ["if", () => tokens.push({ token: Token.TokenType.If })],
-    ["else", () => tokens.push({ token: Token.TokenType.Else })],
-    ["while", () => tokens.push({ token: Token.TokenType.While })],
-    ["do", () => tokens.push({ token: Token.TokenType.Do })],
-    ["for", () => tokens.push({ token: Token.TokenType.For })],
-    ["break", () => tokens.push({ token: Token.TokenType.Break })],
-    ["continue", () => tokens.push({ token: Token.TokenType.Continue })],
-    ["switch", () => tokens.push({ token: Token.TokenType.Switch })],
-    ["case", () => tokens.push({ token: Token.TokenType.Case })],
-    ["default", () => tokens.push({ token: Token.TokenType.Default })],
-    ["return", () => tokens.push({ token: Token.TokenType.Return })],
-    ["calldata", () => tokens.push({ token: Token.TokenType.Calldata })],
-    ["memory", () => tokens.push({ token: Token.TokenType.Memory })],
-    ["storage", () => tokens.push({ token: Token.TokenType.Storage })],
-    ["immutable", () => tokens.push({ token: Token.TokenType.Immutable })],
-    ["constant", () => tokens.push({ token: Token.TokenType.Constant })],
-    ["contract", () => tokens.push({ token: Token.TokenType.Contract })],
-    ["abstract", () => tokens.push({ token: Token.TokenType.Abstract })],
-    ["interface", () => tokens.push({ token: Token.TokenType.Interface })],
-    ["library", () => tokens.push({ token: Token.TokenType.Library })],
-    ["pragma", () => tokens.push({ token: Token.TokenType.Pragma })],
-    ["import", () => tokens.push({ token: Token.TokenType.Import })],
-    ["from", () => tokens.push({ token: Token.TokenType.From })],
-    ["using", () => tokens.push({ token: Token.TokenType.Using })],
-    ["as", () => tokens.push({ token: Token.TokenType.As })],
-    ["is", () => tokens.push({ token: Token.TokenType.Is })],
-    ["function", () => tokens.push({ token: Token.TokenType.Function })],
-    ["external", () => tokens.push({ token: Token.TokenType.External })],
-    ["public", () => tokens.push({ token: Token.TokenType.Public })],
-    ["internal", () => tokens.push({ token: Token.TokenType.Internal })],
-    ["private", () => tokens.push({ token: Token.TokenType.Private })],
-    ["view", () => tokens.push({ token: Token.TokenType.View })],
-    ["pure", () => tokens.push({ token: Token.TokenType.Pure })],
-    ["returns", () => tokens.push({ token: Token.TokenType.Returns })],
-    ["payable", () => tokens.push({ token: Token.TokenType.Payable })],
-    ["nonpayable", () => tokens.push({ token: Token.TokenType.Nonpayable })],
-    ["virtual", () => tokens.push({ token: Token.TokenType.Virtual })],
-    ["override", () => tokens.push({ token: Token.TokenType.Override })],
-    ["constructor", () => tokens.push({ token: Token.TokenType.Constructor })],
-    ["modifier", () => tokens.push({ token: Token.TokenType.Modifier })],
-    ["receive", () => tokens.push({ token: Token.TokenType.Receive })],
-    ["fallback", () => tokens.push({ token: Token.TokenType.Fallback })],
-    ["unchecked", () => tokens.push({ token: Token.TokenType.Unchecked })],
-    ["revert", () => tokens.push({ token: Token.TokenType.Revert })],
-    ["error", () => tokens.push({ token: Token.TokenType.Error })],
-    ["assert", () => tokens.push({ token: Token.TokenType.Assert })],
-    ["throw", () => tokens.push({ token: Token.TokenType.Throw })],
-    ["try", () => tokens.push({ token: Token.TokenType.Try })],
-    ["catch", () => tokens.push({ token: Token.TokenType.Catch })],
-    ["event", () => tokens.push({ token: Token.TokenType.Event })],
-    ["emit", () => tokens.push({ token: Token.TokenType.Emit })],
-    ["indexed", () => tokens.push({ token: Token.TokenType.Indexed })],
-    ["anonymous", () => tokens.push({ token: Token.TokenType.Anonymous })],
-    ["new", () => tokens.push({ token: Token.TokenType.New })],
-    ["delete", () => tokens.push({ token: Token.TokenType.Delete })],
-    ["struct", () => tokens.push({ token: Token.TokenType.Struct })],
-    ["enum", () => tokens.push({ token: Token.TokenType.Enum })],
-    ["type", () => tokens.push({ token: Token.TokenType.Type })],
-    ["mapping", () => tokens.push({ token: Token.TokenType.Mapping })],
-    ["address", () => tokens.push({ token: Token.TokenType.Address })],
-    ["string", () => tokens.push({ token: Token.TokenType.String })],
-    ["bytes", () => tokens.push({ token: Token.TokenType.Bytes })],
-    ["bool", () => tokens.push({ token: Token.TokenType.Bool })],
-    ["assembly", () => tokens.push({ token: Token.TokenType.Assembly })],
-    ["let", () => tokens.push({ token: Token.TokenType.Let })],
-    ["leave", () => tokens.push({ token: Token.TokenType.Leave })],
-    ["int8", () => tokens.push({ token: Token.TokenType.Int, size: 8 })],
-    ["int16", () => tokens.push({ token: Token.TokenType.Int, size: 16 })],
-    ["int24", () => tokens.push({ token: Token.TokenType.Int, size: 24 })],
-    ["int32", () => tokens.push({ token: Token.TokenType.Int, size: 32 })],
-    ["int40", () => tokens.push({ token: Token.TokenType.Int, size: 40 })],
-    ["int48", () => tokens.push({ token: Token.TokenType.Int, size: 48 })],
-    ["int56", () => tokens.push({ token: Token.TokenType.Int, size: 56 })],
-    ["int64", () => tokens.push({ token: Token.TokenType.Int, size: 64 })],
-    ["int72", () => tokens.push({ token: Token.TokenType.Int, size: 72 })],
-    ["int80", () => tokens.push({ token: Token.TokenType.Int, size: 80 })],
-    ["int88", () => tokens.push({ token: Token.TokenType.Int, size: 88 })],
-    ["int96", () => tokens.push({ token: Token.TokenType.Int, size: 96 })],
-    ["int104", () => tokens.push({ token: Token.TokenType.Int, size: 104 })],
-    ["int112", () => tokens.push({ token: Token.TokenType.Int, size: 112 })],
-    ["int120", () => tokens.push({ token: Token.TokenType.Int, size: 120 })],
-    ["int128", () => tokens.push({ token: Token.TokenType.Int, size: 128 })],
-    ["int136", () => tokens.push({ token: Token.TokenType.Int, size: 136 })],
-    ["int144", () => tokens.push({ token: Token.TokenType.Int, size: 144 })],
-    ["int152", () => tokens.push({ token: Token.TokenType.Int, size: 152 })],
-    ["int160", () => tokens.push({ token: Token.TokenType.Int, size: 160 })],
-    ["int168", () => tokens.push({ token: Token.TokenType.Int, size: 168 })],
-    ["int176", () => tokens.push({ token: Token.TokenType.Int, size: 176 })],
-    ["int184", () => tokens.push({ token: Token.TokenType.Int, size: 184 })],
-    ["int192", () => tokens.push({ token: Token.TokenType.Int, size: 192 })],
-    ["int200", () => tokens.push({ token: Token.TokenType.Int, size: 200 })],
-    ["int208", () => tokens.push({ token: Token.TokenType.Int, size: 208 })],
-    ["int216", () => tokens.push({ token: Token.TokenType.Int, size: 216 })],
-    ["int224", () => tokens.push({ token: Token.TokenType.Int, size: 224 })],
-    ["int232", () => tokens.push({ token: Token.TokenType.Int, size: 232 })],
-    ["int240", () => tokens.push({ token: Token.TokenType.Int, size: 240 })],
-    ["int248", () => tokens.push({ token: Token.TokenType.Int, size: 248 })],
-    ["int256", () => tokens.push({ token: Token.TokenType.Int, size: 256 })],
-    ["uint8", () => tokens.push({ token: Token.TokenType.Uint, size: 8 })],
-    ["uint16", () => tokens.push({ token: Token.TokenType.Uint, size: 16 })],
-    ["uint24", () => tokens.push({ token: Token.TokenType.Uint, size: 24 })],
-    ["uint32", () => tokens.push({ token: Token.TokenType.Uint, size: 32 })],
-    ["uint40", () => tokens.push({ token: Token.TokenType.Uint, size: 40 })],
-    ["uint48", () => tokens.push({ token: Token.TokenType.Uint, size: 48 })],
-    ["uint56", () => tokens.push({ token: Token.TokenType.Uint, size: 56 })],
-    ["uint64", () => tokens.push({ token: Token.TokenType.Uint, size: 64 })],
-    ["uint72", () => tokens.push({ token: Token.TokenType.Uint, size: 72 })],
-    ["uint80", () => tokens.push({ token: Token.TokenType.Uint, size: 80 })],
-    ["uint88", () => tokens.push({ token: Token.TokenType.Uint, size: 88 })],
-    ["uint96", () => tokens.push({ token: Token.TokenType.Uint, size: 96 })],
-    ["uint104", () => tokens.push({ token: Token.TokenType.Uint, size: 104 })],
-    ["uint112", () => tokens.push({ token: Token.TokenType.Uint, size: 112 })],
-    ["uint120", () => tokens.push({ token: Token.TokenType.Uint, size: 120 })],
-    ["uint128", () => tokens.push({ token: Token.TokenType.Uint, size: 128 })],
-    ["uint136", () => tokens.push({ token: Token.TokenType.Uint, size: 136 })],
-    ["uint144", () => tokens.push({ token: Token.TokenType.Uint, size: 144 })],
-    ["uint152", () => tokens.push({ token: Token.TokenType.Uint, size: 152 })],
-    ["uint160", () => tokens.push({ token: Token.TokenType.Uint, size: 160 })],
-    ["uint168", () => tokens.push({ token: Token.TokenType.Uint, size: 168 })],
-    ["uint176", () => tokens.push({ token: Token.TokenType.Uint, size: 176 })],
-    ["uint184", () => tokens.push({ token: Token.TokenType.Uint, size: 184 })],
-    ["uint192", () => tokens.push({ token: Token.TokenType.Uint, size: 192 })],
-    ["uint200", () => tokens.push({ token: Token.TokenType.Uint, size: 200 })],
-    ["uint208", () => tokens.push({ token: Token.TokenType.Uint, size: 208 })],
-    ["uint216", () => tokens.push({ token: Token.TokenType.Uint, size: 216 })],
-    ["uint224", () => tokens.push({ token: Token.TokenType.Uint, size: 224 })],
-    ["uint232", () => tokens.push({ token: Token.TokenType.Uint, size: 232 })],
-    ["uint240", () => tokens.push({ token: Token.TokenType.Uint, size: 240 })],
-    ["uint248", () => tokens.push({ token: Token.TokenType.Uint, size: 248 })],
-    ["uint256", () => tokens.push({ token: Token.TokenType.Uint, size: 256 })],
-    ["bytes1", () => tokens.push({ token: Token.TokenType.Byte, size: 1 })],
-    ["bytes2", () => tokens.push({ token: Token.TokenType.Byte, size: 2 })],
-    ["bytes3", () => tokens.push({ token: Token.TokenType.Byte, size: 3 })],
-    ["bytes4", () => tokens.push({ token: Token.TokenType.Byte, size: 4 })],
-    ["bytes5", () => tokens.push({ token: Token.TokenType.Byte, size: 5 })],
-    ["bytes6", () => tokens.push({ token: Token.TokenType.Byte, size: 6 })],
-    ["bytes7", () => tokens.push({ token: Token.TokenType.Byte, size: 7 })],
-    ["bytes8", () => tokens.push({ token: Token.TokenType.Byte, size: 8 })],
-    ["bytes9", () => tokens.push({ token: Token.TokenType.Byte, size: 9 })],
-    ["bytes10", () => tokens.push({ token: Token.TokenType.Byte, size: 10 })],
-    ["bytes11", () => tokens.push({ token: Token.TokenType.Byte, size: 11 })],
-    ["bytes12", () => tokens.push({ token: Token.TokenType.Byte, size: 12 })],
-    ["bytes13", () => tokens.push({ token: Token.TokenType.Byte, size: 13 })],
-    ["bytes14", () => tokens.push({ token: Token.TokenType.Byte, size: 14 })],
-    ["bytes15", () => tokens.push({ token: Token.TokenType.Byte, size: 15 })],
-    ["bytes16", () => tokens.push({ token: Token.TokenType.Byte, size: 16 })],
-    ["bytes17", () => tokens.push({ token: Token.TokenType.Byte, size: 17 })],
-    ["bytes18", () => tokens.push({ token: Token.TokenType.Byte, size: 18 })],
-    ["bytes19", () => tokens.push({ token: Token.TokenType.Byte, size: 19 })],
-    ["bytes20", () => tokens.push({ token: Token.TokenType.Byte, size: 20 })],
-    ["bytes21", () => tokens.push({ token: Token.TokenType.Byte, size: 21 })],
-    ["bytes22", () => tokens.push({ token: Token.TokenType.Byte, size: 22 })],
-    ["bytes23", () => tokens.push({ token: Token.TokenType.Byte, size: 23 })],
-    ["bytes24", () => tokens.push({ token: Token.TokenType.Byte, size: 24 })],
-    ["bytes25", () => tokens.push({ token: Token.TokenType.Byte, size: 25 })],
-    ["bytes26", () => tokens.push({ token: Token.TokenType.Byte, size: 26 })],
-    ["bytes27", () => tokens.push({ token: Token.TokenType.Byte, size: 27 })],
-    ["bytes28", () => tokens.push({ token: Token.TokenType.Byte, size: 28 })],
-    ["bytes29", () => tokens.push({ token: Token.TokenType.Byte, size: 29 })],
-    ["bytes30", () => tokens.push({ token: Token.TokenType.Byte, size: 30 })],
-    ["bytes31", () => tokens.push({ token: Token.TokenType.Byte, size: 31 })],
-    ["bytes32", () => tokens.push({ token: Token.TokenType.Byte, size: 32 })],
+    ["true", () => tokens.push({ token: Token.disc.BoolLiteral, value: true })],
+    ["false", () => tokens.push({ token: Token.disc.BoolLiteral, value: false })],
+    ["if", () => tokens.push({ token: Token.disc.If })],
+    ["else", () => tokens.push({ token: Token.disc.Else })],
+    ["while", () => tokens.push({ token: Token.disc.While })],
+    ["do", () => tokens.push({ token: Token.disc.Do })],
+    ["for", () => tokens.push({ token: Token.disc.For })],
+    ["break", () => tokens.push({ token: Token.disc.Break })],
+    ["continue", () => tokens.push({ token: Token.disc.Continue })],
+    ["switch", () => tokens.push({ token: Token.disc.Switch })],
+    ["case", () => tokens.push({ token: Token.disc.Case })],
+    ["default", () => tokens.push({ token: Token.disc.Default })],
+    ["return", () => tokens.push({ token: Token.disc.Return })],
+    ["calldata", () => tokens.push({ token: Token.disc.Calldata })],
+    ["memory", () => tokens.push({ token: Token.disc.Memory })],
+    ["storage", () => tokens.push({ token: Token.disc.Storage })],
+    ["immutable", () => tokens.push({ token: Token.disc.Immutable })],
+    ["constant", () => tokens.push({ token: Token.disc.Constant })],
+    ["contract", () => tokens.push({ token: Token.disc.Contract })],
+    ["abstract", () => tokens.push({ token: Token.disc.Abstract })],
+    ["interface", () => tokens.push({ token: Token.disc.Interface })],
+    ["library", () => tokens.push({ token: Token.disc.Library })],
+    ["pragma", () => tokens.push({ token: Token.disc.Pragma })],
+    ["import", () => tokens.push({ token: Token.disc.Import })],
+    ["from", () => tokens.push({ token: Token.disc.From })],
+    ["using", () => tokens.push({ token: Token.disc.Using })],
+    ["as", () => tokens.push({ token: Token.disc.As })],
+    ["is", () => tokens.push({ token: Token.disc.Is })],
+    ["function", () => tokens.push({ token: Token.disc.Function })],
+    ["external", () => tokens.push({ token: Token.disc.External })],
+    ["public", () => tokens.push({ token: Token.disc.Public })],
+    ["internal", () => tokens.push({ token: Token.disc.Internal })],
+    ["private", () => tokens.push({ token: Token.disc.Private })],
+    ["view", () => tokens.push({ token: Token.disc.View })],
+    ["pure", () => tokens.push({ token: Token.disc.Pure })],
+    ["returns", () => tokens.push({ token: Token.disc.Returns })],
+    ["payable", () => tokens.push({ token: Token.disc.Payable })],
+    ["nonpayable", () => tokens.push({ token: Token.disc.Nonpayable })],
+    ["virtual", () => tokens.push({ token: Token.disc.Virtual })],
+    ["override", () => tokens.push({ token: Token.disc.Override })],
+    ["constructor", () => tokens.push({ token: Token.disc.Constructor })],
+    ["modifier", () => tokens.push({ token: Token.disc.Modifier })],
+    ["receive", () => tokens.push({ token: Token.disc.Receive })],
+    ["fallback", () => tokens.push({ token: Token.disc.Fallback })],
+    ["unchecked", () => tokens.push({ token: Token.disc.Unchecked })],
+    ["revert", () => tokens.push({ token: Token.disc.Revert })],
+    ["error", () => tokens.push({ token: Token.disc.Error })],
+    ["assert", () => tokens.push({ token: Token.disc.Assert })],
+    ["throw", () => tokens.push({ token: Token.disc.Throw })],
+    ["try", () => tokens.push({ token: Token.disc.Try })],
+    ["catch", () => tokens.push({ token: Token.disc.Catch })],
+    ["event", () => tokens.push({ token: Token.disc.Event })],
+    ["emit", () => tokens.push({ token: Token.disc.Emit })],
+    ["indexed", () => tokens.push({ token: Token.disc.Indexed })],
+    ["anonymous", () => tokens.push({ token: Token.disc.Anonymous })],
+    ["new", () => tokens.push({ token: Token.disc.New })],
+    ["delete", () => tokens.push({ token: Token.disc.Delete })],
+    ["struct", () => tokens.push({ token: Token.disc.Struct })],
+    ["enum", () => tokens.push({ token: Token.disc.Enum })],
+    ["type", () => tokens.push({ token: Token.disc.Type })],
+    ["mapping", () => tokens.push({ token: Token.disc.Mapping })],
+    ["address", () => tokens.push({ token: Token.disc.Address })],
+    ["string", () => tokens.push({ token: Token.disc.String })],
+    ["bytes", () => tokens.push({ token: Token.disc.Bytes })],
+    ["bool", () => tokens.push({ token: Token.disc.Bool })],
+    ["assembly", () => tokens.push({ token: Token.disc.Assembly })],
+    ["let", () => tokens.push({ token: Token.disc.Let })],
+    ["leave", () => tokens.push({ token: Token.disc.Leave })],
+    ["int8", () => tokens.push({ token: Token.disc.Int, size: 8 })],
+    ["int16", () => tokens.push({ token: Token.disc.Int, size: 16 })],
+    ["int24", () => tokens.push({ token: Token.disc.Int, size: 24 })],
+    ["int32", () => tokens.push({ token: Token.disc.Int, size: 32 })],
+    ["int40", () => tokens.push({ token: Token.disc.Int, size: 40 })],
+    ["int48", () => tokens.push({ token: Token.disc.Int, size: 48 })],
+    ["int56", () => tokens.push({ token: Token.disc.Int, size: 56 })],
+    ["int64", () => tokens.push({ token: Token.disc.Int, size: 64 })],
+    ["int72", () => tokens.push({ token: Token.disc.Int, size: 72 })],
+    ["int80", () => tokens.push({ token: Token.disc.Int, size: 80 })],
+    ["int88", () => tokens.push({ token: Token.disc.Int, size: 88 })],
+    ["int96", () => tokens.push({ token: Token.disc.Int, size: 96 })],
+    ["int104", () => tokens.push({ token: Token.disc.Int, size: 104 })],
+    ["int112", () => tokens.push({ token: Token.disc.Int, size: 112 })],
+    ["int120", () => tokens.push({ token: Token.disc.Int, size: 120 })],
+    ["int128", () => tokens.push({ token: Token.disc.Int, size: 128 })],
+    ["int136", () => tokens.push({ token: Token.disc.Int, size: 136 })],
+    ["int144", () => tokens.push({ token: Token.disc.Int, size: 144 })],
+    ["int152", () => tokens.push({ token: Token.disc.Int, size: 152 })],
+    ["int160", () => tokens.push({ token: Token.disc.Int, size: 160 })],
+    ["int168", () => tokens.push({ token: Token.disc.Int, size: 168 })],
+    ["int176", () => tokens.push({ token: Token.disc.Int, size: 176 })],
+    ["int184", () => tokens.push({ token: Token.disc.Int, size: 184 })],
+    ["int192", () => tokens.push({ token: Token.disc.Int, size: 192 })],
+    ["int200", () => tokens.push({ token: Token.disc.Int, size: 200 })],
+    ["int208", () => tokens.push({ token: Token.disc.Int, size: 208 })],
+    ["int216", () => tokens.push({ token: Token.disc.Int, size: 216 })],
+    ["int224", () => tokens.push({ token: Token.disc.Int, size: 224 })],
+    ["int232", () => tokens.push({ token: Token.disc.Int, size: 232 })],
+    ["int240", () => tokens.push({ token: Token.disc.Int, size: 240 })],
+    ["int248", () => tokens.push({ token: Token.disc.Int, size: 248 })],
+    ["int256", () => tokens.push({ token: Token.disc.Int, size: 256 })],
+    ["uint8", () => tokens.push({ token: Token.disc.Uint, size: 8 })],
+    ["uint16", () => tokens.push({ token: Token.disc.Uint, size: 16 })],
+    ["uint24", () => tokens.push({ token: Token.disc.Uint, size: 24 })],
+    ["uint32", () => tokens.push({ token: Token.disc.Uint, size: 32 })],
+    ["uint40", () => tokens.push({ token: Token.disc.Uint, size: 40 })],
+    ["uint48", () => tokens.push({ token: Token.disc.Uint, size: 48 })],
+    ["uint56", () => tokens.push({ token: Token.disc.Uint, size: 56 })],
+    ["uint64", () => tokens.push({ token: Token.disc.Uint, size: 64 })],
+    ["uint72", () => tokens.push({ token: Token.disc.Uint, size: 72 })],
+    ["uint80", () => tokens.push({ token: Token.disc.Uint, size: 80 })],
+    ["uint88", () => tokens.push({ token: Token.disc.Uint, size: 88 })],
+    ["uint96", () => tokens.push({ token: Token.disc.Uint, size: 96 })],
+    ["uint104", () => tokens.push({ token: Token.disc.Uint, size: 104 })],
+    ["uint112", () => tokens.push({ token: Token.disc.Uint, size: 112 })],
+    ["uint120", () => tokens.push({ token: Token.disc.Uint, size: 120 })],
+    ["uint128", () => tokens.push({ token: Token.disc.Uint, size: 128 })],
+    ["uint136", () => tokens.push({ token: Token.disc.Uint, size: 136 })],
+    ["uint144", () => tokens.push({ token: Token.disc.Uint, size: 144 })],
+    ["uint152", () => tokens.push({ token: Token.disc.Uint, size: 152 })],
+    ["uint160", () => tokens.push({ token: Token.disc.Uint, size: 160 })],
+    ["uint168", () => tokens.push({ token: Token.disc.Uint, size: 168 })],
+    ["uint176", () => tokens.push({ token: Token.disc.Uint, size: 176 })],
+    ["uint184", () => tokens.push({ token: Token.disc.Uint, size: 184 })],
+    ["uint192", () => tokens.push({ token: Token.disc.Uint, size: 192 })],
+    ["uint200", () => tokens.push({ token: Token.disc.Uint, size: 200 })],
+    ["uint208", () => tokens.push({ token: Token.disc.Uint, size: 208 })],
+    ["uint216", () => tokens.push({ token: Token.disc.Uint, size: 216 })],
+    ["uint224", () => tokens.push({ token: Token.disc.Uint, size: 224 })],
+    ["uint232", () => tokens.push({ token: Token.disc.Uint, size: 232 })],
+    ["uint240", () => tokens.push({ token: Token.disc.Uint, size: 240 })],
+    ["uint248", () => tokens.push({ token: Token.disc.Uint, size: 248 })],
+    ["uint256", () => tokens.push({ token: Token.disc.Uint, size: 256 })],
+    ["bytes1", () => tokens.push({ token: Token.disc.Byte, size: 1 })],
+    ["bytes2", () => tokens.push({ token: Token.disc.Byte, size: 2 })],
+    ["bytes3", () => tokens.push({ token: Token.disc.Byte, size: 3 })],
+    ["bytes4", () => tokens.push({ token: Token.disc.Byte, size: 4 })],
+    ["bytes5", () => tokens.push({ token: Token.disc.Byte, size: 5 })],
+    ["bytes6", () => tokens.push({ token: Token.disc.Byte, size: 6 })],
+    ["bytes7", () => tokens.push({ token: Token.disc.Byte, size: 7 })],
+    ["bytes8", () => tokens.push({ token: Token.disc.Byte, size: 8 })],
+    ["bytes9", () => tokens.push({ token: Token.disc.Byte, size: 9 })],
+    ["bytes10", () => tokens.push({ token: Token.disc.Byte, size: 10 })],
+    ["bytes11", () => tokens.push({ token: Token.disc.Byte, size: 11 })],
+    ["bytes12", () => tokens.push({ token: Token.disc.Byte, size: 12 })],
+    ["bytes13", () => tokens.push({ token: Token.disc.Byte, size: 13 })],
+    ["bytes14", () => tokens.push({ token: Token.disc.Byte, size: 14 })],
+    ["bytes15", () => tokens.push({ token: Token.disc.Byte, size: 15 })],
+    ["bytes16", () => tokens.push({ token: Token.disc.Byte, size: 16 })],
+    ["bytes17", () => tokens.push({ token: Token.disc.Byte, size: 17 })],
+    ["bytes18", () => tokens.push({ token: Token.disc.Byte, size: 18 })],
+    ["bytes19", () => tokens.push({ token: Token.disc.Byte, size: 19 })],
+    ["bytes20", () => tokens.push({ token: Token.disc.Byte, size: 20 })],
+    ["bytes21", () => tokens.push({ token: Token.disc.Byte, size: 21 })],
+    ["bytes22", () => tokens.push({ token: Token.disc.Byte, size: 22 })],
+    ["bytes23", () => tokens.push({ token: Token.disc.Byte, size: 23 })],
+    ["bytes24", () => tokens.push({ token: Token.disc.Byte, size: 24 })],
+    ["bytes25", () => tokens.push({ token: Token.disc.Byte, size: 25 })],
+    ["bytes26", () => tokens.push({ token: Token.disc.Byte, size: 26 })],
+    ["bytes27", () => tokens.push({ token: Token.disc.Byte, size: 27 })],
+    ["bytes28", () => tokens.push({ token: Token.disc.Byte, size: 28 })],
+    ["bytes29", () => tokens.push({ token: Token.disc.Byte, size: 29 })],
+    ["bytes30", () => tokens.push({ token: Token.disc.Byte, size: 30 })],
+    ["bytes31", () => tokens.push({ token: Token.disc.Byte, size: 31 })],
+    ["bytes32", () => tokens.push({ token: Token.disc.Byte, size: 32 })],
     [
       "after",
       () => {
@@ -575,7 +575,7 @@ export const tokenize = (source: string): Token.Token[] => {
 
         if (length === 42) {
           tokens.push({
-            token: Token.TokenType.AddressLiteral,
+            token: Token.disc.AddressLiteral,
             value: source.substring(cursor.position - length, cursor.position) as Hex,
           });
         }
@@ -590,7 +590,7 @@ export const tokenize = (source: string): Token.Token[] => {
         }
 
         tokens.push({
-          token: Token.TokenType.NumberLiteral,
+          token: Token.disc.NumberLiteral,
           value: BigInt(source.substring(cursor.position - length, cursor.position)),
         });
       }
@@ -611,7 +611,7 @@ export const tokenize = (source: string): Token.Token[] => {
       if (keywordMap.has(lexeme)) {
         keywordMap.get(lexeme)!();
       } else {
-        tokens.push({ token: Token.TokenType.Identifier, value: lexeme });
+        tokens.push({ token: Token.disc.Identifier, value: lexeme });
       }
     } else {
       throw new UnrecognizedSymbolError({ symbol: char });

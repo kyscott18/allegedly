@@ -37,19 +37,19 @@ export const compile = (program: Ast.Program, symbols: CheckContext["symbols"]):
 
   for (const defintion of program) {
     switch (defintion.ast) {
-      case Ast.AstType.FunctionDefinition:
+      case Ast.disc.FunctionDefinition:
         compileFunction(context, defintion);
         break;
 
-      case Ast.AstType.ContractDefinition:
+      case Ast.disc.ContractDefinition:
         code = compileContract(context, defintion);
         break;
 
-      case Ast.AstType.VariableDefinition:
-      case Ast.AstType.EventDefinition:
-      case Ast.AstType.ErrorDefinition:
-      case Ast.AstType.StructDefinition:
-      case Ast.AstType.ModifierDefinition:
+      case Ast.disc.VariableDefinition:
+      case Ast.disc.EventDefinition:
+      case Ast.disc.ErrorDefinition:
+      case Ast.disc.StructDefinition:
+      case Ast.disc.ModifierDefinition:
         break;
 
       default:
@@ -105,15 +105,15 @@ const resolveSymbolType = (context: CompileBytecodeContext, symbol: string): { t
 const compileContract = (context: CompileBytecodeContext, node: Ast.ContractDefinition): Hex => {
   for (const _node of node.nodes) {
     switch (_node.ast) {
-      case Ast.AstType.FunctionDefinition:
+      case Ast.disc.FunctionDefinition:
         compileFunction(context, _node);
         break;
 
-      case Ast.AstType.VariableDefinition:
-      case Ast.AstType.EventDefinition:
-      case Ast.AstType.ErrorDefinition:
-      case Ast.AstType.StructDefinition:
-      case Ast.AstType.ModifierDefinition:
+      case Ast.disc.VariableDefinition:
+      case Ast.disc.EventDefinition:
+      case Ast.disc.ErrorDefinition:
+      case Ast.disc.StructDefinition:
+      case Ast.disc.ModifierDefinition:
         throw new NotImplementedError({ source: JSON.stringify(_node, null, 2) });
 
       default:
@@ -187,8 +187,8 @@ const compileFunction = (context: CompileBytecodeContext, node: Ast.FunctionDefi
   }
 
   if (
-    node.visibility.token === Token.TokenType.External ||
-    node.visibility.token === Token.TokenType.Public
+    node.visibility.token === Token.disc.External ||
+    node.visibility.token === Token.disc.Public
   ) {
     context.functions.set(node, code);
   } else {
@@ -200,7 +200,7 @@ const compileFunction = (context: CompileBytecodeContext, node: Ast.FunctionDefi
 
 const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement): Hex => {
   switch (node.ast) {
-    case Ast.AstType.VariableDeclaration: {
+    case Ast.disc.VariableDeclaration: {
       const location = addSymbol(context, node.identifier.value);
       if (node.initializer) {
         return concat([
@@ -212,51 +212,51 @@ const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement):
       throw new NotImplementedError({ source: "" });
     }
 
-    case Ast.AstType.ExpressionStatement: {
+    case Ast.disc.ExpressionStatement: {
       return compileExpression(context, node.expression).code;
     }
 
-    case Ast.AstType.BlockStatement: {
+    case Ast.disc.BlockStatement: {
       throw new NotImplementedError({ source: "" });
     }
 
-    case Ast.AstType.UncheckedBlockStatement: {
+    case Ast.disc.UncheckedBlockStatement: {
       return "0x";
     }
 
-    case Ast.AstType.IfStatement: {
+    case Ast.disc.IfStatement: {
       return "0x";
     }
 
-    case Ast.AstType.ForStatement: {
+    case Ast.disc.ForStatement: {
       return "0x";
     }
 
-    case Ast.AstType.WhileStatement: {
+    case Ast.disc.WhileStatement: {
       return "0x";
     }
 
-    case Ast.AstType.DoWhileStatement: {
+    case Ast.disc.DoWhileStatement: {
       return "0x";
     }
 
-    case Ast.AstType.BreakStatement: {
+    case Ast.disc.BreakStatement: {
       return "0x";
     }
 
-    case Ast.AstType.ContinueStatement: {
+    case Ast.disc.ContinueStatement: {
       return "0x";
     }
 
-    case Ast.AstType.EmitStatement: {
+    case Ast.disc.EmitStatement: {
       return "0x";
     }
 
-    case Ast.AstType.RevertStatement: {
+    case Ast.disc.RevertStatement: {
       return "0x";
     }
 
-    case Ast.AstType.ReturnStatement: {
+    case Ast.disc.ReturnStatement: {
       if (node.expression === undefined) {
         return concat([push("0x0"), push("0x0"), Code.RETURN]);
       }
@@ -273,7 +273,7 @@ const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement):
       ]);
     }
 
-    case Ast.AstType.PlaceholderStatement: {
+    case Ast.disc.PlaceholderStatement: {
       return "0x";
     }
   }
@@ -290,33 +290,31 @@ const compileExpression = (
   node: Ast.Expression,
 ): { code: Hex; stack: number; type: Type[] } => {
   switch (node.ast) {
-    case Ast.AstType.Identifier: {
+    case Ast.disc.Identifier: {
       const { location } = resolveSymbol(context, node.token.value);
       const { type } = resolveSymbolType(context, node.token.value);
       return { code: concat([push(location), Code.MLOAD]), stack: 1, type: [type] };
     }
 
-    case Ast.AstType.Literal: {
+    case Ast.disc.Literal: {
       switch (node.token.token) {
-        case Token.TokenType.StringLiteral: {
+        case Token.disc.StringLiteral: {
           throw new NotImplementedError({ source: "" });
         }
 
-        case Token.TokenType.AddressLiteral: {
+        case Token.disc.AddressLiteral: {
           return {
             code: push(node.token.value),
             stack: 1,
-            type: [
-              { _type: "elementary", type: { token: Token.TokenType.Address }, isLiteral: true },
-            ],
+            type: [{ _type: "elementary", type: { token: Token.disc.Address }, isLiteral: true }],
           };
         }
 
-        case Token.TokenType.HexLiteral: {
+        case Token.disc.HexLiteral: {
           throw new NotImplementedError({ source: "" });
         }
 
-        case Token.TokenType.NumberLiteral: {
+        case Token.disc.NumberLiteral: {
           return {
             code: push(toHex(node.token.value)),
             stack: 1,
@@ -330,15 +328,15 @@ const compileExpression = (
           };
         }
 
-        case Token.TokenType.RationalNumberLiteral: {
+        case Token.disc.RationalNumberLiteral: {
           throw new NotImplementedError({ source: "" });
         }
 
-        case Token.TokenType.HexNumberLiteral: {
+        case Token.disc.HexNumberLiteral: {
           throw new NotImplementedError({ source: "" });
         }
 
-        case Token.TokenType.BoolLiteral: {
+        case Token.disc.BoolLiteral: {
           throw new NotImplementedError({ source: "" });
         }
 
@@ -348,30 +346,30 @@ const compileExpression = (
       }
     }
 
-    case Ast.AstType.Assignment: {
+    case Ast.disc.Assignment: {
       throw new NotImplementedError({ source: "" });
     }
 
-    case Ast.AstType.UnaryOperation: {
+    case Ast.disc.UnaryOperation: {
       throw new NotImplementedError({ source: "" });
     }
 
-    case Ast.AstType.BinaryOperation: {
+    case Ast.disc.BinaryOperation: {
       throw new NotImplementedError({ source: "" });
     }
 
-    case Ast.AstType.ConditionalExpression: {
+    case Ast.disc.ConditionalExpression: {
       throw new NotImplementedError({ source: "" });
     }
 
-    case Ast.AstType.FunctionCallExpression: {
-      if (node.expression.ast === Ast.AstType.Identifier) {
+    case Ast.disc.FunctionCallExpression: {
+      if (node.expression.ast === Ast.disc.Identifier) {
         const { type } = resolveSymbolType(context, node.expression.token.value);
 
         return { ...compileExpression(context, node.arguments[0]!), type: [type] };
       }
 
-      if (node.expression.ast === Ast.AstType.MemberAccessExpression) {
+      if (node.expression.ast === Ast.disc.MemberAccessExpression) {
         const expression = compileExpression(context, node.expression.expression);
         const t = (expression.type[0]! as Extract<Type, { _type: "contract" }>).functions[0]![1];
 
@@ -427,19 +425,19 @@ const compileExpression = (
       throw new NotImplementedError({ source: "" });
     }
 
-    case Ast.AstType.MemberAccessExpression: {
+    case Ast.disc.MemberAccessExpression: {
       throw new NotImplementedError({ source: "" });
     }
 
-    case Ast.AstType.IndexAccessExpression: {
+    case Ast.disc.IndexAccessExpression: {
       throw new NotImplementedError({ source: "" });
     }
 
-    case Ast.AstType.NewExpression: {
+    case Ast.disc.NewExpression: {
       throw new NotImplementedError({ source: "" });
     }
 
-    case Ast.AstType.TupleExpression: {
+    case Ast.disc.TupleExpression: {
       throw new NotImplementedError({ source: "" });
     }
   }

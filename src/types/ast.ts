@@ -1,7 +1,7 @@
 import type { Token } from "./token";
 
 export namespace Ast {
-  export enum AstType {
+  export enum disc {
     Identifier,
     Literal,
     Assignment,
@@ -43,12 +43,12 @@ export namespace Ast {
   // expressions
 
   export type Identifier = {
-    ast: AstType.Identifier;
+    ast: disc.Identifier;
     token: Token.Identifier | ElementaryType["type"];
   };
 
   export type Literal = {
-    ast: AstType.Literal;
+    ast: disc.Literal;
     token:
       | Token.StringLiteral
       | Token.AddressLiteral
@@ -60,7 +60,7 @@ export namespace Ast {
   };
 
   export type Assignment = {
-    ast: AstType.Assignment;
+    ast: disc.Assignment;
     operator:
       | Token.Assign
       | Token.AddAssign
@@ -79,7 +79,7 @@ export namespace Ast {
 
   // TODO(kyle) prefix or postfix
   export type UnaryOperation = {
-    ast: AstType.UnaryOperation;
+    ast: disc.UnaryOperation;
     operator:
       | Token.Increment
       | Token.Decrement
@@ -92,7 +92,7 @@ export namespace Ast {
   };
 
   export type BinaryOperation = {
-    ast: AstType.BinaryOperation;
+    ast: disc.BinaryOperation;
     operator:
       | Token.Add
       | Token.Subtract
@@ -118,66 +118,66 @@ export namespace Ast {
   };
 
   export type ConditionalExpression = {
-    ast: AstType.ConditionalExpression;
+    ast: disc.ConditionalExpression;
     condition: Expression;
     trueExpression: Expression;
     falseExpression: Expression;
   };
 
   export type FunctionCallExpression = {
-    ast: AstType.FunctionCallExpression;
+    ast: disc.FunctionCallExpression;
     expression: Expression;
     arguments: Expression[];
   };
 
   export type MemberAccessExpression = {
-    ast: AstType.MemberAccessExpression;
+    ast: disc.MemberAccessExpression;
     expression: Expression;
     member: Identifier;
   };
 
   export type IndexAccessExpression = {
-    ast: AstType.IndexAccessExpression;
+    ast: disc.IndexAccessExpression;
     base: Expression;
     index: Expression;
   };
 
   export type NewExpression = {
-    ast: AstType.NewExpression;
+    ast: disc.NewExpression;
     expression: Expression;
   };
 
   export type TupleExpression = {
-    ast: AstType.TupleExpression;
+    ast: disc.TupleExpression;
     elements: Expression[];
   };
 
   // statements
 
   export type ExpressionStatement = {
-    ast: AstType.ExpressionStatement;
+    ast: disc.ExpressionStatement;
     expression: Expression;
   };
 
   export type BlockStatement = {
-    ast: AstType.BlockStatement;
+    ast: disc.BlockStatement;
     statements: Statement[];
   };
 
   export type UncheckedBlockStatement = {
-    ast: AstType.UncheckedBlockStatement;
+    ast: disc.UncheckedBlockStatement;
     statements: Statement[];
   };
 
   export type IfStatement = {
-    ast: AstType.IfStatement;
+    ast: disc.IfStatement;
     condition: Expression;
     trueBody: Statement;
     falseBody: Statement | undefined;
   };
 
   export type ForStatement = {
-    ast: AstType.ForStatement;
+    ast: disc.ForStatement;
     body: Statement;
     init: Expression | undefined;
     test: Expression | undefined;
@@ -185,48 +185,48 @@ export namespace Ast {
   };
 
   export type WhileStatement = {
-    ast: AstType.WhileStatement;
+    ast: disc.WhileStatement;
     body: Statement;
     test: Expression;
   };
 
   export type DoWhileStatement = {
-    ast: AstType.DoWhileStatement;
+    ast: disc.DoWhileStatement;
     body: Statement;
     test: Expression;
   };
 
   export type BreakStatement = {
-    ast: AstType.BreakStatement;
+    ast: disc.BreakStatement;
   };
 
   export type ContinueStatement = {
-    ast: AstType.ContinueStatement;
+    ast: disc.ContinueStatement;
   };
 
   export type EmitStatement = {
-    ast: AstType.EmitStatement;
+    ast: disc.EmitStatement;
     event: FunctionCallExpression;
   };
 
   export type RevertStatement = {
-    ast: AstType.RevertStatement;
+    ast: disc.RevertStatement;
     error: FunctionCallExpression;
   };
 
   export type ReturnStatement = {
-    ast: AstType.ReturnStatement;
+    ast: disc.ReturnStatement;
     expression: Expression | undefined;
   };
 
   export type PlaceholderStatement = {
-    ast: AstType.PlaceholderStatement;
+    ast: disc.PlaceholderStatement;
   };
 
   // types
 
   export type ElementaryType = {
-    ast: AstType.ElementaryType;
+    ast: disc.ElementaryType;
     type:
       | Token.Address
       | Token.String
@@ -238,13 +238,13 @@ export namespace Ast {
   };
 
   export type ArrayType = {
-    ast: AstType.ArrayType;
+    ast: disc.ArrayType;
     length: Expression | undefined;
     type: Type;
   };
 
   export type Mapping = {
-    ast: AstType.Mapping;
+    ast: disc.Mapping;
     keyType: Type;
     keyName: Token.Identifier | undefined;
     valueType: Type;
@@ -262,7 +262,7 @@ export namespace Ast {
   };
 
   export type VariableDefintion = {
-    ast: AstType.VariableDefinition;
+    ast: disc.VariableDefinition;
     type: Type;
     identifier: Token.Identifier;
     isConstant: boolean;
@@ -271,7 +271,7 @@ export namespace Ast {
   };
 
   export type VariableDeclaration = {
-    ast: AstType.VariableDeclaration;
+    ast: disc.VariableDeclaration;
     type: Type;
     identifier: Token.Identifier;
     location: Token.Storage | Token.Memory | Token.Calldata | undefined;
@@ -279,7 +279,7 @@ export namespace Ast {
   };
 
   export type Parameter = {
-    ast: AstType.Parameter;
+    ast: disc.Parameter;
     type: Type;
     identifier: Token.Identifier | undefined;
     location: Token.Storage | Token.Memory | Token.Calldata | undefined;
@@ -287,7 +287,7 @@ export namespace Ast {
   };
 
   export type FunctionDefinition = {
-    ast: Ast.AstType.FunctionDefinition;
+    ast: Ast.disc.FunctionDefinition;
     kind: Token.Function | Token.Receive | Token.Constructor | Token.Fallback;
     visibility: Visibility;
     mutability: Mutability;
@@ -299,7 +299,7 @@ export namespace Ast {
   };
 
   export type ContractDefinition = {
-    ast: Ast.AstType.ContractDefinition;
+    ast: Ast.disc.ContractDefinition;
     kind: Token.Contract | Token.Interface | Token.Library;
     name: Token.Identifier;
     nodes: (
@@ -313,25 +313,25 @@ export namespace Ast {
   };
 
   export type EventDefinition = {
-    ast: AstType.EventDefinition;
+    ast: disc.EventDefinition;
     name: Token.Identifier;
     parameters: Parameter[];
   };
 
   export type ErrorDefinition = {
-    ast: AstType.ErrorDefinition;
+    ast: disc.ErrorDefinition;
     name: Token.Identifier;
     parameters: Parameter[];
   };
 
   export type StructDefinition = {
-    ast: AstType.StructDefinition;
+    ast: disc.StructDefinition;
     name: Token.Identifier;
     members: Parameter[];
   };
 
   export type ModifierDefinition = {
-    ast: AstType.ModifierDefinition;
+    ast: disc.ModifierDefinition;
     name: Token.Identifier;
     body: BlockStatement;
     visibility: Visibility;

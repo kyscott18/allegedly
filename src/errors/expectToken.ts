@@ -5,10 +5,7 @@ export type ExpectTokenErrorType = ExpectTokenError & {
 };
 export class ExpectTokenError extends Error {
   override name = "ExpectTokenError";
-  constructor({
-    expected,
-    received,
-  }: { expected: Token.TokenType; received: Token.TokenType | undefined }) {
+  constructor({ expected, received }: { expected: Token.disc; received: Token.disc | undefined }) {
     super(`Expected "${expected}", received "${received}".`);
   }
 }

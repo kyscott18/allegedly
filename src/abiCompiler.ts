@@ -30,25 +30,25 @@ export const compileAbi = (program: Ast.Program): Contract => {
 
   for (const defintion of program) {
     switch (defintion.ast) {
-      case Ast.AstType.FunctionDefinition:
+      case Ast.disc.FunctionDefinition:
         abi.push(compileFunctionAbi(context, defintion));
         break;
 
-      case Ast.AstType.ContractDefinition: {
+      case Ast.disc.ContractDefinition: {
         const contract = compileContractAbi(context, defintion);
         return contract as Contract;
       }
 
-      case Ast.AstType.EventDefinition:
+      case Ast.disc.EventDefinition:
         abi.push(compileEventAbi(context, defintion));
         break;
 
-      case Ast.AstType.ErrorDefinition:
+      case Ast.disc.ErrorDefinition:
         abi.push(compileErrorAbi(context, defintion));
         break;
 
-      case Ast.AstType.StructDefinition:
-      case Ast.AstType.ModifierDefinition:
+      case Ast.disc.StructDefinition:
+      case Ast.disc.ModifierDefinition:
         throw new NotImplementedError({ source: JSON.stringify(defintion, null, 2) });
 
       default:
@@ -61,25 +61,25 @@ export const compileAbi = (program: Ast.Program): Contract => {
 
 const compileElementaryType = (type: Ast.ElementaryType): AbiType => {
   switch (type.type.token) {
-    case Token.TokenType.Address:
+    case Token.disc.Address:
       return "address";
 
-    case Token.TokenType.String:
+    case Token.disc.String:
       return "string";
 
-    case Token.TokenType.Uint:
+    case Token.disc.Uint:
       return `uint${type.type.size}` as SolidityInt;
 
-    case Token.TokenType.Int:
+    case Token.disc.Int:
       return `int${type.type.size}` as SolidityInt;
 
-    case Token.TokenType.Byte:
+    case Token.disc.Byte:
       return `bytes${type.type.size}` as SolidityBytes;
 
-    case Token.TokenType.Bytes:
+    case Token.disc.Bytes:
       throw "unreachable";
 
-    case Token.TokenType.Bool:
+    case Token.disc.Bool:
       return "bool";
 
     default:
@@ -110,24 +110,24 @@ const compileContractAbi = (
 
   for (const _node of node.nodes) {
     switch (_node.ast) {
-      case Ast.AstType.FunctionDefinition:
+      case Ast.disc.FunctionDefinition:
         abi.push(compileFunctionAbi(context, _node));
         break;
 
-      case Ast.AstType.VariableDefinition:
+      case Ast.disc.VariableDefinition:
         abi.push(compileVariableAbi(context, _node));
         break;
 
-      case Ast.AstType.EventDefinition:
+      case Ast.disc.EventDefinition:
         abi.push(compileEventAbi(context, _node));
         break;
 
-      case Ast.AstType.ErrorDefinition:
+      case Ast.disc.ErrorDefinition:
         abi.push(compileErrorAbi(context, _node));
         break;
 
-      case Ast.AstType.StructDefinition:
-      case Ast.AstType.ModifierDefinition:
+      case Ast.disc.StructDefinition:
+      case Ast.disc.ModifierDefinition:
         throw new NotImplementedError({ source: JSON.stringify(_node, null, 2) });
 
       default:
@@ -176,16 +176,16 @@ const compileParameters = (node: Ast.Parameter): AbiParameter => {
 
 const compileMutability = (node: Ast.Mutability): AbiStateMutability => {
   switch (node.token) {
-    case Token.TokenType.View:
+    case Token.disc.View:
       return "view";
 
-    case Token.TokenType.Pure:
+    case Token.disc.Pure:
       return "pure";
 
-    case Token.TokenType.Nonpayable:
+    case Token.disc.Nonpayable:
       return "nonpayable";
 
-    case Token.TokenType.Payable:
+    case Token.disc.Payable:
       return "payable";
   }
 };

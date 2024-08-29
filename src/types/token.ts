@@ -2,7 +2,7 @@ import type { Hex } from "viem";
 import type { TODO } from "./utils";
 
 export namespace Token {
-  export enum TokenType {
+  export enum disc {
     Identifier,
     StringLiteral,
     AddressLiteral,
@@ -160,166 +160,166 @@ export namespace Token {
     Var,
   }
 
-  export type Identifier = { token: TokenType.Identifier; value: string };
+  export type Identifier = { token: disc.Identifier; value: string };
 
   // literals
 
-  export type StringLiteral = { token: TokenType.StringLiteral; value: TODO };
-  export type AddressLiteral = { token: TokenType.AddressLiteral; value: Hex };
-  export type HexLiteral = { token: TokenType.HexLiteral; value: TODO };
-  export type NumberLiteral = { token: TokenType.NumberLiteral; value: bigint };
-  export type RationalNumberLiteral = { token: TokenType.RationalNumberLiteral; value: TODO };
-  export type HexNumberLiteral = { token: TokenType.HexNumberLiteral; value: TODO };
-  export type BoolLiteral = { token: TokenType.BoolLiteral; value: boolean };
+  export type StringLiteral = { token: disc.StringLiteral; value: TODO };
+  export type AddressLiteral = { token: disc.AddressLiteral; value: Hex };
+  export type HexLiteral = { token: disc.HexLiteral; value: TODO };
+  export type NumberLiteral = { token: disc.NumberLiteral; value: bigint };
+  export type RationalNumberLiteral = { token: disc.RationalNumberLiteral; value: TODO };
+  export type HexNumberLiteral = { token: disc.HexNumberLiteral; value: TODO };
+  export type BoolLiteral = { token: disc.BoolLiteral; value: boolean };
 
   // keywords
 
-  export type If = { token: TokenType.If };
-  export type Else = { token: TokenType.Else };
-  export type While = { token: TokenType.While };
-  export type Do = { token: TokenType.Do };
-  export type For = { token: TokenType.For };
-  export type Break = { token: TokenType.Break };
-  export type Continue = { token: TokenType.Continue };
-  export type Switch = { token: TokenType.Switch };
-  export type Case = { token: TokenType.Case };
-  export type Default = { token: TokenType.Default };
-  export type Return = { token: TokenType.Return };
+  export type If = { token: disc.If };
+  export type Else = { token: disc.Else };
+  export type While = { token: disc.While };
+  export type Do = { token: disc.Do };
+  export type For = { token: disc.For };
+  export type Break = { token: disc.Break };
+  export type Continue = { token: disc.Continue };
+  export type Switch = { token: disc.Switch };
+  export type Case = { token: disc.Case };
+  export type Default = { token: disc.Default };
+  export type Return = { token: disc.Return };
 
-  export type Calldata = { token: TokenType.Calldata };
-  export type Memory = { token: TokenType.Memory };
-  export type Storage = { token: TokenType.Storage };
-  export type Immutable = { token: TokenType.Immutable };
-  export type Constant = { token: TokenType.Constant };
+  export type Calldata = { token: disc.Calldata };
+  export type Memory = { token: disc.Memory };
+  export type Storage = { token: disc.Storage };
+  export type Immutable = { token: disc.Immutable };
+  export type Constant = { token: disc.Constant };
 
-  export type Contract = { token: TokenType.Contract };
-  export type Abstract = { token: TokenType.Abstract };
-  export type Interface = { token: TokenType.Interface };
-  export type Library = { token: TokenType.Library };
+  export type Contract = { token: disc.Contract };
+  export type Abstract = { token: disc.Abstract };
+  export type Interface = { token: disc.Interface };
+  export type Library = { token: disc.Library };
 
-  export type Pragma = { token: TokenType.Pragma };
-  export type Import = { token: TokenType.Import };
-  export type From = { token: TokenType.From };
-  export type Using = { token: TokenType.Using };
-  export type As = { token: TokenType.As };
-  export type Is = { token: TokenType.Is };
+  export type Pragma = { token: disc.Pragma };
+  export type Import = { token: disc.Import };
+  export type From = { token: disc.From };
+  export type Using = { token: disc.Using };
+  export type As = { token: disc.As };
+  export type Is = { token: disc.Is };
 
-  export type Function = { token: TokenType.Function };
-  export type External = { token: TokenType.External };
-  export type Public = { token: TokenType.Public };
-  export type Internal = { token: TokenType.Internal };
-  export type Private = { token: TokenType.Private };
-  export type View = { token: TokenType.View };
-  export type Pure = { token: TokenType.Pure };
-  export type Returns = { token: TokenType.Returns };
-  export type Payable = { token: TokenType.Payable };
-  export type Nonpayable = { token: TokenType.Nonpayable };
-  export type Virtual = { token: TokenType.Virtual };
-  export type Override = { token: TokenType.Override };
+  export type Function = { token: disc.Function };
+  export type External = { token: disc.External };
+  export type Public = { token: disc.Public };
+  export type Internal = { token: disc.Internal };
+  export type Private = { token: disc.Private };
+  export type View = { token: disc.View };
+  export type Pure = { token: disc.Pure };
+  export type Returns = { token: disc.Returns };
+  export type Payable = { token: disc.Payable };
+  export type Nonpayable = { token: disc.Nonpayable };
+  export type Virtual = { token: disc.Virtual };
+  export type Override = { token: disc.Override };
 
-  export type Constructor = { token: TokenType.Constructor };
-  export type Modifier = { token: TokenType.Modifier };
-  export type Receive = { token: TokenType.Receive };
-  export type Fallback = { token: TokenType.Fallback };
-  export type Unchecked = { token: TokenType.Unchecked };
+  export type Constructor = { token: disc.Constructor };
+  export type Modifier = { token: disc.Modifier };
+  export type Receive = { token: disc.Receive };
+  export type Fallback = { token: disc.Fallback };
+  export type Unchecked = { token: disc.Unchecked };
 
-  export type Error = { token: TokenType.Error };
-  export type Revert = { token: TokenType.Revert };
-  export type Assert = { token: TokenType.Assert };
-  export type Throw = { token: TokenType.Throw };
+  export type Error = { token: disc.Error };
+  export type Revert = { token: disc.Revert };
+  export type Assert = { token: disc.Assert };
+  export type Throw = { token: disc.Throw };
 
-  export type Try = { token: TokenType.Try };
-  export type Catch = { token: TokenType.Catch };
+  export type Try = { token: disc.Try };
+  export type Catch = { token: disc.Catch };
 
-  export type Event = { token: TokenType.Event };
-  export type Emit = { token: TokenType.Emit };
-  export type Indexed = { token: TokenType.Indexed };
-  export type Anonymous = { token: TokenType.Anonymous };
+  export type Event = { token: disc.Event };
+  export type Emit = { token: disc.Emit };
+  export type Indexed = { token: disc.Indexed };
+  export type Anonymous = { token: disc.Anonymous };
 
-  export type New = { token: TokenType.New };
-  export type Delete = { token: TokenType.Delete };
+  export type New = { token: disc.New };
+  export type Delete = { token: disc.Delete };
 
   // type keywords
 
-  export type Struct = { token: TokenType.Struct };
-  export type Enum = { token: TokenType.Enum };
-  export type Type = { token: TokenType.Type };
-  export type Mapping = { token: TokenType.Mapping };
+  export type Struct = { token: disc.Struct };
+  export type Enum = { token: disc.Enum };
+  export type Type = { token: disc.Type };
+  export type Mapping = { token: disc.Mapping };
 
-  export type Address = { token: TokenType.Address };
-  export type String = { token: TokenType.String };
-  export type Uint = { token: TokenType.Uint; size: number };
-  export type Int = { token: TokenType.Int; size: number };
-  export type Byte = { token: TokenType.Byte; size: number };
-  export type Bytes = { token: TokenType.Bytes };
-  export type Bool = { token: TokenType.Bool };
+  export type Address = { token: disc.Address };
+  export type String = { token: disc.String };
+  export type Uint = { token: disc.Uint; size: number };
+  export type Int = { token: disc.Int; size: number };
+  export type Byte = { token: disc.Byte; size: number };
+  export type Bytes = { token: disc.Bytes };
+  export type Bool = { token: disc.Bool };
 
   // symbols
 
-  export type Member = { token: TokenType.Member };
-  export type Comma = { token: TokenType.Comma };
-  export type Question = { token: TokenType.Question };
-  export type OpenParenthesis = { token: TokenType.OpenParenthesis };
-  export type CloseParenthesis = { token: TokenType.CloseParenthesis };
-  export type OpenCurlyBrace = { token: TokenType.OpenCurlyBrace };
-  export type CloseCurlyBrace = { token: TokenType.CloseCurlyBrace };
-  export type OpenBracket = { token: TokenType.OpenBracket };
-  export type CloseBracket = { token: TokenType.CloseBracket };
-  export type Semicolon = { token: TokenType.Semicolon };
-  export type Colon = { token: TokenType.Colon };
-  export type Arrow = { token: TokenType.Arrow };
-  export type Placeholder = { token: TokenType.Placeholder };
+  export type Member = { token: disc.Member };
+  export type Comma = { token: disc.Comma };
+  export type Question = { token: disc.Question };
+  export type OpenParenthesis = { token: disc.OpenParenthesis };
+  export type CloseParenthesis = { token: disc.CloseParenthesis };
+  export type OpenCurlyBrace = { token: disc.OpenCurlyBrace };
+  export type CloseCurlyBrace = { token: disc.CloseCurlyBrace };
+  export type OpenBracket = { token: disc.OpenBracket };
+  export type CloseBracket = { token: disc.CloseBracket };
+  export type Semicolon = { token: disc.Semicolon };
+  export type Colon = { token: disc.Colon };
+  export type Arrow = { token: disc.Arrow };
+  export type Placeholder = { token: disc.Placeholder };
 
   // operators
 
-  export type Assign = { token: TokenType.Assign };
-  export type Add = { token: TokenType.Add };
-  export type AddAssign = { token: TokenType.AddAssign };
-  export type Increment = { token: TokenType.Increment };
-  export type Subtract = { token: TokenType.Subtract };
-  export type SubtractAssign = { token: TokenType.SubtractAssign };
-  export type Decrement = { token: TokenType.Decrement };
-  export type Mul = { token: TokenType.Mul };
-  export type MulAssign = { token: TokenType.MulAssign };
-  export type Divide = { token: TokenType.Divide };
-  export type DivideAssign = { token: TokenType.DivideAssign };
-  export type Modulo = { token: TokenType.Modulo };
-  export type ModuloAssign = { token: TokenType.ModuloAssign };
-  export type Power = { token: TokenType.Power };
-  export type And = { token: TokenType.And };
-  export type Or = { token: TokenType.Or };
+  export type Assign = { token: disc.Assign };
+  export type Add = { token: disc.Add };
+  export type AddAssign = { token: disc.AddAssign };
+  export type Increment = { token: disc.Increment };
+  export type Subtract = { token: disc.Subtract };
+  export type SubtractAssign = { token: disc.SubtractAssign };
+  export type Decrement = { token: disc.Decrement };
+  export type Mul = { token: disc.Mul };
+  export type MulAssign = { token: disc.MulAssign };
+  export type Divide = { token: disc.Divide };
+  export type DivideAssign = { token: disc.DivideAssign };
+  export type Modulo = { token: disc.Modulo };
+  export type ModuloAssign = { token: disc.ModuloAssign };
+  export type Power = { token: disc.Power };
+  export type And = { token: disc.And };
+  export type Or = { token: disc.Or };
 
   // bitwise operators
 
-  export type BitwiseOr = { token: TokenType.BitwiseOr };
-  export type BitwiseOrAssign = { token: TokenType.BitwiseOrAssign };
-  export type BitwiseXOr = { token: TokenType.BitwiseXOr };
-  export type BitwiseXOrAssign = { token: TokenType.BitwiseXOrAssign };
-  export type BitwiseAnd = { token: TokenType.BitwiseAnd };
-  export type BitwiseAndAssign = { token: TokenType.BitwiseAndAssign };
-  export type BitwiseNot = { token: TokenType.BitwiseNot };
-  export type ShiftRight = { token: TokenType.ShiftRight };
-  export type ShiftRightAssign = { token: TokenType.ShiftRightAssign };
-  export type ShiftLeft = { token: TokenType.ShiftLeft };
-  export type ShiftLeftAssign = { token: TokenType.ShiftLeftAssign };
+  export type BitwiseOr = { token: disc.BitwiseOr };
+  export type BitwiseOrAssign = { token: disc.BitwiseOrAssign };
+  export type BitwiseXOr = { token: disc.BitwiseXOr };
+  export type BitwiseXOrAssign = { token: disc.BitwiseXOrAssign };
+  export type BitwiseAnd = { token: disc.BitwiseAnd };
+  export type BitwiseAndAssign = { token: disc.BitwiseAndAssign };
+  export type BitwiseNot = { token: disc.BitwiseNot };
+  export type ShiftRight = { token: disc.ShiftRight };
+  export type ShiftRightAssign = { token: disc.ShiftRightAssign };
+  export type ShiftLeft = { token: disc.ShiftLeft };
+  export type ShiftLeftAssign = { token: disc.ShiftLeftAssign };
 
   // comparisons
 
-  export type Equal = { token: TokenType.Equal };
-  export type Not = { token: TokenType.Not };
-  export type NotEqual = { token: TokenType.NotEqual };
-  export type Less = { token: TokenType.Less };
-  export type LessEqual = { token: TokenType.LessEqual };
-  export type More = { token: TokenType.More };
-  export type MoreEqual = { token: TokenType.MoreEqual };
+  export type Equal = { token: disc.Equal };
+  export type Not = { token: disc.Not };
+  export type NotEqual = { token: disc.NotEqual };
+  export type Less = { token: disc.Less };
+  export type LessEqual = { token: disc.LessEqual };
+  export type More = { token: disc.More };
+  export type MoreEqual = { token: disc.MoreEqual };
 
   // yul
 
-  export type Assembly = { token: TokenType.Assembly };
-  export type ColonAssign = { token: TokenType.ColonAssign };
-  export type YulArrow = { token: TokenType.YulArrow };
-  export type Let = { token: TokenType.Let };
-  export type Leave = { token: TokenType.Leave };
+  export type Assembly = { token: disc.Assembly };
+  export type ColonAssign = { token: disc.ColonAssign };
+  export type YulArrow = { token: disc.YulArrow };
+  export type Let = { token: disc.Let };
+  export type Leave = { token: disc.Leave };
 
   // abi
   // block

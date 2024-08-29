@@ -17,86 +17,86 @@ import { never } from "./utils/never.js";
 
 const assignmentOperatorToString = (operator: Ast.Assignment["operator"]): string => {
   switch (operator.token) {
-    case Token.TokenType.Assign:
+    case Token.disc.Assign:
       return "=";
-    case Token.TokenType.AddAssign:
+    case Token.disc.AddAssign:
       return "+=";
-    case Token.TokenType.SubtractAssign:
+    case Token.disc.SubtractAssign:
       return "-=";
-    case Token.TokenType.MulAssign:
+    case Token.disc.MulAssign:
       return "*=";
-    case Token.TokenType.DivideAssign:
+    case Token.disc.DivideAssign:
       return "/=";
-    case Token.TokenType.ModuloAssign:
+    case Token.disc.ModuloAssign:
       return "%=";
-    case Token.TokenType.BitwiseAndAssign:
+    case Token.disc.BitwiseAndAssign:
       return "&=";
-    case Token.TokenType.BitwiseOrAssign:
+    case Token.disc.BitwiseOrAssign:
       return "|=";
-    case Token.TokenType.BitwiseXOrAssign:
+    case Token.disc.BitwiseXOrAssign:
       return "^=";
-    case Token.TokenType.ShiftRightAssign:
+    case Token.disc.ShiftRightAssign:
       return ">>=";
-    case Token.TokenType.ShiftLeftAssign:
+    case Token.disc.ShiftLeftAssign:
       return "<<=";
   }
 };
 const unaryOperatorToString = (operator: Ast.UnaryOperation["operator"]): string => {
   switch (operator.token) {
-    case Token.TokenType.Increment:
+    case Token.disc.Increment:
       return "++";
-    case Token.TokenType.Decrement:
+    case Token.disc.Decrement:
       return "--";
-    case Token.TokenType.Subtract:
+    case Token.disc.Subtract:
       return "-";
-    case Token.TokenType.Delete:
+    case Token.disc.Delete:
       return "delete";
-    case Token.TokenType.Not:
+    case Token.disc.Not:
       return "!";
-    case Token.TokenType.BitwiseNot:
+    case Token.disc.BitwiseNot:
       return "~";
   }
 };
 
 const binaryOperatorToString = (operator: Ast.BinaryOperation["operator"]): string => {
   switch (operator.token) {
-    case Token.TokenType.Add:
+    case Token.disc.Add:
       return "+";
-    case Token.TokenType.Subtract:
+    case Token.disc.Subtract:
       return "-";
-    case Token.TokenType.Mul:
+    case Token.disc.Mul:
       return "*";
-    case Token.TokenType.Divide:
+    case Token.disc.Divide:
       return "/";
-    case Token.TokenType.Modulo:
+    case Token.disc.Modulo:
       return "%";
-    case Token.TokenType.Power:
+    case Token.disc.Power:
       return "**";
-    case Token.TokenType.And:
+    case Token.disc.And:
       return "&&";
-    case Token.TokenType.Or:
+    case Token.disc.Or:
       return "||";
-    case Token.TokenType.Equal:
+    case Token.disc.Equal:
       return "==";
-    case Token.TokenType.NotEqual:
+    case Token.disc.NotEqual:
       return "!=";
-    case Token.TokenType.Less:
+    case Token.disc.Less:
       return "<";
-    case Token.TokenType.LessEqual:
+    case Token.disc.LessEqual:
       return "<=";
-    case Token.TokenType.More:
+    case Token.disc.More:
       return ">";
-    case Token.TokenType.MoreEqual:
+    case Token.disc.MoreEqual:
       return ">=";
-    case Token.TokenType.BitwiseAnd:
+    case Token.disc.BitwiseAnd:
       return "&";
-    case Token.TokenType.BitwiseOr:
+    case Token.disc.BitwiseOr:
       return "|";
-    case Token.TokenType.BitwiseXOr:
+    case Token.disc.BitwiseXOr:
       return "^";
-    case Token.TokenType.ShiftRight:
+    case Token.disc.ShiftRight:
       return ">>";
-    case Token.TokenType.ShiftLeft:
+    case Token.disc.ShiftLeft:
       return "<<";
 
     default:
@@ -108,25 +108,25 @@ const binaryOperatorToString = (operator: Ast.BinaryOperation["operator"]): stri
 /** converts an expression to a polish notation string */
 const expressionToString = (expression: Ast.Expression): string => {
   switch (expression.ast) {
-    case Ast.AstType.Literal:
-    case Ast.AstType.Identifier:
+    case Ast.disc.Literal:
+    case Ast.disc.Identifier:
       return expression.token.value;
 
-    case Ast.AstType.Assignment:
+    case Ast.disc.Assignment:
       return `(${assignmentOperatorToString(expression.operator)} ${expressionToString(expression.left)} ${expressionToString(expression.right)})`;
 
-    case Ast.AstType.UnaryOperation:
+    case Ast.disc.UnaryOperation:
       return expression.prefix
         ? `(${unaryOperatorToString(expression.operator)} ${expressionToString(expression.expression)})`
         : `(${expressionToString(expression.expression)} ${unaryOperatorToString(expression.operator)})`;
 
-    case Ast.AstType.BinaryOperation:
+    case Ast.disc.BinaryOperation:
       return `(${binaryOperatorToString(expression.operator)} ${expressionToString(expression.left)} ${expressionToString(expression.right)})`;
 
-    case Ast.AstType.ConditionalExpression:
+    case Ast.disc.ConditionalExpression:
       return `(? ${expressionToString(expression.condition)} ${expressionToString(expression.trueExpression)} ${expressionToString(expression.falseExpression)})`;
 
-    case Ast.AstType.MemberAccessExpression:
+    case Ast.disc.MemberAccessExpression:
       return `(. ${expressionToString(expression.expression)} ${expressionToString(expression.member)})`;
 
     default:
@@ -142,7 +142,7 @@ test("identifier", () => {
     tokenIndex: 0,
   }) as Ast.Identifier | undefined;
 
-  expect(identifier!.ast).toBe(Ast.AstType.Identifier);
+  expect(identifier!.ast).toBe(Ast.disc.Identifier);
   expect(identifier!.token.value).toBe("id");
 });
 
@@ -172,9 +172,9 @@ test("literal", () => {
   // expect(stringLiteral!.ast).toBe(Ast.AstType.Literal);
   // expect(addressLiteral!.ast).toBe(Ast.AstType.Literal);
   // expect(hexLiteral!.ast).toBe(Ast.AstType.Literal);
-  expect(numberLiteral!.ast).toBe(Ast.AstType.Literal);
+  expect(numberLiteral!.ast).toBe(Ast.disc.Literal);
   // expect(rationalNumberLiteral!.ast).toBe(Ast.AstType.Literal);
-  expect(boolLiteral!.ast).toBe(Ast.AstType.Literal);
+  expect(boolLiteral!.ast).toBe(Ast.disc.Literal);
 });
 
 test("assignment", () => {
@@ -190,17 +190,17 @@ test("assignment", () => {
   const shiftRightAssign = parseExpression({ tokens: tokenize("a >>= b"), tokenIndex: 0 });
   const shiftLeftAssign = parseExpression({ tokens: tokenize("a <<= b"), tokenIndex: 0 });
 
-  expect(assign!.ast).toBe(Ast.AstType.Assignment);
-  expect(addAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(subtractAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(mulAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(divideAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(moduloAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(bitwiseAndAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(bitwiseOrAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(bitwiseXOrAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(shiftRightAssign!.ast).toBe(Ast.AstType.Assignment);
-  expect(shiftLeftAssign!.ast).toBe(Ast.AstType.Assignment);
+  expect(assign!.ast).toBe(Ast.disc.Assignment);
+  expect(addAssign!.ast).toBe(Ast.disc.Assignment);
+  expect(subtractAssign!.ast).toBe(Ast.disc.Assignment);
+  expect(mulAssign!.ast).toBe(Ast.disc.Assignment);
+  expect(divideAssign!.ast).toBe(Ast.disc.Assignment);
+  expect(moduloAssign!.ast).toBe(Ast.disc.Assignment);
+  expect(bitwiseAndAssign!.ast).toBe(Ast.disc.Assignment);
+  expect(bitwiseOrAssign!.ast).toBe(Ast.disc.Assignment);
+  expect(bitwiseXOrAssign!.ast).toBe(Ast.disc.Assignment);
+  expect(shiftRightAssign!.ast).toBe(Ast.disc.Assignment);
+  expect(shiftLeftAssign!.ast).toBe(Ast.disc.Assignment);
 });
 
 test("unary operation", () => {
@@ -213,14 +213,14 @@ test("unary operation", () => {
   const not = parseExpression({ tokens: tokenize("!id"), tokenIndex: 0 });
   const bitwiseNot = parseExpression({ tokens: tokenize("~id"), tokenIndex: 0 });
 
-  expect(incrementPostfix!.ast).toBe(Ast.AstType.UnaryOperation);
-  expect(decrementPostfix!.ast).toBe(Ast.AstType.UnaryOperation);
-  expect(incrementPrefix!.ast).toBe(Ast.AstType.UnaryOperation);
-  expect(decrementPrefix!.ast).toBe(Ast.AstType.UnaryOperation);
-  expect(subtract!.ast).toBe(Ast.AstType.UnaryOperation);
-  expect(_delete!.ast).toBe(Ast.AstType.UnaryOperation);
-  expect(not!.ast).toBe(Ast.AstType.UnaryOperation);
-  expect(bitwiseNot!.ast).toBe(Ast.AstType.UnaryOperation);
+  expect(incrementPostfix!.ast).toBe(Ast.disc.UnaryOperation);
+  expect(decrementPostfix!.ast).toBe(Ast.disc.UnaryOperation);
+  expect(incrementPrefix!.ast).toBe(Ast.disc.UnaryOperation);
+  expect(decrementPrefix!.ast).toBe(Ast.disc.UnaryOperation);
+  expect(subtract!.ast).toBe(Ast.disc.UnaryOperation);
+  expect(_delete!.ast).toBe(Ast.disc.UnaryOperation);
+  expect(not!.ast).toBe(Ast.disc.UnaryOperation);
+  expect(bitwiseNot!.ast).toBe(Ast.disc.UnaryOperation);
 });
 
 test("binary operation", () => {
@@ -244,25 +244,25 @@ test("binary operation", () => {
   const shiftRight = parseExpression({ tokens: tokenize("a >> b"), tokenIndex: 0 });
   const shiftLeft = parseExpression({ tokens: tokenize("a << b"), tokenIndex: 0 });
 
-  expect(add!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(subtract!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(mul!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(divide!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(modulo!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(power!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(and!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(or!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(equal!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(notEqual!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(less!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(lessEqual!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(more!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(moreEqual!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(bitwiseAnd!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(bitwiseOr!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(bitwiseXOr!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(shiftRight!.ast).toBe(Ast.AstType.BinaryOperation);
-  expect(shiftLeft!.ast).toBe(Ast.AstType.BinaryOperation);
+  expect(add!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(subtract!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(mul!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(divide!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(modulo!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(power!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(and!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(or!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(equal!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(notEqual!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(less!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(lessEqual!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(more!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(moreEqual!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(bitwiseAnd!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(bitwiseOr!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(bitwiseXOr!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(shiftRight!.ast).toBe(Ast.disc.BinaryOperation);
+  expect(shiftLeft!.ast).toBe(Ast.disc.BinaryOperation);
 
   let expression: Ast.Expression;
 
@@ -275,7 +275,7 @@ test("binary operation", () => {
 
 test("conditional expression", () => {
   const conditional = parseExpression({ tokens: tokenize("a ? b : c"), tokenIndex: 0 });
-  expect(conditional!.ast).toBe(Ast.AstType.ConditionalExpression);
+  expect(conditional!.ast).toBe(Ast.disc.ConditionalExpression);
 });
 
 test("function call expression", () => {
@@ -289,13 +289,13 @@ test("function call expression", () => {
     | Ast.FunctionCallExpression
     | undefined;
 
-  expect(emptyFunction!.ast).toBe(Ast.AstType.FunctionCallExpression);
-  expect(singleFunction!.ast).toBe(Ast.AstType.FunctionCallExpression);
-  expect(manyFunction!.ast).toBe(Ast.AstType.FunctionCallExpression);
+  expect(emptyFunction!.ast).toBe(Ast.disc.FunctionCallExpression);
+  expect(singleFunction!.ast).toBe(Ast.disc.FunctionCallExpression);
+  expect(manyFunction!.ast).toBe(Ast.disc.FunctionCallExpression);
 
-  expect(emptyFunction!.expression.ast).toBe(Ast.AstType.Identifier);
-  expect(singleFunction!.expression.ast).toBe(Ast.AstType.Identifier);
-  expect(manyFunction!.expression.ast).toBe(Ast.AstType.Identifier);
+  expect(emptyFunction!.expression.ast).toBe(Ast.disc.Identifier);
+  expect(singleFunction!.expression.ast).toBe(Ast.disc.Identifier);
+  expect(manyFunction!.expression.ast).toBe(Ast.disc.Identifier);
 
   expect(emptyFunction!.arguments).toHaveLength(0);
   expect(singleFunction!.arguments).toHaveLength(1);
@@ -306,9 +306,9 @@ test("member access expression", () => {
   const memberAccess = parseExpression({ tokens: tokenize("a.b"), tokenIndex: 0 }) as
     | Ast.MemberAccessExpression
     | undefined;
-  expect(memberAccess!.ast).toBe(Ast.AstType.MemberAccessExpression);
-  expect(memberAccess!.expression.ast).toBe(Ast.AstType.Identifier);
-  expect(memberAccess!.member.ast).toBe(Ast.AstType.Identifier);
+  expect(memberAccess!.ast).toBe(Ast.disc.MemberAccessExpression);
+  expect(memberAccess!.expression.ast).toBe(Ast.disc.Identifier);
+  expect(memberAccess!.member.ast).toBe(Ast.disc.Identifier);
 
   const expression = parseExpression({ tokens: tokenize("a.b.c"), tokenIndex: 0 })!;
   expect(expressionToString(expression)).toBe("(. (. a b) c)");
@@ -318,21 +318,21 @@ test("index access expression", () => {
   const indexAccess = parseExpression({ tokens: tokenize("a[0]"), tokenIndex: 0 }) as
     | Ast.IndexAccessExpression
     | undefined;
-  expect(indexAccess!.ast).toBe(Ast.AstType.IndexAccessExpression);
-  expect(indexAccess!.base.ast).toBe(Ast.AstType.Identifier);
-  expect(indexAccess!.index.ast).toBe(Ast.AstType.Literal);
+  expect(indexAccess!.ast).toBe(Ast.disc.IndexAccessExpression);
+  expect(indexAccess!.base.ast).toBe(Ast.disc.Identifier);
+  expect(indexAccess!.index.ast).toBe(Ast.disc.Literal);
 });
 
 test("new expression", () => {
   const _new = parseExpression({ tokens: tokenize("new Contract()"), tokenIndex: 0 });
-  expect(_new!.ast).toBe(Ast.AstType.NewExpression);
+  expect(_new!.ast).toBe(Ast.disc.NewExpression);
 });
 
 test("tuple expression", () => {
   const tuple = parseExpression({ tokens: tokenize("(a,b,c)"), tokenIndex: 0 }) as
     | Ast.TupleExpression
     | undefined;
-  expect(tuple!.ast).toBe(Ast.AstType.TupleExpression);
+  expect(tuple!.ast).toBe(Ast.disc.TupleExpression);
   expect(tuple!.elements).toHaveLength(3);
 });
 
@@ -373,18 +373,18 @@ test("expression statement", () => {
     tokenIndex: 0,
   });
 
-  expect(identifier!.ast).toBe(Ast.AstType.ExpressionStatement);
-  expect(literal!.ast).toBe(Ast.AstType.ExpressionStatement);
-  expect(assignment!.ast).toBe(Ast.AstType.ExpressionStatement);
-  expect(unaryOperation!.ast).toBe(Ast.AstType.ExpressionStatement);
-  expect(binaryOperation!.ast).toBe(Ast.AstType.ExpressionStatement);
-  expect(conditional!.ast).toBe(Ast.AstType.ExpressionStatement);
-  expect(functionCall!.ast).toBe(Ast.AstType.ExpressionStatement);
-  expect(memberAccess!.ast).toBe(Ast.AstType.ExpressionStatement);
-  expect(indexAccess!.ast).toBe(Ast.AstType.ExpressionStatement);
-  expect(_new!.ast).toBe(Ast.AstType.ExpressionStatement);
-  expect(tuple!.ast).toBe(Ast.AstType.ExpressionStatement);
-  expect(parenthesized!.ast).toBe(Ast.AstType.ExpressionStatement);
+  expect(identifier!.ast).toBe(Ast.disc.ExpressionStatement);
+  expect(literal!.ast).toBe(Ast.disc.ExpressionStatement);
+  expect(assignment!.ast).toBe(Ast.disc.ExpressionStatement);
+  expect(unaryOperation!.ast).toBe(Ast.disc.ExpressionStatement);
+  expect(binaryOperation!.ast).toBe(Ast.disc.ExpressionStatement);
+  expect(conditional!.ast).toBe(Ast.disc.ExpressionStatement);
+  expect(functionCall!.ast).toBe(Ast.disc.ExpressionStatement);
+  expect(memberAccess!.ast).toBe(Ast.disc.ExpressionStatement);
+  expect(indexAccess!.ast).toBe(Ast.disc.ExpressionStatement);
+  expect(_new!.ast).toBe(Ast.disc.ExpressionStatement);
+  expect(tuple!.ast).toBe(Ast.disc.ExpressionStatement);
+  expect(parenthesized!.ast).toBe(Ast.disc.ExpressionStatement);
 });
 
 test("block statement", () => {
@@ -401,9 +401,9 @@ test("block statement", () => {
     tokenIndex: 0,
   }) as Ast.BlockStatement;
 
-  expect(emptyBlock!.ast).toBe(Ast.AstType.BlockStatement);
-  expect(singleBlock!.ast).toBe(Ast.AstType.BlockStatement);
-  expect(manyBlock!.ast).toBe(Ast.AstType.BlockStatement);
+  expect(emptyBlock!.ast).toBe(Ast.disc.BlockStatement);
+  expect(singleBlock!.ast).toBe(Ast.disc.BlockStatement);
+  expect(manyBlock!.ast).toBe(Ast.disc.BlockStatement);
 
   expect(emptyBlock!.statements).toHaveLength(0);
   expect(manyBlock!.statements).toHaveLength(2);
@@ -424,9 +424,9 @@ test("unchecked block statement", () => {
     tokenIndex: 0,
   }) as Ast.UncheckedBlockStatement;
 
-  expect(emptyBlock!.ast).toBe(Ast.AstType.UncheckedBlockStatement);
-  expect(singleBlock!.ast).toBe(Ast.AstType.UncheckedBlockStatement);
-  expect(manyBlock!.ast).toBe(Ast.AstType.UncheckedBlockStatement);
+  expect(emptyBlock!.ast).toBe(Ast.disc.UncheckedBlockStatement);
+  expect(singleBlock!.ast).toBe(Ast.disc.UncheckedBlockStatement);
+  expect(manyBlock!.ast).toBe(Ast.disc.UncheckedBlockStatement);
 
   expect(emptyBlock!.statements).toHaveLength(0);
   expect(singleBlock!.statements).toHaveLength(1);
@@ -440,37 +440,37 @@ test.todo("if statement", () => {
     tokenIndex: 0,
   });
 
-  expect(_if!.ast).toBe(Ast.AstType.IfStatement);
-  expect(_ifElse!.ast).toBe(Ast.AstType.IfStatement);
+  expect(_if!.ast).toBe(Ast.disc.IfStatement);
+  expect(_ifElse!.ast).toBe(Ast.disc.IfStatement);
 });
 
 test.todo("for statement", () => {});
 
 test.todo("while statement", () => {
   const _while = parseStatement({ tokens: tokenize("while (a) { b; }"), tokenIndex: 0 });
-  expect(_while!.ast).toBe(Ast.AstType.WhileStatement);
+  expect(_while!.ast).toBe(Ast.disc.WhileStatement);
 });
 
 test.todo("do while statement");
 
 test("break statement", () => {
   const _break = parseStatement({ tokens: tokenize("break;"), tokenIndex: 0 });
-  expect(_break!.ast).toBe(Ast.AstType.BreakStatement);
+  expect(_break!.ast).toBe(Ast.disc.BreakStatement);
 });
 
 test("continue statement", () => {
   const _continue = parseStatement({ tokens: tokenize("continue;"), tokenIndex: 0 });
-  expect(_continue!.ast).toBe(Ast.AstType.ContinueStatement);
+  expect(_continue!.ast).toBe(Ast.disc.ContinueStatement);
 });
 
 test("emit statement", () => {
   const emit = parseStatement({ tokens: tokenize("emit Log();"), tokenIndex: 0 });
-  expect(emit!.ast).toBe(Ast.AstType.EmitStatement);
+  expect(emit!.ast).toBe(Ast.disc.EmitStatement);
 });
 
 test("revert statement", () => {
   const revert = parseStatement({ tokens: tokenize("revert Error();"), tokenIndex: 0 });
-  expect(revert!.ast).toBe(Ast.AstType.RevertStatement);
+  expect(revert!.ast).toBe(Ast.disc.RevertStatement);
 });
 
 test("return statement", () => {
@@ -480,13 +480,13 @@ test("return statement", () => {
     tokenIndex: 0,
   });
 
-  expect(_return!.ast).toBe(Ast.AstType.ReturnStatement);
-  expect(_returnExpression!.ast).toBe(Ast.AstType.ReturnStatement);
+  expect(_return!.ast).toBe(Ast.disc.ReturnStatement);
+  expect(_returnExpression!.ast).toBe(Ast.disc.ReturnStatement);
 });
 
 test.todo("placehoder statement", () => {
   const placeholder = parseStatement({ tokens: tokenize("_;"), tokenIndex: 0 });
-  expect(placeholder!.ast).toBe(Ast.AstType.PlaceholderStatement);
+  expect(placeholder!.ast).toBe(Ast.disc.PlaceholderStatement);
 });
 
 test("variable declaration", () => {
@@ -505,21 +505,21 @@ test("variable declaration", () => {
 
   // TODO(kyle) attributes
 
-  expect(noInitializer!.ast).toBe(Ast.AstType.VariableDeclaration);
-  expect(initializer!.ast).toBe(Ast.AstType.VariableDeclaration);
-  expect(location!.ast).toBe(Ast.AstType.VariableDeclaration);
+  expect(noInitializer!.ast).toBe(Ast.disc.VariableDeclaration);
+  expect(initializer!.ast).toBe(Ast.disc.VariableDeclaration);
+  expect(location!.ast).toBe(Ast.disc.VariableDeclaration);
 
   expect(initializer!.initializer).toBeDefined();
 });
 
 test("event definition", () => {
   const event = parseEventDefinition({ tokens: tokenize("event Event();"), tokenIndex: 0 });
-  expect(event.ast).toBe(Ast.AstType.EventDefinition);
+  expect(event.ast).toBe(Ast.disc.EventDefinition);
 });
 
 test("error definition", () => {
   const error = parseErrorDefinition({ tokens: tokenize("error Error();"), tokenIndex: 0 });
-  expect(error.ast).toBe(Ast.AstType.ErrorDefinition);
+  expect(error.ast).toBe(Ast.disc.ErrorDefinition);
 });
 
 test("contract definition", () => {
