@@ -3,6 +3,12 @@ import path from "node:path";
 import { tokenize } from "./lexer";
 import { Token } from "./types/token";
 
+test("symbol", () => {
+  const tokens = tokenize(".++");
+
+  expect(tokens).toHaveLength(2);
+});
+
 test("identifier", () => {
   const tokens = tokenize("hi");
 

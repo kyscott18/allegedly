@@ -13,6 +13,20 @@ export type CheckContext = {
 
 export type TypeAnnotations = CheckContext["annotations"];
 
+// abi
+// keccak256
+// blockhash
+// blobhash
+// gasleft
+// sha256
+// ripemd160
+// ecrecover
+// addmod
+// mulmod
+// this
+// super
+// selfdestruct
+
 export const check = (program: Ast.Program): TypeAnnotations => {
   const context: CheckContext = {
     symbols: [

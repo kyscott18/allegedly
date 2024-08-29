@@ -28,5 +28,8 @@
       "path": "dist/index.js",
       "limit": "20 kB"
     }
-  ]
+  ],
+  "dependencies": {
+    "picocolors": "^1.0.1"
+  }
 }

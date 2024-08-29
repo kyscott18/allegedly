@@ -1,6 +1,8 @@
 export type Cursor = IterableIterator<string> & {
   string: string;
   position: number;
+  line: number;
+  offset: number;
   remaining: number;
   peek: () => string | undefined;
 };
@@ -8,6 +10,8 @@ export type Cursor = IterableIterator<string> & {
 const staticCursor: Cursor = {
   string: "",
   position: 0,
+  line: 0,
+  offset: 0,
   get remaining() {
     return this.string.length - this.position;
   },
@@ -17,7 +21,17 @@ const staticCursor: Cursor = {
   },
   next() {
     if (this.remaining === 0) return { value: undefined, done: true };
-    return { value: this.string.charAt(this.position++), done: false };
+
+    const value = this.string.charAt(this.position++);
+
+    if (value === "\r" || value === "\n") {
+      this.line++;
+      this.offset = 0;
+    } else {
+      this.offset++;
+    }
+
+    return { value, done: false };
   },
   [Symbol.iterator]() {
     return this;
