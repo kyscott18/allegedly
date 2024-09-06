@@ -6,6 +6,6 @@ import { parse } from "./parser";
 const source = await Bun.file(path.join(import.meta.dir, "_sol", "SimpleStorage.sol")).text();
 const tokens = tokenize(source);
 
-bench("parse", () => parse(tokens));
+bench("parse", () => parse(source, tokens));
 
 await run();

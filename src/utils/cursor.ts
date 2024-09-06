@@ -10,8 +10,8 @@ export type Cursor = IterableIterator<string> & {
 const staticCursor: Cursor = {
   string: "",
   position: 0,
-  line: 0,
-  offset: 0,
+  line: 1,
+  offset: 1,
   get remaining() {
     return this.string.length - this.position;
   },
@@ -26,7 +26,7 @@ const staticCursor: Cursor = {
 
     if (value === "\r" || value === "\n") {
       this.line++;
-      this.offset = 0;
+      this.offset = 1;
     } else {
       this.offset++;
     }

@@ -24,7 +24,7 @@ export const frame = (source: string, loc: SourceLocation, message?: string) => 
       const paddedNumber = ` ${number}`.slice(-numberMaxWidth);
       const gutter = ` ${paddedNumber} |`;
 
-      if (number === loc.start.line + 1) {
+      if (number === loc.start.line) {
         const markerOffset = loc.start.offset - 1;
         const markerLength =
           loc.start.line === loc.end.line
@@ -46,4 +46,8 @@ export const frame = (source: string, loc: SourceLocation, message?: string) => 
   }
 
   return frame;
+};
+
+export const recoverSource = (source: string, loc: SourceLocation) => {
+  return source.split(NEWLINE)[loc.start.line - 1]!.slice(loc.start.offset - 1, loc.end.offset - 1);
 };

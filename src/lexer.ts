@@ -44,7 +44,7 @@ export const tokenize = (source: string): Token.Token[] => {
       ":",
       (start) => {
         if (cursor.peek() === "=") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.ColonAssign, loc: toLoc(start, 2) });
         } else {
           tokens.push({ token: Token.disc.Colon, loc: toLoc(start, 1) });
@@ -55,10 +55,10 @@ export const tokenize = (source: string): Token.Token[] => {
       "=",
       (start) => {
         if (cursor.peek() === "=") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.Equal, loc: toLoc(start, 2) });
         } else if (cursor.peek() === ">") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.Arrow, loc: toLoc(start, 2) });
         } else {
           tokens.push({ token: Token.disc.Assign, loc: toLoc(start, 1) });
@@ -69,10 +69,10 @@ export const tokenize = (source: string): Token.Token[] => {
       "+",
       (start) => {
         if (cursor.peek() === "=") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.AddAssign, loc: toLoc(start, 2) });
         } else if (cursor.peek() === "+") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.Increment, loc: toLoc(start, 2) });
         } else {
           tokens.push({ token: Token.disc.Add, loc: toLoc(start, 1) });
@@ -83,13 +83,13 @@ export const tokenize = (source: string): Token.Token[] => {
       "-",
       (start) => {
         if (cursor.peek() === "=") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.SubtractAssign, loc: toLoc(start, 2) });
         } else if (cursor.peek() === "-") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.Decrement, loc: toLoc(start, 2) });
         } else if (cursor.peek() === ">") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.YulArrow, loc: toLoc(start, 2) });
         } else {
           tokens.push({ token: Token.disc.Subtract, loc: toLoc(start, 1) });
@@ -100,10 +100,10 @@ export const tokenize = (source: string): Token.Token[] => {
       "*",
       (start) => {
         if (cursor.peek() === "=") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.MulAssign, loc: toLoc(start, 2) });
         } else if (cursor.peek() === "*") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.Power, loc: toLoc(start, 2) });
         } else {
           tokens.push({ token: Token.disc.Mul, loc: toLoc(start, 1) });
@@ -120,12 +120,12 @@ export const tokenize = (source: string): Token.Token[] => {
         } else if (cursor.peek() === "*") {
           for (const char of cursor) {
             if (char === "*" && cursor.peek() === "/") {
-              cursor.position++;
+              cursor.next();
               break;
             }
           }
         } else if (cursor.peek() === "=") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.DivideAssign, loc: toLoc(start, 2) });
         } else {
           tokens.push({ token: Token.disc.Divide, loc: toLoc(start, 1) });
@@ -136,7 +136,7 @@ export const tokenize = (source: string): Token.Token[] => {
       "%",
       (start) => {
         if (cursor.peek() === "=") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.ModuloAssign, loc: toLoc(start, 2) });
         } else {
           tokens.push({ token: Token.disc.Modulo, loc: toLoc(start, 1) });
@@ -147,10 +147,10 @@ export const tokenize = (source: string): Token.Token[] => {
       "&",
       (start) => {
         if (cursor.peek() === "&") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.And, loc: toLoc(start, 2) });
         } else if (cursor.peek() === "=") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.BitwiseAndAssign, loc: toLoc(start, 2) });
         } else {
           tokens.push({ token: Token.disc.BitwiseAnd, loc: toLoc(start, 1) });
@@ -161,10 +161,10 @@ export const tokenize = (source: string): Token.Token[] => {
       "|",
       (start) => {
         if (cursor.peek() === "|") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.Or, loc: toLoc(start, 2) });
         } else if (cursor.peek() === "=") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.BitwiseOrAssign, loc: toLoc(start, 2) });
         } else {
           tokens.push({ token: Token.disc.BitwiseOr, loc: toLoc(start, 1) });
@@ -175,7 +175,7 @@ export const tokenize = (source: string): Token.Token[] => {
       "^",
       (start) => {
         if (cursor.peek() === "=") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.BitwiseXOrAssign, loc: toLoc(start, 2) });
         } else {
           tokens.push({ token: Token.disc.BitwiseXOr, loc: toLoc(start, 1) });
@@ -187,12 +187,12 @@ export const tokenize = (source: string): Token.Token[] => {
       ">",
       (start) => {
         if (cursor.peek() === "=") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.MoreEqual, loc: toLoc(start, 2) });
         } else if (cursor.peek() === ">") {
-          cursor.position++;
+          cursor.next();
           if (cursor.peek() === "=") {
-            cursor.position++;
+            cursor.next();
             tokens.push({ token: Token.disc.ShiftRightAssign, loc: toLoc(start, 3) });
           } else {
             tokens.push({ token: Token.disc.ShiftRight, loc: toLoc(start, 2) });
@@ -206,12 +206,12 @@ export const tokenize = (source: string): Token.Token[] => {
       "<",
       (start) => {
         if (cursor.peek() === "=") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.LessEqual, loc: toLoc(start, 2) });
         } else if (cursor.peek() === "<") {
-          cursor.position++;
+          cursor.next();
           if (cursor.peek() === "=") {
-            cursor.position++;
+            cursor.next();
             tokens.push({ token: Token.disc.ShiftLeftAssign, loc: toLoc(start, 3) });
           } else {
             tokens.push({ token: Token.disc.ShiftLeft, loc: toLoc(start, 2) });
@@ -225,7 +225,7 @@ export const tokenize = (source: string): Token.Token[] => {
       "!",
       (start) => {
         if (cursor.peek() === "=") {
-          cursor.position++;
+          cursor.next();
           tokens.push({ token: Token.disc.NotEqual, loc: toLoc(start, 2) });
         } else {
           tokens.push({ token: Token.disc.Not, loc: toLoc(start, 1) });
@@ -402,163 +402,163 @@ export const tokenize = (source: string): Token.Token[] => {
     [
       "after",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "after" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "alias",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "alias" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "apply",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "apply" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "auto",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "auto" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "byte",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "byte" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "copyof",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "copyof" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "define",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "define" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "final",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "final" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "implements",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "implements" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "in",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "in" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "inline",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "inline" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "macro",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "macro" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "match",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "match" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "mutable",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "mutable" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "null",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "null" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "of",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "of" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "partial",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "partial" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "promise",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "promise" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "reference",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "reference" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "relocatable",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "relocatable" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "sealed",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "sealed" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "sizeof",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "sizeof" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "static",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "static" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "supports",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "supports" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "typedef",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "typedef" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "typeof",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "typeof" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
     [
       "var",
       (loc) => {
-        throw new ReservedKeywordError({ source, loc, keyword: "var" });
+        throw new ReservedKeywordError({ source, loc });
       },
     ],
   ]);
@@ -584,6 +584,7 @@ export const tokenize = (source: string): Token.Token[] => {
           if (isHex(char)) length++;
           else {
             cursor.position--;
+            cursor.offset--;
             break;
           }
         }
@@ -601,6 +602,7 @@ export const tokenize = (source: string): Token.Token[] => {
           if (isDigit(char)) length++;
           else {
             cursor.position--;
+            cursor.offset--;
             break;
           }
         }
@@ -619,6 +621,7 @@ export const tokenize = (source: string): Token.Token[] => {
         if (isIdentifier(char)) length++;
         else {
           cursor.position--;
+          cursor.offset--;
           break;
         }
       }
@@ -638,7 +641,6 @@ export const tokenize = (source: string): Token.Token[] => {
       throw new UnrecognizedSymbolError({
         source,
         loc: { start, end: { line: start.line, offset: start.offset + 1 } },
-        symbol: char,
       });
     }
   }

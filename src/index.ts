@@ -1,5 +1,4 @@
 import type { Abi } from "abitype";
-import { compileAbi } from "./abiCompiler";
 import { check } from "./checker";
 import { compile } from "./compiler";
 import { tokenize } from "./lexer";
@@ -22,20 +21,17 @@ export const sol = <const source extends string>(source: source): SolReturnType<
   const tokens = tokenize(source);
 
   // Syntax analysis
-  const program = parse(tokens);
+  const program = parse(source, tokens);
 
   // Semantic analysis
   const annotations = check(program);
 
-  // abi generation
-  const { name, abi } = compileAbi(program);
+  // TODO(kyle) Check for one contract
 
-  // Bytecode generation
-  const code = compile(program, annotations);
-
-  return { name, abi, code };
+  // abi + bytecode generation
+  return compile(program, annotations);
 };
 
 export { Ast } from "./types/ast";
 export { Token } from "./types/token";
-export { tokenize, parse, check, compileAbi, compile };
+export { tokenize, parse, check, compile };

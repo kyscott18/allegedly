@@ -580,4 +580,3 @@ const isElementaryTypeEqual = (a: Type.Elementary, b: Type.Elementary): boolean 
       return a.value.token === b.value.token && a.value.size === b.value.size;
   }
 };
-export { Type };

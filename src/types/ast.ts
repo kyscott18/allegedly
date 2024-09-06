@@ -321,7 +321,7 @@ export namespace Ast {
     ast: Ast.disc.FunctionDefinition;
     kind: Token.Function | Token.Receive | Token.Constructor | Token.Fallback;
     visibility: Visibility;
-    mutability: Mutability;
+    mutability: Mutability | undefined;
     modifiers: Base[];
     parameters: Parameter[];
     returns: Parameter[];

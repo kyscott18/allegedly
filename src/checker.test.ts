@@ -15,7 +15,7 @@ const getError = <ast extends Ast.Statement | Ast.Definition | Ast.Expression>(
 
     checker(
       { symbols: [], annotations: new Map(), isContractScope: false },
-      parser({ tokens, tokenIndex: 0 }),
+      parser({ source, tokens, tokenIndex: 0 }),
     );
 
     return undefined;

@@ -1,18 +1,19 @@
 import { EOFError } from "./errors/eof";
 import { ExpectTokenError } from "./errors/expectToken";
 import { UnexpectTokenError } from "./errors/unexpectedToken";
-import { UnrecognizedSymbolError } from "./errors/unrecognizedSymbol";
 import { Ast } from "./types/ast";
 import { Token } from "./types/token";
+import type { SourceLocation } from "./types/utils";
 
 export type ParseContext = {
+  source: string;
   tokens: Token.Token[];
   tokenIndex: number;
 };
 
-export const parse = (tokens: Token.Token[]): Ast.Program => {
+export const parse = (source: string, tokens: Token.Token[]): Ast.Program => {
   const program: Ast.Program = [];
-  const context = { tokens, tokenIndex: 0 };
+  const context = { source, tokens, tokenIndex: 0 };
 
   while (true) {
     const token = peek(context);
@@ -38,7 +39,7 @@ export const parse = (tokens: Token.Token[]): Ast.Program => {
         break;
 
       default:
-        throw new UnexpectTokenError(peek(context)!);
+        throw new UnexpectTokenError({ source: context.source, token: peek(context)! });
     }
   }
 };
@@ -74,6 +75,17 @@ const next = (context: ParseContext) => {
 /** Look ahead at next token. */
 const peek = (context: ParseContext) => {
   return context.tokens[context.tokenIndex];
+};
+
+const toLoc = (
+  context: ParseContext,
+  start: ParseContext["tokenIndex"],
+  end: ParseContext["tokenIndex"],
+): SourceLocation => {
+  return {
+    start: context.tokens[start]!.loc.start,
+    end: context.tokens[end - 1]!.loc.end,
+  };
 };
 
 const parseList = <T>(
@@ -151,7 +163,7 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
       mutability = token as Ast.Mutability;
     }
 
-    if (visibility === undefined) throw new UnexpectTokenError(token);
+    if (visibility === undefined) throw new UnexpectTokenError({ source: context.source, token });
 
     if (eat(context, Token.disc.Returns)) {
       const returns = parseList(
@@ -170,7 +182,7 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
         ast: Ast.disc.FunctionDefinition,
         kind,
         visibility,
-        mutability: mutability ?? { token: Token.disc.Nonpayable },
+        mutability,
         modifiers: [],
         parameters,
         returns,
@@ -183,7 +195,7 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
       ast: Ast.disc.FunctionDefinition,
       kind,
       visibility,
-      mutability: mutability ?? { token: Token.disc.Nonpayable },
+      mutability,
       modifiers: [],
       parameters,
       returns: [],
@@ -192,7 +204,7 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
     };
   }
 
-  throw new UnexpectTokenError(peek(context)!);
+  throw new UnexpectTokenError({ source: context.source, token: peek(context)! });
 };
 
 export const parseContractDefinition = (context: ParseContext): Ast.ContractDefinition => {
@@ -246,12 +258,13 @@ export const parseContractDefinition = (context: ParseContext): Ast.ContractDefi
         throw new EOFError();
 
       default:
-        throw new UnexpectTokenError(peek(context)!);
+        throw new UnexpectTokenError({ source: context.source, token: peek(context)! });
     }
   }
 };
 
 export const parseEventDefinition = (context: ParseContext): Ast.EventDefinition => {
+  const start = context.tokenIndex;
   expect(context, Token.disc.Event);
 
   const name = context.tokens[context.tokenIndex] as Token.Identifier;
@@ -266,10 +279,16 @@ export const parseEventDefinition = (context: ParseContext): Ast.EventDefinition
 
   expect(context, Token.disc.Semicolon);
 
-  return { ast: Ast.disc.EventDefinition, name, parameters };
+  return {
+    ast: Ast.disc.EventDefinition,
+    loc: toLoc(context, start, context.tokenIndex),
+    name,
+    parameters,
+  };
 };
 
 export const parseErrorDefinition = (context: ParseContext): Ast.ErrorDefinition => {
+  const start = context.tokenIndex;
   expect(context, Token.disc.Error);
 
   const name = context.tokens[context.tokenIndex] as Token.Identifier;
@@ -284,7 +303,12 @@ export const parseErrorDefinition = (context: ParseContext): Ast.ErrorDefinition
 
   expect(context, Token.disc.Semicolon);
 
-  return { ast: Ast.disc.ErrorDefinition, name, parameters };
+  return {
+    ast: Ast.disc.ErrorDefinition,
+    loc: toLoc(context, start, context.tokenIndex),
+    name,
+    parameters,
+  };
 };
 
 export const parseStructDefinition = (
@@ -298,6 +322,7 @@ export const parseModifierDefinition = (
 ): Ast.ModifierDefinition => {};
 
 export const parseVariableDefinition = (context: ParseContext): Ast.VariableDefintion => {
+  const start = context.tokenIndex;
   const type = parseType(context);
 
   const identifier = peek(context) as Token.Identifier;
@@ -305,6 +330,7 @@ export const parseVariableDefinition = (context: ParseContext): Ast.VariableDefi
 
   return {
     ast: Ast.disc.VariableDefinition,
+    loc: toLoc(context, start, context.tokenIndex),
     type,
     identifier,
     isConstant: false,
@@ -314,6 +340,7 @@ export const parseVariableDefinition = (context: ParseContext): Ast.VariableDefi
 };
 
 export const parseVariableDeclaration = (context: ParseContext): Ast.VariableDeclaration => {
+  const start = context.tokenIndex;
   const type = parseType(context);
 
   let maybeLocation = peek(context) as Token.Storage | Token.Memory | Token.Calldata | undefined;
@@ -332,6 +359,7 @@ export const parseVariableDeclaration = (context: ParseContext): Ast.VariableDec
     expect(context, Token.disc.Semicolon);
     return {
       ast: Ast.disc.VariableDeclaration,
+      loc: toLoc(context, start, context.tokenIndex),
       type,
       identifier,
       location: maybeLocation,
@@ -343,6 +371,7 @@ export const parseVariableDeclaration = (context: ParseContext): Ast.VariableDec
   expect(context, Token.disc.Semicolon);
   return {
     ast: Ast.disc.VariableDeclaration,
+    loc: toLoc(context, start, context.tokenIndex),
     type,
     identifier,
     location: maybeLocation,
@@ -351,6 +380,7 @@ export const parseVariableDeclaration = (context: ParseContext): Ast.VariableDec
 };
 
 export const parseParameter = (context: ParseContext): Ast.Parameter => {
+  const start = context.tokenIndex;
   const type = parseType(context);
 
   let maybeLocation = peek(context) as Token.Storage | Token.Memory | Token.Calldata | undefined;
@@ -366,6 +396,7 @@ export const parseParameter = (context: ParseContext): Ast.Parameter => {
 
   return {
     ast: Ast.disc.Parameter,
+    loc: toLoc(context, start, context.tokenIndex),
     type,
     identifier: eat(context, Token.disc.Identifier) ? identifier : undefined,
     location: maybeLocation,
@@ -437,18 +468,28 @@ export const parseStatement = (context: ParseContext): Ast.Statement => {
 };
 
 export const parseExpressionStatement = (context: ParseContext): Ast.ExpressionStatement => {
+  const start = context.tokenIndex;
   const expression = parseExpression(context);
   expect(context, Token.disc.Semicolon);
-  return { ast: Ast.disc.ExpressionStatement, expression };
+  return {
+    ast: Ast.disc.ExpressionStatement,
+    loc: toLoc(context, start, context.tokenIndex),
+    expression,
+  };
 };
 
 export const parseBlockStatement = (context: ParseContext): Ast.BlockStatement => {
+  const start = context.tokenIndex;
   expect(context, Token.disc.OpenCurlyBrace);
 
   const statements: Ast.Statement[] = [];
   while (true) {
     if (eat(context, Token.disc.CloseCurlyBrace)) {
-      return { ast: Ast.disc.BlockStatement, statements };
+      return {
+        ast: Ast.disc.BlockStatement,
+        loc: toLoc(context, start, context.tokenIndex),
+        statements,
+      };
     }
     statements.push(parseStatement(context));
   }
@@ -457,13 +498,18 @@ export const parseBlockStatement = (context: ParseContext): Ast.BlockStatement =
 export const parseUncheckedBlockStatement = (
   context: ParseContext,
 ): Ast.UncheckedBlockStatement => {
+  const start = context.tokenIndex;
   expect(context, Token.disc.Unchecked);
   expect(context, Token.disc.OpenCurlyBrace);
 
   const statements: Ast.Statement[] = [];
   while (true) {
     if (eat(context, Token.disc.CloseCurlyBrace)) {
-      return { ast: Ast.disc.UncheckedBlockStatement, statements };
+      return {
+        ast: Ast.disc.UncheckedBlockStatement,
+        loc: toLoc(context, start, context.tokenIndex),
+        statements,
+      };
     }
     statements.push(parseStatement(context));
   }
@@ -486,20 +532,23 @@ export const parseDoWhileStatement = (
 ): Ast.DoWhileStatement => {};
 
 export const parseBreakStatement = (context: ParseContext): Ast.BreakStatement => {
+  const start = context.tokenIndex;
   expect(context, Token.disc.Break);
   expect(context, Token.disc.Semicolon);
 
-  return { ast: Ast.disc.BreakStatement };
+  return { ast: Ast.disc.BreakStatement, loc: toLoc(context, start, context.tokenIndex) };
 };
 
 export const parseContinueStatement = (context: ParseContext): Ast.ContinueStatement => {
+  const start = context.tokenIndex;
   expect(context, Token.disc.Continue);
   expect(context, Token.disc.Semicolon);
 
-  return { ast: Ast.disc.ContinueStatement };
+  return { ast: Ast.disc.ContinueStatement, loc: toLoc(context, start, context.tokenIndex) };
 };
 
 export const parseEmitStatement = (context: ParseContext): Ast.EmitStatement => {
+  const start = context.tokenIndex;
   expect(context, Token.disc.Emit);
 
   const maybeEvent = parseExpression(context);
@@ -507,10 +556,15 @@ export const parseEmitStatement = (context: ParseContext): Ast.EmitStatement => 
 
   expect(context, Token.disc.Semicolon);
 
-  return { ast: Ast.disc.EmitStatement, event: maybeEvent };
+  return {
+    ast: Ast.disc.EmitStatement,
+    loc: toLoc(context, start, context.tokenIndex),
+    event: maybeEvent,
+  };
 };
 
 export const parseRevertStatement = (context: ParseContext): Ast.RevertStatement => {
+  const start = context.tokenIndex;
   expect(context, Token.disc.Revert);
 
   const error = parseExpression(context);
@@ -518,15 +572,17 @@ export const parseRevertStatement = (context: ParseContext): Ast.RevertStatement
 
   expect(context, Token.disc.Semicolon);
 
-  return { ast: Ast.disc.RevertStatement, error };
+  return { ast: Ast.disc.RevertStatement, loc: toLoc(context, start, context.tokenIndex), error };
 };
 
 export const parseReturnStatement = (context: ParseContext): Ast.ReturnStatement => {
+  const start = context.tokenIndex;
   expect(context, Token.disc.Return);
 
   if (eat(context, Token.disc.Semicolon)) {
     return {
       ast: Ast.disc.ReturnStatement,
+      loc: toLoc(context, start, context.tokenIndex),
       expression: undefined,
     };
   }
@@ -536,21 +592,23 @@ export const parseReturnStatement = (context: ParseContext): Ast.ReturnStatement
 
   return {
     ast: Ast.disc.ReturnStatement,
+    loc: toLoc(context, start, context.tokenIndex),
     expression,
   };
 };
 
 export const parsePlaceholderStatement = (context: ParseContext): Ast.PlaceholderStatement => {
+  const start = context.tokenIndex;
   expect(context, Token.disc.Placeholder);
   expect(context, Token.disc.Semicolon);
 
-  return { ast: Ast.disc.PlaceholderStatement };
+  return { ast: Ast.disc.PlaceholderStatement, loc: toLoc(context, start, context.tokenIndex) };
 };
 
 // binding power for operator associativity and precendence
 // https://docs.soliditylang.org/en/v0.8.26/cheatsheet.html#order-of-precedence-of-operators
 
-const getPrefixBindingPower = (operator: Token.Token): number => {
+const getPrefixBindingPower = (operator: Token.Token): number | undefined => {
   switch (operator.token) {
     case Token.disc.Increment:
     case Token.disc.Decrement:
@@ -561,7 +619,7 @@ const getPrefixBindingPower = (operator: Token.Token): number => {
       return 27;
 
     default:
-      throw new UnrecognizedSymbolError({ symbol: operator.toString() });
+      return undefined;
   }
 };
 
@@ -652,6 +710,7 @@ const getInfixBindingPower = (operator: Token.Token): [number, number] | undefin
 // expressions
 
 export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expression => {
+  const start = context.tokenIndex;
   const token = next(context);
 
   let left: Ast.Expression | undefined;
@@ -663,7 +722,11 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
     case Token.disc.RationalNumberLiteral:
     case Token.disc.HexNumberLiteral:
     case Token.disc.BoolLiteral:
-      left = { ast: Ast.disc.Literal, token } satisfies Ast.Literal;
+      left = {
+        ast: Ast.disc.Literal,
+        loc: toLoc(context, start, context.tokenIndex),
+        token,
+      } satisfies Ast.Literal;
       break;
 
     case Token.disc.Identifier:
@@ -674,7 +737,11 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
     case Token.disc.Byte:
     case Token.disc.Bytes:
     case Token.disc.Bool:
-      left = { ast: Ast.disc.Identifier, token } satisfies Ast.Identifier;
+      left = {
+        ast: Ast.disc.Identifier,
+        loc: toLoc(context, start, context.tokenIndex),
+        token,
+      } satisfies Ast.Identifier;
       break;
 
     // prefix unary operators
@@ -686,10 +753,13 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
     case Token.disc.BitwiseNot:
       {
         const rBp = getPrefixBindingPower(token);
+        if (rBp === undefined) throw new UnexpectTokenError({ source: context.source, token });
+
         const right = parseExpression(context, rBp);
 
         left = {
           ast: Ast.disc.UnaryOperation,
+          loc: toLoc(context, start, context.tokenIndex),
           operator: token,
           expression: right,
           prefix: true,
@@ -701,8 +771,17 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
       left = parseExpression(context, 0);
 
       if (peek(context)?.token === Token.disc.Comma) {
-        const tuple = parseTupleExpression(context, left);
-        left = tuple;
+        const elements: Ast.Expression[] = [left];
+        while (true) {
+          if (eat(context, Token.disc.CloseParenthesis)) break;
+          expect(context, Token.disc.Comma);
+          elements.push(parseExpression(context));
+        }
+        left = {
+          ast: Ast.disc.TupleExpression,
+          loc: toLoc(context, start, context.tokenIndex),
+          elements,
+        };
         break;
       }
 
@@ -713,12 +792,13 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
     case Token.disc.New:
       left = {
         ast: Ast.disc.NewExpression,
+        loc: toLoc(context, start, context.tokenIndex),
         expression: parseExpression(context),
       } satisfies Ast.NewExpression;
       break;
   }
 
-  if (left === undefined) throw new UnexpectTokenError(token);
+  if (left === undefined) throw new UnexpectTokenError({ source: context.source, token });
 
   while (true) {
     const operator = peek(context);
@@ -740,7 +820,12 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
       if (operator.token === Token.disc.OpenBracket) {
         const right = parseExpression(context, 0);
         expect(context, Token.disc.CloseBracket);
-        left = { ast: Ast.disc.IndexAccessExpression, base: left, index: right };
+        left = {
+          ast: Ast.disc.IndexAccessExpression,
+          loc: toLoc(context, start, context.tokenIndex),
+          base: left,
+          index: right,
+        };
       } else if (operator.token === Token.disc.OpenParenthesis) {
         context.tokenIndex--;
         const right = parseList(
@@ -749,10 +834,16 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
           Token.disc.CloseParenthesis,
           parseExpression,
         );
-        left = { ast: Ast.disc.FunctionCallExpression, expression: left, arguments: right };
+        left = {
+          ast: Ast.disc.FunctionCallExpression,
+          loc: toLoc(context, start, context.tokenIndex),
+          expression: left,
+          arguments: right,
+        };
       } else {
         left = {
           ast: Ast.disc.UnaryOperation,
+          loc: toLoc(context, start, context.tokenIndex),
           operator: operator as Token.Increment | Token.Decrement,
           expression: left,
           prefix: false,
@@ -775,6 +866,7 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
 
       left = {
         ast: Ast.disc.ConditionalExpression,
+        loc: toLoc(context, start, context.tokenIndex),
         condition: left,
         trueExpression: middle,
         falseExpression: right,
@@ -788,6 +880,7 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
 
           left = {
             ast: Ast.disc.MemberAccessExpression,
+            loc: toLoc(context, start, context.tokenIndex),
             expression: left,
             member: right,
           } satisfies Ast.MemberAccessExpression;
@@ -806,6 +899,7 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
         case Token.disc.ShiftLeftAssign:
           left = {
             ast: Ast.disc.Assignment,
+            loc: toLoc(context, start, context.tokenIndex),
             operator,
             left,
             right,
@@ -815,6 +909,7 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
         default:
           left = {
             ast: Ast.disc.BinaryOperation,
+            loc: toLoc(context, start, context.tokenIndex),
             operator: operator as Ast.BinaryOperation["operator"],
             left,
             right,
@@ -826,20 +921,6 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
   return left;
 };
 
-const parseTupleExpression = (
-  context: ParseContext,
-  firstExpression: Ast.Expression,
-): Ast.TupleExpression => {
-  const elements: Ast.Expression[] = [firstExpression];
-  while (true) {
-    if (eat(context, Token.disc.CloseParenthesis)) {
-      return { ast: Ast.disc.TupleExpression, elements };
-    }
-    expect(context, Token.disc.Comma);
-    elements.push(parseExpression(context));
-  }
-};
-
 // types
 
 export const parseType = (context: ParseContext): Ast.Type => {
@@ -847,6 +928,7 @@ export const parseType = (context: ParseContext): Ast.Type => {
 };
 
 export const parseElementaryType = (context: ParseContext): Ast.ElementaryType => {
+  const start = context.tokenIndex;
   const token = next(context);
   switch (token?.token) {
     case Token.disc.Address:
@@ -856,11 +938,14 @@ export const parseElementaryType = (context: ParseContext): Ast.ElementaryType =
     case Token.disc.Byte:
     case Token.disc.Bytes:
     case Token.disc.Bool:
-    case Token.disc.Mapping:
-      return { ast: Ast.disc.ElementaryType, type: token as Ast.ElementaryType["type"] };
+      return {
+        ast: Ast.disc.ElementaryType,
+        loc: toLoc(context, start, context.tokenIndex),
+        type: token,
+      };
 
     default:
-      throw new UnexpectTokenError(token!);
+      throw new UnexpectTokenError({ source: context.source, token: token! });
   }
 };
 

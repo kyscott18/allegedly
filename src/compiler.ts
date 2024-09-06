@@ -1,5 +1,4 @@
-import { concat, numberToHex, padHex, size, toFunctionSelector, toHex } from "viem";
-import { compileFunctionAbi } from "./abiCompiler";
+import { type Abi, concat, numberToHex, padHex, size, toFunctionSelector, toHex } from "viem";
 import type { TypeAnnotations } from "./checker";
 import { NotImplementedError } from "./errors/notImplemented";
 import { Ast } from "./types/ast";
@@ -24,7 +23,10 @@ export type CompileBytecodeContext = {
  * Compiles a valid Solidity program represented by an abstract
  * syntax tree into EVM bytecode.
  */
-export const compile = (program: Ast.Program, annotations: TypeAnnotations): Hex => {
+export const compile = (
+  program: Ast.Program,
+  annotations: TypeAnnotations,
+): { name: string; abi: Abi; code: Hex } => {
   const context: CompileBytecodeContext = {
     symbols: [new Map()],
     functions: new Map(),
