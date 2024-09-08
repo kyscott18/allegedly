@@ -72,15 +72,15 @@ export namespace Type {
     return type;
   };
 
-  export const staticUint256 = {
-    type: disc.Elementary,
-    value: { token: Token.disc.Uint, size: 256 },
-    isLiteral: false,
-  } satisfies Elementary;
-
   export const staticAddress = {
     type: disc.Elementary,
     value: { token: Token.disc.Address },
+    isLiteral: false,
+  } satisfies Elementary;
+
+  export const staticString = {
+    type: disc.Elementary,
+    value: { token: Token.disc.String },
     isLiteral: false,
   } satisfies Elementary;
 
@@ -90,11 +90,41 @@ export namespace Type {
     isLiteral: false,
   } satisfies Elementary;
 
-  export const staticBytes4 = {
+  export const staticBool = {
     type: disc.Elementary,
-    value: { token: Token.disc.Byte, size: 4 },
+    value: { token: Token.disc.Bool },
     isLiteral: false,
   } satisfies Elementary;
+
+  export const staticUintSize = (size: number) =>
+    ({
+      type: disc.Elementary,
+      value: { token: Token.disc.Uint, size },
+      isLiteral: false,
+    }) satisfies Elementary;
+
+  export const staticIntSize = (size: number) =>
+    ({
+      type: disc.Elementary,
+      value: { token: Token.disc.Int, size },
+      isLiteral: false,
+    }) satisfies Elementary;
+
+  export const staticBytesSize = (size: number) =>
+    ({
+      type: disc.Elementary,
+      value: { token: Token.disc.Byte, size },
+      isLiteral: false,
+    }) satisfies Elementary;
+
+  export const conversion = (type: Elementary): Function => {
+    return {
+      type: disc.Function,
+      parameters: [type],
+      returns: [type],
+      isTypeConversion: true,
+    };
+  };
 
   export type Type = Elementary | Function | Contract | Struct | Tuple;
 }

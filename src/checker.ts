@@ -29,52 +29,152 @@ export type TypeAnnotations = CheckContext["annotations"];
 // super
 // selfdestruct
 
+export const defaultSymbols = new Map<string, Type.Type>([
+  ["address", Type.conversion(Type.staticAddress)],
+  ["string", Type.conversion(Type.staticString)],
+  ["bytes", Type.conversion(Type.staticBytes)],
+  ["bool", Type.conversion(Type.staticBool)],
+  ["int8", Type.conversion(Type.staticIntSize(8))],
+  ["int16", Type.conversion(Type.staticIntSize(16))],
+  ["int24", Type.conversion(Type.staticIntSize(24))],
+  ["int32", Type.conversion(Type.staticIntSize(32))],
+  ["int40", Type.conversion(Type.staticIntSize(40))],
+  ["int48", Type.conversion(Type.staticIntSize(48))],
+  ["int56", Type.conversion(Type.staticIntSize(56))],
+  ["int64", Type.conversion(Type.staticIntSize(64))],
+  ["int72", Type.conversion(Type.staticIntSize(72))],
+  ["int80", Type.conversion(Type.staticIntSize(80))],
+  ["int88", Type.conversion(Type.staticIntSize(88))],
+  ["int96", Type.conversion(Type.staticIntSize(96))],
+  ["int104", Type.conversion(Type.staticIntSize(104))],
+  ["int112", Type.conversion(Type.staticIntSize(112))],
+  ["int120", Type.conversion(Type.staticIntSize(120))],
+  ["int128", Type.conversion(Type.staticIntSize(128))],
+  ["int136", Type.conversion(Type.staticIntSize(136))],
+  ["int144", Type.conversion(Type.staticIntSize(144))],
+  ["int152", Type.conversion(Type.staticIntSize(152))],
+  ["int160", Type.conversion(Type.staticIntSize(160))],
+  ["int168", Type.conversion(Type.staticIntSize(168))],
+  ["int176", Type.conversion(Type.staticIntSize(176))],
+  ["int184", Type.conversion(Type.staticIntSize(184))],
+  ["int192", Type.conversion(Type.staticIntSize(192))],
+  ["int200", Type.conversion(Type.staticIntSize(200))],
+  ["int208", Type.conversion(Type.staticIntSize(208))],
+  ["int216", Type.conversion(Type.staticIntSize(216))],
+  ["int224", Type.conversion(Type.staticIntSize(224))],
+  ["int232", Type.conversion(Type.staticIntSize(232))],
+  ["int240", Type.conversion(Type.staticIntSize(240))],
+  ["int248", Type.conversion(Type.staticIntSize(248))],
+  ["int256", Type.conversion(Type.staticIntSize(256))],
+  ["uint8", Type.conversion(Type.staticUintSize(8))],
+  ["uint16", Type.conversion(Type.staticUintSize(16))],
+  ["uint24", Type.conversion(Type.staticUintSize(24))],
+  ["uint32", Type.conversion(Type.staticUintSize(32))],
+  ["uint40", Type.conversion(Type.staticUintSize(40))],
+  ["uint48", Type.conversion(Type.staticUintSize(48))],
+  ["uint56", Type.conversion(Type.staticUintSize(56))],
+  ["uint64", Type.conversion(Type.staticUintSize(64))],
+  ["uint72", Type.conversion(Type.staticUintSize(72))],
+  ["uint80", Type.conversion(Type.staticUintSize(80))],
+  ["uint88", Type.conversion(Type.staticUintSize(88))],
+  ["uint96", Type.conversion(Type.staticUintSize(96))],
+  ["uint104", Type.conversion(Type.staticUintSize(104))],
+  ["uint112", Type.conversion(Type.staticUintSize(112))],
+  ["uint120", Type.conversion(Type.staticUintSize(120))],
+  ["uint128", Type.conversion(Type.staticUintSize(128))],
+  ["uint136", Type.conversion(Type.staticUintSize(136))],
+  ["uint144", Type.conversion(Type.staticUintSize(144))],
+  ["uint152", Type.conversion(Type.staticUintSize(152))],
+  ["uint160", Type.conversion(Type.staticUintSize(160))],
+  ["uint168", Type.conversion(Type.staticUintSize(168))],
+  ["uint176", Type.conversion(Type.staticUintSize(176))],
+  ["uint184", Type.conversion(Type.staticUintSize(184))],
+  ["uint192", Type.conversion(Type.staticUintSize(192))],
+  ["uint200", Type.conversion(Type.staticUintSize(200))],
+  ["uint208", Type.conversion(Type.staticUintSize(208))],
+  ["uint216", Type.conversion(Type.staticUintSize(216))],
+  ["uint224", Type.conversion(Type.staticUintSize(224))],
+  ["uint232", Type.conversion(Type.staticUintSize(232))],
+  ["uint240", Type.conversion(Type.staticUintSize(240))],
+  ["uint248", Type.conversion(Type.staticUintSize(248))],
+  ["uint256", Type.conversion(Type.staticUintSize(256))],
+  ["bytes1", Type.conversion(Type.staticBytesSize(1))],
+  ["bytes2", Type.conversion(Type.staticBytesSize(2))],
+  ["bytes3", Type.conversion(Type.staticBytesSize(3))],
+  ["bytes4", Type.conversion(Type.staticBytesSize(4))],
+  ["bytes5", Type.conversion(Type.staticBytesSize(5))],
+  ["bytes6", Type.conversion(Type.staticBytesSize(6))],
+  ["bytes7", Type.conversion(Type.staticBytesSize(7))],
+  ["bytes8", Type.conversion(Type.staticBytesSize(8))],
+  ["bytes9", Type.conversion(Type.staticBytesSize(9))],
+  ["bytes10", Type.conversion(Type.staticBytesSize(10))],
+  ["bytes11", Type.conversion(Type.staticBytesSize(11))],
+  ["bytes12", Type.conversion(Type.staticBytesSize(12))],
+  ["bytes13", Type.conversion(Type.staticBytesSize(13))],
+  ["bytes14", Type.conversion(Type.staticBytesSize(14))],
+  ["bytes15", Type.conversion(Type.staticBytesSize(15))],
+  ["bytes16", Type.conversion(Type.staticBytesSize(16))],
+  ["bytes17", Type.conversion(Type.staticBytesSize(17))],
+  ["bytes18", Type.conversion(Type.staticBytesSize(18))],
+  ["bytes19", Type.conversion(Type.staticBytesSize(19))],
+  ["bytes20", Type.conversion(Type.staticBytesSize(20))],
+  ["bytes21", Type.conversion(Type.staticBytesSize(21))],
+  ["bytes22", Type.conversion(Type.staticBytesSize(22))],
+  ["bytes23", Type.conversion(Type.staticBytesSize(23))],
+  ["bytes24", Type.conversion(Type.staticBytesSize(24))],
+  ["bytes25", Type.conversion(Type.staticBytesSize(25))],
+  ["bytes26", Type.conversion(Type.staticBytesSize(26))],
+  ["bytes27", Type.conversion(Type.staticBytesSize(27))],
+  ["bytes28", Type.conversion(Type.staticBytesSize(28))],
+  ["bytes29", Type.conversion(Type.staticBytesSize(29))],
+  ["bytes30", Type.conversion(Type.staticBytesSize(30))],
+  ["bytes31", Type.conversion(Type.staticBytesSize(31))],
+  ["bytes32", Type.conversion(Type.staticBytesSize(32))],
+  [
+    "block",
+    {
+      type: Type.disc.Struct,
+      members: new Map<string, Type.Type>([
+        ["basefee", Type.staticUintSize(256)],
+        ["blobbasefee", Type.staticUintSize(256)],
+        ["chainid", Type.staticUintSize(256)],
+        ["coinbase", Type.staticAddress],
+        ["difficulty", Type.staticUintSize(256)],
+        ["gaslimit", Type.staticUintSize(256)],
+        ["number", Type.staticUintSize(256)],
+        ["prevrandao", Type.staticUintSize(256)],
+        ["timestamp", Type.staticUintSize(256)],
+      ]),
+    },
+  ],
+  [
+    "msg",
+    {
+      type: Type.disc.Struct,
+      members: new Map<string, Type.Type>([
+        ["data", Type.staticBytes],
+        ["sender", Type.staticAddress],
+        ["sig", Type.staticBytesSize(4)],
+        ["value", Type.staticUintSize(256)],
+      ]),
+    },
+  ],
+  [
+    "tx",
+    {
+      type: Type.disc.Struct,
+      members: new Map<string, Type.Type>([
+        ["gasprice", Type.staticUintSize(256)],
+        ["origin", Type.staticAddress],
+      ]),
+    },
+  ],
+]);
+
 export const check = (source: string, program: Ast.Program): TypeAnnotations => {
   const context: CheckContext = {
     source,
-    symbols: [
-      new Map([
-        [
-          "block",
-          {
-            type: Type.disc.Struct,
-            members: new Map<string, Type.Type>([
-              ["basefee", Type.staticUint256],
-              ["blobbasefee", Type.staticUint256],
-              ["chainid", Type.staticUint256],
-              ["coinbase", Type.staticAddress],
-              ["difficulty", Type.staticUint256],
-              ["gaslimit", Type.staticUint256],
-              ["number", Type.staticUint256],
-              ["prevrandao", Type.staticUint256],
-              ["timestamp", Type.staticUint256],
-            ]),
-          },
-        ],
-        [
-          "msg",
-          {
-            type: Type.disc.Struct,
-            members: new Map<string, Type.Type>([
-              ["data", Type.staticBytes],
-              ["sender", Type.staticAddress],
-              ["sig", Type.staticBytes4],
-              ["value", Type.staticUint256],
-            ]),
-          },
-        ],
-        [
-          "tx",
-          {
-            type: Type.disc.Struct,
-            members: new Map<string, Type.Type>([
-              ["gasprice", Type.staticUint256],
-              ["origin", Type.staticAddress],
-            ]),
-          },
-        ],
-      ]),
-    ],
+    symbols: [defaultSymbols],
     annotations: new Map(),
     isContractScope: false,
   };
@@ -225,29 +325,19 @@ export const checkStatement = (context: CheckContext, statement: Ast.Statement):
 
 export const checkExpression = (context: CheckContext, expression: Ast.Expression): Type.Type => {
   switch (expression.ast) {
-    case Ast.disc.Identifier:
-      if (expression.token.token === Token.disc.Identifier) {
-        const symbol = resolveSymbol(context, expression.token.value);
+    case Ast.disc.Identifier: {
+      const symbol = resolveSymbol(context, expression.token.value);
 
-        if (symbol.type === Type.disc.Contract) {
-          return {
-            type: Type.disc.Function,
-            parameters: [symbol],
-            returns: [symbol],
-            isTypeConversion: true,
-          };
-        }
-        return symbol;
+      if (symbol.type === Type.disc.Contract) {
+        return {
+          type: Type.disc.Function,
+          parameters: [symbol],
+          returns: [symbol],
+          isTypeConversion: true,
+        };
       }
-
-      // TODO(kyle) handle native conversions better
-
-      return {
-        type: Type.disc.Function,
-        parameters: [{ type: Type.disc.Elementary, value: expression.token, isLiteral: false }],
-        returns: [{ type: Type.disc.Elementary, value: expression.token, isLiteral: false }],
-        isTypeConversion: true,
-      };
+      return symbol;
+    }
 
     case Ast.disc.Literal:
       switch (expression.token.token) {

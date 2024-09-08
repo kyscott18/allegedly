@@ -46,7 +46,7 @@ export namespace Ast {
   export type Identifier = {
     ast: disc.Identifier;
     loc: SourceLocation;
-    token: Token.Identifier | ElementaryType["type"];
+    token: Token.Identifier;
   };
 
   export type Literal = {

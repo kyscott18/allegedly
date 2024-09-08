@@ -766,23 +766,101 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
     case Token.disc.BoolLiteral:
       left = {
         ast: Ast.disc.Literal,
-        loc: toLoc(context, start, context.tokenIndex),
+        loc: token.loc,
         token,
       } satisfies Ast.Literal;
       break;
 
     case Token.disc.Identifier:
+      left = {
+        ast: Ast.disc.Identifier,
+        loc: token.loc,
+        token,
+      } satisfies Ast.Identifier;
+      break;
+
+    // type conversion
     case Token.disc.Address:
+      left = {
+        ast: Ast.disc.Identifier,
+        loc: token.loc,
+        token: {
+          token: Token.disc.Identifier,
+          loc: token.loc,
+          value: "address",
+        },
+      } satisfies Ast.Identifier;
+      break;
+
     case Token.disc.String:
+      left = {
+        ast: Ast.disc.Identifier,
+        loc: token.loc,
+        token: {
+          token: Token.disc.Identifier,
+          loc: token.loc,
+          value: "string",
+        },
+      } satisfies Ast.Identifier;
+      break;
+
     case Token.disc.Uint:
+      left = {
+        ast: Ast.disc.Identifier,
+        loc: token.loc,
+        token: {
+          token: Token.disc.Identifier,
+          loc: token.loc,
+          value: `uint${token.size}`,
+        },
+      } satisfies Ast.Identifier;
+      break;
+
     case Token.disc.Int:
+      left = {
+        ast: Ast.disc.Identifier,
+        loc: token.loc,
+        token: {
+          token: Token.disc.Identifier,
+          loc: token.loc,
+          value: `int${token.size}`,
+        },
+      } satisfies Ast.Identifier;
+      break;
+
     case Token.disc.Byte:
+      left = {
+        ast: Ast.disc.Identifier,
+        loc: token.loc,
+        token: {
+          token: Token.disc.Identifier,
+          loc: token.loc,
+          value: `bytes${token.size}`,
+        },
+      } satisfies Ast.Identifier;
+      break;
+
     case Token.disc.Bytes:
+      left = {
+        ast: Ast.disc.Identifier,
+        loc: token.loc,
+        token: {
+          token: Token.disc.Identifier,
+          loc: token.loc,
+          value: "bytes",
+        },
+      } satisfies Ast.Identifier;
+      break;
+
     case Token.disc.Bool:
       left = {
         ast: Ast.disc.Identifier,
-        loc: toLoc(context, start, context.tokenIndex),
-        token,
+        loc: token.loc,
+        token: {
+          token: Token.disc.Identifier,
+          loc: token.loc,
+          value: "bool",
+        },
       } satisfies Ast.Identifier;
       break;
 

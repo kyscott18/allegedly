@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { type CheckContext, checkExpression, checkStatement } from "./checker";
+import { type CheckContext, checkExpression, checkStatement, defaultSymbols } from "./checker";
 import type { TypeError } from "./errors/type";
 import { tokenize } from "./lexer";
 import { type ParseContext, parseBlockStatement, parseExpression } from "./parser";
@@ -14,7 +14,7 @@ const getError = <ast extends Ast.Statement | Ast.Definition | Ast.Expression>(
     const tokens = tokenize(source);
 
     checker(
-      { source, symbols: [], annotations: new Map(), isContractScope: false },
+      { source, symbols: [defaultSymbols], annotations: new Map(), isContractScope: false },
       parser({ source, tokens, tokenIndex: 0 }),
     );
 
