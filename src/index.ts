@@ -24,12 +24,12 @@ export const sol = <const source extends string>(source: source): SolReturnType<
   const program = parse(source, tokens);
 
   // Semantic analysis
-  const annotations = check(program);
+  const annotations = check(source, program);
 
   // TODO(kyle) Check for one contract
 
   // abi + bytecode generation
-  return compile(program, annotations);
+  return compile(source, program, annotations);
 };
 
 export { Ast } from "./types/ast";

@@ -14,7 +14,7 @@ const getError = <ast extends Ast.Statement | Ast.Definition | Ast.Expression>(
     const tokens = tokenize(source);
 
     checker(
-      { symbols: [], annotations: new Map(), isContractScope: false },
+      { source, symbols: [], annotations: new Map(), isContractScope: false },
       parser({ source, tokens, tokenIndex: 0 }),
     );
 
@@ -23,6 +23,18 @@ const getError = <ast extends Ast.Statement | Ast.Definition | Ast.Expression>(
     return error as TypeError;
   }
 };
+
+test("1080", () => {
+  const error = getError("true ? 10 : false", parseExpression, checkExpression);
+
+  expect(error).toBeDefined();
+  expect(error!.code).toBe(1080);
+});
+
+test("no 1080", () => {
+  const error = getError("true ? 10 : 8", parseExpression, checkExpression);
+  expect(error).toBeUndefined();
+});
 
 test("2271", () => {
   let error = getError("10 + true", parseExpression, checkExpression);

@@ -1,11 +1,20 @@
+import type { SourceLocation } from "../types/utils";
+import { frame } from "../utils/frame";
+
 export type NotImplementedErrorType = NotImplementedError & {
   name: "NotImplementedError";
 };
 export class NotImplementedError extends Error {
   override name = "NotImplementedError";
-  constructor({ source }: { source: string }) {
+  constructor({ source, loc, feature }: { source: string; loc: SourceLocation; feature: string }) {
     super(
-      `"${source}" is a feature of solidity that has not yet been implemented into this compiler.`,
+      `${feature} is a feature of solidity that has not yet been implemented into this compiler.`,
+    );
+
+    frame(
+      source,
+      loc,
+      `${feature} is a feature of solidity that has not yet been implemented into this compiler.`,
     );
   }
 }

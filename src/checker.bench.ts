@@ -4,9 +4,9 @@ import { check } from "./checker";
 import { tokenize } from "./lexer";
 import { parse } from "./parser";
 
-const source = await Bun.file(path.join(import.meta.dir, "_sol", "SimpleStorage.sol")).text();
-const ast = parse(tokenize(source));
+const source = await Bun.file(path.join(import.meta.dir, "_sol", "GetBalance.sol")).text();
+const ast = parse(source, tokenize(source));
 
-bench("check", () => check(ast));
+bench("check", () => check(source, ast));
 
 await run();

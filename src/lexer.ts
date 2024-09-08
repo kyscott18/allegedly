@@ -1,4 +1,5 @@
 import type { Hex } from "viem";
+import { NotImplementedError } from "./errors/notImplemented";
 import { ReservedKeywordError } from "./errors/reservedKeyword";
 import { UnrecognizedSymbolError } from "./errors/unrecognizedSymbol";
 import { Token } from "./types/token";
@@ -570,12 +571,9 @@ export const tokenize = (source: string): Token.Token[] => {
 
     if (symbolMap.has(char)) {
       symbolMap.get(char)!(start);
-    } else if (char === '"') {
-      // TODO(kyle) string literal
+    } else if (char === '"' || char === "'") {
+      throw new NotImplementedError({ source, loc: toLoc(start, 1), feature: "string literal" });
     } else if (isDigit(char)) {
-      // TODO(kyle) rational number literal
-      // TODO(kyle) hex number literal
-
       if (char === "0" && cursor.peek() === "x") {
         cursor.next();
 
@@ -595,12 +593,25 @@ export const tokenize = (source: string): Token.Token[] => {
             loc: toLoc(start, length),
             value: source.substring(cursor.position - length, cursor.position) as Hex,
           });
+        } else {
+          throw new NotImplementedError({
+            source,
+            loc: toLoc(start, length),
+            feature: "hex number literal",
+          });
         }
       } else {
         let length = 1;
         for (const char of cursor) {
           if (isDigit(char)) length++;
           else {
+            if (char === "." || (char === "e" && cursor.peek() && isDigit(cursor.peek()!))) {
+              throw new NotImplementedError({
+                source,
+                loc: toLoc(start, length),
+                feature: "rational number literal",
+              });
+            }
             cursor.position--;
             cursor.offset--;
             break;

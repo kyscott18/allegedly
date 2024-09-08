@@ -3,7 +3,7 @@ export type InvariantViolationErrorType = InvariantViolationError & {
 };
 export class InvariantViolationError extends Error {
   override name = "InvariantViolationError";
-  constructor(message: string) {
+  constructor(message?: string) {
     super(`${message}`);
   }
 }

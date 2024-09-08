@@ -10,6 +10,6 @@ export class ReservedKeywordError extends Error {
     const keyword = recoverSource(source, loc);
     super(`"${keyword}" is a reserved keyword.`);
 
-    console.log(frame(source, loc, `"${keyword}" is a reserved keyword.`));
+    frame(source, loc, `"${keyword}" is a reserved keyword.`);
   }
 }

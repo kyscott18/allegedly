@@ -1,3 +1,4 @@
+import { InvariantViolationError } from "./errors/invariantViolation";
 import { NotImplementedError } from "./errors/notImplemented";
 import { TypeError } from "./errors/type";
 import { Ast } from "./types/ast";
@@ -6,6 +7,7 @@ import { Type } from "./types/type";
 import { never } from "./utils/never";
 
 export type CheckContext = {
+  source: string;
   symbols: Map<string, Type.Type>[];
   annotations: Map<Ast.Expression, Type.Type>;
   isContractScope: boolean;
@@ -27,8 +29,9 @@ export type TypeAnnotations = CheckContext["annotations"];
 // super
 // selfdestruct
 
-export const check = (program: Ast.Program): TypeAnnotations => {
+export const check = (source: string, program: Ast.Program): TypeAnnotations => {
   const context: CheckContext = {
+    source,
     symbols: [
       new Map([
         [
@@ -113,7 +116,11 @@ const exitScope = (context: CheckContext) => {
 export const checkDefinition = (context: CheckContext, definition: Ast.Definition): void => {
   switch (definition.ast) {
     case Ast.disc.VariableDefinition:
-      throw new Error("bad");
+      throw new NotImplementedError({
+        source: context.source,
+        loc: definition.loc,
+        feature: "variable defintion",
+      });
 
     case Ast.disc.FunctionDefinition:
       if (definition.body !== undefined) checkStatement(context, definition.body);
@@ -129,16 +136,32 @@ export const checkDefinition = (context: CheckContext, definition: Ast.Definitio
       break;
 
     case Ast.disc.EventDefinition:
-      throw new Error("bad");
+      throw new NotImplementedError({
+        source: context.source,
+        loc: definition.loc,
+        feature: "event defintion",
+      });
 
     case Ast.disc.ErrorDefinition:
-      throw new Error("bad");
+      throw new NotImplementedError({
+        source: context.source,
+        loc: definition.loc,
+        feature: "error defintion",
+      });
 
     case Ast.disc.StructDefinition:
-      throw new Error("bad");
+      throw new NotImplementedError({
+        source: context.source,
+        loc: definition.loc,
+        feature: "struct defintion",
+      });
 
     case Ast.disc.ModifierDefinition:
-      throw new Error("bad");
+      throw new NotImplementedError({
+        source: context.source,
+        loc: definition.loc,
+        feature: "modifier defintion",
+      });
 
     default:
       never(definition);
@@ -151,6 +174,7 @@ export const checkStatement = (context: CheckContext, statement: Ast.Statement):
       addSymbol(context, statement.identifier.value, Type.convertAst(statement.type));
       if (statement.initializer) {
         const initializer = checkExpression(context, statement.initializer);
+        context.annotations.set(statement.initializer, initializer);
         if (isImplicitlyConvertibleTo(initializer, Type.convertAst(statement.type)) === false) {
           throw new TypeError(
             `Type ${initializer} is not implicitly convertible to expected type ${statement.type}`,
@@ -160,9 +184,11 @@ export const checkStatement = (context: CheckContext, statement: Ast.Statement):
       }
       break;
 
-    case Ast.disc.ExpressionStatement:
-      checkExpression(context, statement.expression);
+    case Ast.disc.ExpressionStatement: {
+      const expression = checkExpression(context, statement.expression);
+      context.annotations.set(statement.expression, expression);
       break;
+    }
 
     case Ast.disc.BlockStatement:
       enterScope(context);
@@ -282,6 +308,8 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
     case Ast.disc.Assignment: {
       const left = checkExpression(context, expression.left);
       const right = checkExpression(context, expression.right);
+      context.annotations.set(expression.left, left);
+      context.annotations.set(expression.right, right);
 
       if (isImplicitlyConvertibleTo(left, right) === false) {
         throw new TypeError(
@@ -290,12 +318,13 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         );
       }
 
-      return checkExpression(context, expression.right);
+      return right;
     }
 
     case Ast.disc.UnaryOperation:
       {
         const _expression = checkExpression(context, expression.expression);
+        context.annotations.set(expression.expression, _expression);
 
         switch (expression.operator.token) {
           case Token.disc.Increment:
@@ -325,6 +354,8 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
     case Ast.disc.BinaryOperation: {
       const left = checkExpression(context, expression.left);
       const right = checkExpression(context, expression.right);
+      context.annotations.set(expression.left, left);
+      context.annotations.set(expression.right, right);
 
       if (isImplicitlyConvertibleTo(left, right) === false)
         throw new TypeError(
@@ -339,6 +370,9 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       const condition = checkExpression(context, expression.condition);
       const trueExpression = checkExpression(context, expression.trueExpression);
       const falseExpression = checkExpression(context, expression.falseExpression);
+      context.annotations.set(expression.condition, condition);
+      context.annotations.set(expression.trueExpression, trueExpression);
+      context.annotations.set(expression.falseExpression, falseExpression);
 
       if (
         isImplicitlyConvertibleTo(condition, {
@@ -346,16 +380,25 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
           value: { token: Token.disc.Bool },
           isLiteral: false,
         }) === false
-      )
-        throw new Error("bad!");
-      if (isImplicitlyConvertibleTo(trueExpression, falseExpression) === false)
-        throw new Error("bad!");
+      ) {
+        throw new TypeError(
+          `Type ${condition} is not implicitly convertible to expected type bool`,
+          7407,
+        );
+      }
+      if (isImplicitlyConvertibleTo(trueExpression, falseExpression) === false) {
+        throw new TypeError(
+          `True expressions's type ${trueExpression} does not match false expressions type ${falseExpression}`,
+          1080,
+        );
+      }
 
       return trueExpression;
     }
 
     case Ast.disc.FunctionCallExpression: {
       const _expression = checkExpression(context, expression.expression);
+      context.annotations.set(expression.expression, _expression);
 
       if (_expression.type === Type.disc.Function) {
         if (_expression.parameters.length !== expression.arguments.length) {
@@ -367,6 +410,7 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 
         for (let i = 0; i < expression.arguments.length; i++) {
           const _argument = checkExpression(context, expression.arguments[i]!);
+          context.annotations.set(expression.arguments[i]!, _argument);
 
           if (_expression.isTypeConversion) {
             if (isExplicitlyConvertibleTo(_argument, _expression.returns[0]!) === false) {
@@ -393,6 +437,7 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 
     case Ast.disc.MemberAccessExpression: {
       const _expression = checkExpression(context, expression.expression);
+      context.annotations.set(expression.expression, _expression);
 
       if (expression.member.token.token !== Token.disc.Identifier) {
         throw new TypeError(`Expected identifer but got ${expression.member.token}`, 2314);
@@ -417,19 +462,31 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
     }
 
     case Ast.disc.IndexAccessExpression:
-      throw new NotImplementedError({ source: "a[i]" });
+      throw new NotImplementedError({
+        source: context.source,
+        loc: expression.loc,
+        feature: "index access",
+      });
 
     case Ast.disc.NewExpression:
-      throw new NotImplementedError({ source: "new A()" });
+      throw new NotImplementedError({
+        source: context.source,
+        loc: expression.loc,
+        feature: "contract creation",
+      });
 
     case Ast.disc.TupleExpression:
-      throw new NotImplementedError({ source: "a[i]" });
+      throw new NotImplementedError({
+        source: context.source,
+        loc: expression.loc,
+        feature: "tuple",
+      });
 
     default:
       never(expression);
   }
 
-  throw "unreachable";
+  throw new InvariantViolationError();
 };
 
 const isExplicitlyConvertibleTo = (from: Type.Type, to: Type.Type): boolean => {

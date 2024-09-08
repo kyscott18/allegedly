@@ -319,6 +319,7 @@ export namespace Ast {
 
   export type FunctionDefinition = {
     ast: Ast.disc.FunctionDefinition;
+    loc: SourceLocation;
     kind: Token.Function | Token.Receive | Token.Constructor | Token.Fallback;
     visibility: Visibility;
     mutability: Mutability | undefined;
@@ -331,6 +332,7 @@ export namespace Ast {
 
   export type ContractDefinition = {
     ast: Ast.disc.ContractDefinition;
+    loc: SourceLocation;
     kind: Token.Contract | Token.Interface | Token.Library;
     name: Token.Identifier;
     nodes: (

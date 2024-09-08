@@ -8,7 +8,7 @@ import type {
   SolidityBytes,
   SolidityInt,
 } from "abitype";
-import { NotImplementedError } from "../errors/notImplemented";
+import { InvariantViolationError } from "../errors/invariantViolation";
 import { Ast } from "../types/ast";
 import { Token } from "../types/token";
 
@@ -26,7 +26,7 @@ export const getAbiFunction = (
       };
     }
 
-    throw new NotImplementedError({ source: "" });
+    throw new InvariantViolationError();
   }
 
   return {

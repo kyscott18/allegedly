@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import path from "node:path";
-import { NotImplementedError } from "./errors/notImplemented.js";
+import { InvariantViolationError } from "./errors/invariantViolation.js";
 import { tokenize } from "./lexer.js";
 import {
   type ParseContext,
@@ -111,6 +111,7 @@ const expressionToString = (expression: Ast.Expression): string => {
   switch (expression.ast) {
     case Ast.disc.Literal:
     case Ast.disc.Identifier:
+      // @ts-ignore
       return expression.token.value;
 
     case Ast.disc.Assignment:
@@ -131,7 +132,7 @@ const expressionToString = (expression: Ast.Expression): string => {
       return `(. ${expressionToString(expression.expression)} ${expressionToString(expression.member)})`;
 
     default:
-      throw new NotImplementedError({ source: "expressionToString" });
+      throw new InvariantViolationError();
   }
 };
 
@@ -145,6 +146,7 @@ test("identifier", () => {
   const identifier = getAst("id", parseExpression) as Ast.Identifier;
 
   expect(identifier!.ast).toBe(Ast.disc.Identifier);
+  // @ts-ignore
   expect(identifier!.token.value).toBe("id");
 });
 

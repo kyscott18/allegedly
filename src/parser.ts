@@ -1,5 +1,7 @@
 import { EOFError } from "./errors/eof";
 import { ExpectTokenError } from "./errors/expectToken";
+import { NotImplementedError } from "./errors/notImplemented";
+import { UnexpectExpressionError } from "./errors/unexpectedExpression";
 import { UnexpectTokenError } from "./errors/unexpectedToken";
 import { Ast } from "./types/ast";
 import { Token } from "./types/token";
@@ -112,6 +114,7 @@ const parseList = <T>(
 // defintions
 
 export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefinition => {
+  const start = context.tokenIndex;
   const kind = next(context);
   if (kind.token === Token.disc.Function) {
     const name = peek(context) as Token.Identifier;
@@ -180,6 +183,7 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
 
       return {
         ast: Ast.disc.FunctionDefinition,
+        loc: toLoc(context, start, context.tokenIndex),
         kind,
         visibility,
         mutability,
@@ -193,6 +197,7 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
 
     return {
       ast: Ast.disc.FunctionDefinition,
+      loc: toLoc(context, start, context.tokenIndex),
       kind,
       visibility,
       mutability,
@@ -208,6 +213,7 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
 };
 
 export const parseContractDefinition = (context: ParseContext): Ast.ContractDefinition => {
+  const start = context.tokenIndex;
   const kind = next(context) as Ast.ContractDefinition["kind"];
 
   if (
@@ -226,7 +232,13 @@ export const parseContractDefinition = (context: ParseContext): Ast.ContractDefi
   const nodes: Ast.ContractDefinition["nodes"] = [];
   while (true) {
     if (eat(context, Token.disc.CloseCurlyBrace)) {
-      return { ast: Ast.disc.ContractDefinition, kind, name, nodes };
+      return {
+        ast: Ast.disc.ContractDefinition,
+        loc: toLoc(context, start, context.tokenIndex),
+        kind,
+        name,
+        nodes,
+      };
     }
 
     switch (peek(context)?.token) {
@@ -311,15 +323,21 @@ export const parseErrorDefinition = (context: ParseContext): Ast.ErrorDefinition
   };
 };
 
-export const parseStructDefinition = (
-  _context: ParseContext,
-  // @ts-expect-error
-): Ast.StructDefinition => {};
+export const parseStructDefinition = (context: ParseContext): Ast.StructDefinition => {
+  throw new NotImplementedError({
+    source: context.source,
+    loc: context.tokens[context.tokenIndex]!.loc,
+    feature: "structs",
+  });
+};
 
-export const parseModifierDefinition = (
-  _context: ParseContext,
-  // @ts-expect-error
-): Ast.ModifierDefinition => {};
+export const parseModifierDefinition = (context: ParseContext): Ast.ModifierDefinition => {
+  throw new NotImplementedError({
+    source: context.source,
+    loc: context.tokens[context.tokenIndex]!.loc,
+    feature: "modifier",
+  });
+};
 
 export const parseVariableDefinition = (context: ParseContext): Ast.VariableDefintion => {
   const start = context.tokenIndex;
@@ -515,21 +533,37 @@ export const parseUncheckedBlockStatement = (
   }
 };
 
-// @ts-expect-error
-export const parseIfStatement = (_context: ParseContext): Ast.IfStatement => {};
+export const parseIfStatement = (context: ParseContext): Ast.IfStatement => {
+  throw new NotImplementedError({
+    source: context.source,
+    loc: context.tokens[context.tokenIndex]!.loc,
+    feature: "if statement",
+  });
+};
 
-// @ts-expect-error
-export const parseForStatement = (_context: ParseContext): Ast.ForStatement => {};
+export const parseForStatement = (context: ParseContext): Ast.ForStatement => {
+  throw new NotImplementedError({
+    source: context.source,
+    loc: context.tokens[context.tokenIndex]!.loc,
+    feature: "for loop",
+  });
+};
 
-export const parseWhileStatement = (
-  _context: ParseContext,
-  // @ts-expect-error
-): Ast.WhileStatement => {};
+export const parseWhileStatement = (context: ParseContext): Ast.WhileStatement => {
+  throw new NotImplementedError({
+    source: context.source,
+    loc: context.tokens[context.tokenIndex]!.loc,
+    feature: "while loop",
+  });
+};
 
-export const parseDoWhileStatement = (
-  _context: ParseContext,
-  // @ts-expect-error
-): Ast.DoWhileStatement => {};
+export const parseDoWhileStatement = (context: ParseContext): Ast.DoWhileStatement => {
+  throw new NotImplementedError({
+    source: context.source,
+    loc: context.tokens[context.tokenIndex]!.loc,
+    feature: "do-while loop",
+  });
+};
 
 export const parseBreakStatement = (context: ParseContext): Ast.BreakStatement => {
   const start = context.tokenIndex;
@@ -551,16 +585,18 @@ export const parseEmitStatement = (context: ParseContext): Ast.EmitStatement => 
   const start = context.tokenIndex;
   expect(context, Token.disc.Emit);
 
-  const maybeEvent = parseExpression(context);
-  if (maybeEvent?.ast !== Ast.disc.FunctionCallExpression) throw new Error("TODO");
+  const event = parseExpression(context);
+  if (event.ast !== Ast.disc.FunctionCallExpression) {
+    throw new UnexpectExpressionError({
+      source: context.source,
+      expression: event,
+      expected: "event",
+    });
+  }
 
   expect(context, Token.disc.Semicolon);
 
-  return {
-    ast: Ast.disc.EmitStatement,
-    loc: toLoc(context, start, context.tokenIndex),
-    event: maybeEvent,
-  };
+  return { ast: Ast.disc.EmitStatement, loc: toLoc(context, start, context.tokenIndex), event };
 };
 
 export const parseRevertStatement = (context: ParseContext): Ast.RevertStatement => {
@@ -568,7 +604,13 @@ export const parseRevertStatement = (context: ParseContext): Ast.RevertStatement
   expect(context, Token.disc.Revert);
 
   const error = parseExpression(context);
-  if (error?.ast !== Ast.disc.FunctionCallExpression) throw new Error("TODO");
+  if (error.ast !== Ast.disc.FunctionCallExpression) {
+    throw new UnexpectExpressionError({
+      source: context.source,
+      expression: error,
+      expected: "error",
+    });
+  }
 
   expect(context, Token.disc.Semicolon);
 
@@ -876,7 +918,13 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
 
       switch (operator.token) {
         case Token.disc.Member:
-          if (right.ast !== Ast.disc.Identifier) throw new Error("TODO");
+          if (right.ast !== Ast.disc.Identifier) {
+            throw new UnexpectExpressionError({
+              source: context.source,
+              expression: right,
+              expected: "identifier",
+            });
+          }
 
           left = {
             ast: Ast.disc.MemberAccessExpression,
@@ -949,8 +997,18 @@ export const parseElementaryType = (context: ParseContext): Ast.ElementaryType =
   }
 };
 
-// @ts-expect-error
-export const parseArrayType = (_context: ParseContext): Ast.ArrayType => {};
+export const parseArrayType = (context: ParseContext): Ast.ArrayType => {
+  throw new NotImplementedError({
+    source: context.source,
+    loc: context.tokens[context.tokenIndex]!.loc,
+    feature: "arrays",
+  });
+};
 
-// @ts-expect-error
-export const parseMapping = (_context: ParseContext): Ast.Mapping => {};
+export const parseMapping = (context: ParseContext): Ast.Mapping => {
+  throw new NotImplementedError({
+    source: context.source,
+    loc: context.tokens[context.tokenIndex]!.loc,
+    feature: "mapping",
+  });
+};

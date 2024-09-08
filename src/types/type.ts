@@ -10,9 +10,9 @@ export namespace Type {
     Tuple,
   }
 
-  export type Elementary = {
+  export type Elementary<value = Ast.ElementaryType["type"]> = {
     type: disc.Elementary;
-    value: Ast.ElementaryType["type"];
+    value: value extends value ? Omit<value, "loc"> : never;
     isLiteral: boolean;
   };
 
