@@ -7,7 +7,7 @@ import { parse } from "./parser";
 import { Ast } from "./types/ast";
 import type { Hex } from "./types/utils";
 
-export type SolReturnType<source extends string> = {
+export type SolReturnType = {
   name: string;
   abi: Abi;
   code: Hex;
@@ -18,7 +18,7 @@ export type SolReturnType<source extends string> = {
  *
  * @param source Source code of a Solidity program.
  */
-export const sol = <const source extends string>(source: source): SolReturnType<source> => {
+export const sol = <const source extends string>(source: source): SolReturnType => {
   // Lexical analysis
   const tokens = tokenize(source);
 
