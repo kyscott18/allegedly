@@ -1,8 +1,10 @@
 import type { Abi } from "abitype";
 import { check } from "./checker";
 import { compile } from "./compiler";
+import { NoContractFoundError } from "./errors/noContractFound";
 import { tokenize } from "./lexer";
 import { parse } from "./parser";
+import { Ast } from "./types/ast";
 import type { Hex } from "./types/utils";
 
 export type SolReturnType<source extends string> = {
@@ -23,10 +25,12 @@ export const sol = <const source extends string>(source: source): SolReturnType<
   // Syntax analysis
   const program = parse(source, tokens);
 
+  if (program.find((d) => d.ast === Ast.disc.ContractDefinition) === undefined) {
+    throw new NoContractFoundError();
+  }
+
   // Semantic analysis
   const annotations = check(source, program);
-
-  // TODO(kyle) Check for one contract
 
   // abi + bytecode generation
   return compile(source, program, annotations);
