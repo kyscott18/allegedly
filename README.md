@@ -20,6 +20,8 @@ contract GetBalance {
 
 ## [`solc`](https://github.com/ethereum/solidity)
 
+This project is not meant to replace `solc`. Instead, it is smaller, faster, more modular alternative, that produces less efficient and less secure bytecode.
+
 ## Supported Language Features
 
 - [x] none
