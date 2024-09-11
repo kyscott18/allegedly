@@ -116,6 +116,7 @@ test("literal", async () => {
 contract C {
   function run() external {
     10;
+    true;
   }
 }`,
     toFunctionSelector("function run()"),
@@ -153,7 +154,22 @@ contract C {
   expect(result.exceptionError).toBeUndefined();
 });
 
-test.skip("function call expression", async () => {
+test.only("assignment", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    uint256 x;
+    x = 10;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+});
+
+test.skip("function call", async () => {
   const { result } = await getCode(
     `
 contract Identity {

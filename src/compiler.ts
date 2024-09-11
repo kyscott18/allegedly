@@ -411,6 +411,7 @@ const compileExpression = (
           throw new InvariantViolationError();
         }
 
+        case Token.disc.BoolLiteral:
         case Token.disc.NumberLiteral: {
           return {
             code: push(toHex(node.token.value)),
@@ -426,10 +427,6 @@ const compileExpression = (
           throw new InvariantViolationError();
         }
 
-        case Token.disc.BoolLiteral: {
-          throw new NotImplementedError({ source: "" });
-        }
-
         default:
           never(node.token);
           throw new InvariantViolationError();
@@ -437,22 +434,35 @@ const compileExpression = (
     }
 
     case Ast.disc.Assignment: {
-      throw new NotImplementedError({ source: "" });
+      throw new NotImplementedError();
     }
 
     case Ast.disc.UnaryOperation: {
-      throw new NotImplementedError({ source: "" });
+      const _expression = compileExpression(context, node.expression);
+      switch (node.operator.token) {
+        case Token.disc.Subtract:
+          return {
+            code: concat([
+              _expression.code, // [value]
+              Code.NOT, //         [~value]
+              push("0x1"), //      [1, ~value]
+              Code.ADD, //         [~value + 1]
+            ]),
+            stack: 1,
+          };
+
+        default:
+          throw new NotImplementedError();
+      }
     }
 
-    case Ast.disc.BinaryOperation: {
-      throw new NotImplementedError({ source: "" });
-    }
+    case Ast.disc.BinaryOperation:
+      throw new NotImplementedError();
 
-    case Ast.disc.ConditionalExpression: {
-      throw new NotImplementedError({ source: "" });
-    }
+    case Ast.disc.ConditionalExpression:
+      throw new NotImplementedError();
 
-    case Ast.disc.FunctionCallExpression: {
+    case Ast.disc.FunctionCallExpression:
       if (node.expression.ast === Ast.disc.Identifier) {
         return { ...compileExpression(context, node.arguments[0]!) };
       }
@@ -512,23 +522,18 @@ const compileExpression = (
         };
       }
 
-      throw new NotImplementedError({ source: "" });
-    }
+      throw new NotImplementedError();
 
-    case Ast.disc.MemberAccessExpression: {
-      throw new NotImplementedError({ source: "" });
-    }
+    case Ast.disc.MemberAccessExpression:
+      throw new NotImplementedError();
 
-    case Ast.disc.IndexAccessExpression: {
+    case Ast.disc.IndexAccessExpression:
       throw new InvariantViolationError();
-    }
 
-    case Ast.disc.NewExpression: {
+    case Ast.disc.NewExpression:
       throw new InvariantViolationError();
-    }
 
-    case Ast.disc.TupleExpression: {
+    case Ast.disc.TupleExpression:
       throw new InvariantViolationError();
-    }
   }
 };

@@ -1,4 +1,4 @@
-import type { Abi } from "abitype";
+import type { Abi } from "viem";
 import { check } from "./checker";
 import { compile } from "./compiler";
 import { NoContractFoundError } from "./errors/noContractFound";

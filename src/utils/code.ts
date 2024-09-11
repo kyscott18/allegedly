@@ -2,7 +2,9 @@ import { type Hex, concat, padHex } from "viem";
 
 export enum Code {
   STOP = "0x00",
+  ADD = "0x01",
   EQ = "0x14",
+  NOT = "0x19",
   SHR = "0x1c",
   CALLDATALOAD = "0x35",
   CALLDATASIZE = "0x36",
