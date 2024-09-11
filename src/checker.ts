@@ -174,7 +174,7 @@ export const defaultSymbols = new Map<string, Type.Type>([
 export const check = (source: string, program: Ast.Program): TypeAnnotations => {
   const context: CheckContext = {
     source,
-    symbols: [defaultSymbols],
+    symbols: [defaultSymbols, new Map()],
     annotations: new Map(),
     isContractScope: false,
   };
