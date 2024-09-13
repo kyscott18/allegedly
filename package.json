@@ -4,7 +4,7 @@
   "version": "0.0.1-alpha.0",
   "module": "src/index.ts",
   "devDependencies": {
-    "@biomejs/biome": "^1.8.3",
+    "@biomejs/biome": "^1.9.0",
     "@changesets/cli": "^2.27.8",
     "@ethereumjs/evm": "^3.1.1",
     "@size-limit/preset-small-lib": "^11.1.5",
