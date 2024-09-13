@@ -642,11 +642,15 @@ export const tokenize = (source: string): Token.Token[] => {
       if (keywordMap.has(lexeme)) {
         keywordMap.get(lexeme)!(toLoc(start, lexeme.length));
       } else {
-        tokens.push({
-          token: Token.disc.Identifier,
-          value: lexeme,
-          loc: toLoc(start, lexeme.length),
-        });
+        if (length === 1 && lexeme === "_") {
+          tokens.push({ token: Token.disc.Placeholder, loc: toLoc(start, lexeme.length) });
+        } else {
+          tokens.push({
+            token: Token.disc.Identifier,
+            value: lexeme,
+            loc: toLoc(start, lexeme.length),
+          });
+        }
       }
     } else {
       throw new UnrecognizedSymbolError({

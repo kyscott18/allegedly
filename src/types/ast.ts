@@ -204,8 +204,8 @@ export namespace Ast {
   export type WhileStatement = {
     ast: disc.WhileStatement;
     loc: SourceLocation;
-    body: Statement;
     test: Expression;
+    body: Statement;
   };
 
   export type DoWhileStatement = {

@@ -477,6 +477,10 @@ export const parseStatement = (context: ParseContext): Ast.Statement => {
     case Token.disc.Return:
       return parseReturnStatement(context);
 
+    case Token.disc.Placeholder: {
+      return parsePlaceholderStatement(context);
+    }
+
     case undefined:
       throw new EOFError();
 
@@ -534,35 +538,95 @@ export const parseUncheckedBlockStatement = (
 };
 
 export const parseIfStatement = (context: ParseContext): Ast.IfStatement => {
-  throw new NotImplementedError({
-    source: context.source,
-    loc: context.tokens[context.tokenIndex]!.loc,
-    feature: "if statement",
-  });
+  const start = context.tokenIndex;
+  expect(context, Token.disc.If);
+
+  const condition = parseExpression(context);
+  const trueBody = parseStatement(context);
+
+  let falseBody: Ast.Statement | undefined;
+
+  if (eat(context, Token.disc.Else)) {
+    falseBody = parseStatement(context);
+  }
+
+  return {
+    ast: Ast.disc.IfStatement,
+    loc: toLoc(context, start, context.tokenIndex),
+    condition,
+    trueBody,
+    falseBody,
+  };
 };
 
 export const parseForStatement = (context: ParseContext): Ast.ForStatement => {
-  throw new NotImplementedError({
-    source: context.source,
-    loc: context.tokens[context.tokenIndex]!.loc,
-    feature: "for loop",
-  });
+  const start = context.tokenIndex;
+  expect(context, Token.disc.For);
+  expect(context, Token.disc.OpenParenthesis);
+
+  let init: Ast.ForStatement["init"];
+  let test: Ast.ForStatement["test"];
+  let update: Ast.ForStatement["update"];
+
+  if (eat(context, Token.disc.Semicolon) === false) {
+    init = parseExpression(context);
+    expect(context, Token.disc.Semicolon);
+  }
+
+  if (eat(context, Token.disc.Semicolon) === false) {
+    test = parseExpression(context);
+    expect(context, Token.disc.Semicolon);
+  }
+
+  if (eat(context, Token.disc.CloseParenthesis) === false) {
+    update = parseExpression(context);
+    expect(context, Token.disc.CloseParenthesis);
+  }
+
+  const body = parseStatement(context);
+
+  return {
+    ast: Ast.disc.ForStatement,
+    loc: toLoc(context, start, context.tokenIndex),
+    init,
+    test,
+    update,
+    body,
+  };
 };
 
 export const parseWhileStatement = (context: ParseContext): Ast.WhileStatement => {
-  throw new NotImplementedError({
-    source: context.source,
-    loc: context.tokens[context.tokenIndex]!.loc,
-    feature: "while loop",
-  });
+  const start = context.tokenIndex;
+  expect(context, Token.disc.While);
+  expect(context, Token.disc.OpenParenthesis);
+  const test = parseExpression(context);
+  expect(context, Token.disc.CloseParenthesis);
+  const body = parseStatement(context);
+
+  return {
+    ast: Ast.disc.WhileStatement,
+    loc: toLoc(context, start, context.tokenIndex),
+    test,
+    body,
+  };
 };
 
 export const parseDoWhileStatement = (context: ParseContext): Ast.DoWhileStatement => {
-  throw new NotImplementedError({
-    source: context.source,
-    loc: context.tokens[context.tokenIndex]!.loc,
-    feature: "do-while loop",
-  });
+  const start = context.tokenIndex;
+  expect(context, Token.disc.Do);
+  const body = parseStatement(context);
+  expect(context, Token.disc.While);
+  expect(context, Token.disc.OpenParenthesis);
+  const test = parseExpression(context);
+  expect(context, Token.disc.CloseParenthesis);
+  expect(context, Token.disc.Semicolon);
+
+  return {
+    ast: Ast.disc.DoWhileStatement,
+    loc: toLoc(context, start, context.tokenIndex),
+    test,
+    body,
+  };
 };
 
 export const parseBreakStatement = (context: ParseContext): Ast.BreakStatement => {

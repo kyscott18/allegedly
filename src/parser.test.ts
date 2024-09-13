@@ -382,22 +382,41 @@ test("unchecked block statement", () => {
   expect(manyBlock!.statements).toHaveLength(2);
 });
 
-test.todo("if statement", () => {
-  const _if = getAst("if (a) { b; }", parseStatement);
-  const _ifElse = getAst("if (a) { b; } else { c; }", parseStatement);
+test("if statement", () => {
+  const _if = getAst("if (a) { b; }", parseStatement) as Ast.IfStatement;
+  const _ifNoBracket = getAst("if (a) return;", parseStatement) as Ast.IfStatement;
+  const _ifElse = getAst("if (a) { b; } else { c; }", parseStatement) as Ast.IfStatement;
 
   expect(_if!.ast).toBe(Ast.disc.IfStatement);
+  expect(_ifNoBracket!.ast).toBe(Ast.disc.IfStatement);
   expect(_ifElse!.ast).toBe(Ast.disc.IfStatement);
+
+  expect(_if.falseBody).toBeUndefined();
+  expect(_ifNoBracket.falseBody).toBeUndefined();
+  expect(_ifElse.falseBody).toBeDefined();
 });
 
-test.todo("for statement", () => {});
+test("for statement", () => {
+  const _for = getAst("for(a; b; c) { d; }", parseStatement) as Ast.ForStatement;
+  const _forNoBracket = getAst("for(a; b; c) d;", parseStatement) as Ast.ForStatement;
+  const _forNoConditions = getAst("for(;;) { d; }", parseStatement) as Ast.ForStatement;
 
-test.todo("while statement", () => {
+  expect(_for!.ast).toBe(Ast.disc.ForStatement);
+  expect(_forNoBracket!.ast).toBe(Ast.disc.ForStatement);
+  expect(_forNoConditions!.ast).toBe(Ast.disc.ForStatement);
+});
+
+test("while statement", () => {
   const _while = getAst("while (a) { b; }", parseStatement);
+  const _whileNoBracket = getAst("while(a) b;", parseStatement);
   expect(_while!.ast).toBe(Ast.disc.WhileStatement);
+  expect(_whileNoBracket!.ast).toBe(Ast.disc.WhileStatement);
 });
 
-test.todo("do while statement");
+test("do while statement", () => {
+  const doWhile = getAst("do { a; } while (b);", parseStatement);
+  expect(doWhile!.ast).toBe(Ast.disc.DoWhileStatement);
+});
 
 test("break statement", () => {
   const _break = getAst("break;", parseStatement);
@@ -427,7 +446,7 @@ test("return statement", () => {
   expect(_returnExpression!.ast).toBe(Ast.disc.ReturnStatement);
 });
 
-test.todo("placehoder statement", () => {
+test("placehoder statement", () => {
   const placeholder = getAst("_;", parseStatement);
   expect(placeholder!.ast).toBe(Ast.disc.PlaceholderStatement);
 });
