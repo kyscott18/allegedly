@@ -455,12 +455,20 @@ test("variable declaration", () => {
   const noInitializer = getAst("uint256 a;", parseStatement) as Ast.VariableDeclaration;
   const initializer = getAst("uint256 a = 0;", parseStatement) as Ast.VariableDeclaration;
   const location = getAst("uint256 memory a;", parseStatement) as Ast.VariableDeclaration;
-
-  // TODO(kyle) attributes
+  const plural = getAst(
+    "(uint256 a, uint256 b) = (1, 2);",
+    parseStatement,
+  ) as Ast.VariableDeclaration;
+  const pluralWithUnidentified = getAst(
+    "(uint256, uint256 b) = (1, 2);",
+    parseStatement,
+  ) as Ast.VariableDeclaration;
 
   expect(noInitializer!.ast).toBe(Ast.disc.VariableDeclaration);
   expect(initializer!.ast).toBe(Ast.disc.VariableDeclaration);
   expect(location!.ast).toBe(Ast.disc.VariableDeclaration);
+  expect(plural!.ast).toBe(Ast.disc.VariableDeclaration);
+  expect(pluralWithUnidentified!.ast).toBe(Ast.disc.VariableDeclaration);
 
   expect(initializer!.initializer).toBeDefined();
 });

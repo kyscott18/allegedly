@@ -302,9 +302,11 @@ export namespace Ast {
   export type VariableDeclaration = {
     ast: disc.VariableDeclaration;
     loc: SourceLocation;
-    type: Type;
-    identifier: Token.Identifier;
-    location: Token.Storage | Token.Memory | Token.Calldata | undefined;
+    declarations: {
+      type: Type;
+      identifier: Token.Identifier | undefined;
+      location: Token.Storage | Token.Memory | Token.Calldata | undefined;
+    }[];
     initializer: Expression | undefined;
   };
 

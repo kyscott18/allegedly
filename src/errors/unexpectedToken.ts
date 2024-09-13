@@ -7,7 +7,6 @@ export type UnexpectTokenErrorType = UnexpectTokenError & {
 export class UnexpectTokenError extends Error {
   override name = "UnexpectTokenError";
   constructor({ source, token }: { source: string; token: Token.Token }) {
-    const _token = recoverSource(source, token.loc);
-    super(`Unexpected token: "${_token}".`);
+    super(`Unexpected token: "${recoverSource(source, token.loc)}".`);
   }
 }

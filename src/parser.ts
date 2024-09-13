@@ -53,8 +53,9 @@ const expect = (context: ParseContext, token: Token.disc) => {
   const next = context.tokens[context.tokenIndex++];
   if (next?.token !== token) {
     throw new ExpectTokenError({
+      source: context.source,
       expected: token,
-      received: next?.token,
+      received: next,
     });
   }
 };
@@ -359,40 +360,57 @@ export const parseVariableDefinition = (context: ParseContext): Ast.VariableDefi
 
 export const parseVariableDeclaration = (context: ParseContext): Ast.VariableDeclaration => {
   const start = context.tokenIndex;
-  const type = parseType(context);
 
-  let maybeLocation = peek(context) as Token.Storage | Token.Memory | Token.Calldata | undefined;
-  if (
-    eat(context, Token.disc.Storage) === false &&
-    eat(context, Token.disc.Memory) === false &&
-    eat(context, Token.disc.Calldata) === false
-  ) {
-    maybeLocation = undefined;
-  }
+  const parseDeclaration = (context: ParseContext) => {
+    const type = parseType(context);
 
-  const identifier = peek(context) as Token.Identifier;
-  expect(context, Token.disc.Identifier);
+    let location = peek(context) as Token.Storage | Token.Memory | Token.Calldata | undefined;
+    if (
+      eat(context, Token.disc.Storage) === false &&
+      eat(context, Token.disc.Memory) === false &&
+      eat(context, Token.disc.Calldata) === false
+    ) {
+      location = undefined;
+    }
 
-  if (eat(context, Token.disc.Assign) === false) {
-    expect(context, Token.disc.Semicolon);
+    let identifier = peek(context) as Token.Identifier | undefined;
+
+    if (eat(context, Token.disc.Identifier) === false) {
+      identifier = undefined;
+    }
+
     return {
-      ast: Ast.disc.VariableDeclaration,
-      loc: toLoc(context, start, context.tokenIndex),
       type,
       identifier,
-      location: maybeLocation,
-      initializer: undefined,
+      location,
     };
+  };
+
+  let declarations: Ast.VariableDeclaration["declarations"];
+
+  if (peek(context)?.token === Token.disc.OpenParenthesis) {
+    declarations = parseList(
+      context,
+      Token.disc.OpenParenthesis,
+      Token.disc.CloseParenthesis,
+      parseDeclaration,
+    );
+  } else {
+    declarations = [parseDeclaration(context)];
   }
 
-  const initializer = parseExpression(context);
+  let initializer: Ast.Expression | undefined;
+
+  if (eat(context, Token.disc.Assign)) {
+    initializer = parseExpression(context);
+  }
+
   expect(context, Token.disc.Semicolon);
+
   return {
     ast: Ast.disc.VariableDeclaration,
     loc: toLoc(context, start, context.tokenIndex),
-    type,
-    identifier,
-    location: maybeLocation,
+    declarations,
     initializer,
   };
 };
@@ -434,7 +452,8 @@ export const parseStatement = (context: ParseContext): Ast.Statement => {
     case Token.disc.Int:
     case Token.disc.Byte:
     case Token.disc.Bytes:
-    case Token.disc.Bool: {
+    case Token.disc.Bool:
+    case Token.disc.OpenParenthesis: {
       const index = context.tokenIndex;
       try {
         return parseVariableDeclaration(context);
