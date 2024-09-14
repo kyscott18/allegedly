@@ -22,6 +22,7 @@ export const parse = (source: string, tokens: Token.Token[]): Ast.Program => {
     if (token === undefined) return program;
 
     switch (token?.token) {
+      case Token.disc.Abstract:
       case Token.disc.Contract:
       case Token.disc.Interface:
       case Token.disc.Library:
@@ -29,6 +30,9 @@ export const parse = (source: string, tokens: Token.Token[]): Ast.Program => {
         break;
 
       case Token.disc.Function:
+      case Token.disc.Constructor:
+      case Token.disc.Receive:
+      case Token.disc.Fallback:
         program.push(parseFunctionDefinition(context));
         break;
 
@@ -38,6 +42,10 @@ export const parse = (source: string, tokens: Token.Token[]): Ast.Program => {
 
       case Token.disc.Error:
         program.push(parseErrorDefinition(context));
+        break;
+
+      case Token.disc.Pragma:
+        program.push(parsePragmentDirective(context));
         break;
 
       default:
@@ -116,22 +124,40 @@ const parseList = <T>(
 
 export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefinition => {
   const start = context.tokenIndex;
-  const kind = next(context);
-  if (kind.token === Token.disc.Function) {
-    const name = peek(context) as Token.Identifier;
+  const kind = peek(context) as Ast.FunctionDefinition["kind"];
+
+  let hasName = false;
+
+  if (eat(context, Token.disc.Function)) {
+    hasName = true;
+  } else if (
+    eat(context, Token.disc.Constructor) === false &&
+    eat(context, Token.disc.Fallback) === false &&
+    eat(context, Token.disc.Receive) === false
+  ) {
+    throw new UnexpectTokenError({ source: context.source, token: kind });
+  }
+
+  let name: Token.Identifier | undefined;
+
+  if (hasName) {
+    name = peek(context) as Token.Identifier;
     expect(context, Token.disc.Identifier);
+  }
 
-    const parameters = parseList(
-      context,
-      Token.disc.OpenParenthesis,
-      Token.disc.CloseParenthesis,
-      parseParameter,
-    );
+  const parameters = parseList(
+    context,
+    Token.disc.OpenParenthesis,
+    Token.disc.CloseParenthesis,
+    parseParameter,
+  );
 
-    let visibility: Ast.Visibility | undefined;
-    let mutability: Ast.Mutability | undefined;
+  let visibility: Ast.Visibility | undefined;
+  let mutability: Ast.Mutability | undefined;
 
-    let token = peek(context) as Ast.Visibility | Ast.Mutability;
+  let token = peek(context) as Ast.Visibility | Ast.Mutability;
+
+  while (true) {
     if (
       eat(context, Token.disc.External) ||
       eat(context, Token.disc.Public) ||
@@ -139,6 +165,7 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
       eat(context, Token.disc.Private)
     ) {
       visibility = token as Ast.Visibility;
+      token = peek(context) as Ast.Visibility | Ast.Mutability;
     } else if (
       eat(context, Token.disc.Pure) ||
       eat(context, Token.disc.View) ||
@@ -146,54 +173,21 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
       eat(context, Token.disc.Nonpayable)
     ) {
       mutability = token as Ast.Mutability;
-    }
+      token = peek(context) as Ast.Visibility | Ast.Mutability;
+    } else break;
+  }
 
-    token = peek(context) as Ast.Visibility | Ast.Mutability;
-    if (
-      visibility === undefined &&
-      (eat(context, Token.disc.External) ||
-        eat(context, Token.disc.Public) ||
-        eat(context, Token.disc.Internal) ||
-        eat(context, Token.disc.Private))
-    ) {
-      visibility = token as Ast.Visibility;
-    } else if (
-      mutability === undefined &&
-      (eat(context, Token.disc.Pure) ||
-        eat(context, Token.disc.View) ||
-        eat(context, Token.disc.Payable) ||
-        eat(context, Token.disc.Nonpayable))
-    ) {
-      mutability = token as Ast.Mutability;
-    }
+  if (eat(context, Token.disc.Returns)) {
+    const returns = parseList(
+      context,
+      Token.disc.OpenParenthesis,
+      Token.disc.CloseParenthesis,
+      parseParameter,
+    );
 
-    if (visibility === undefined) throw new UnexpectTokenError({ source: context.source, token });
-
-    if (eat(context, Token.disc.Returns)) {
-      const returns = parseList(
-        context,
-        Token.disc.OpenParenthesis,
-        Token.disc.CloseParenthesis,
-        parseParameter,
-      );
-
-      let body: Ast.BlockStatement | undefined;
-      if (eat(context, Token.disc.Semicolon) === false) {
-        body = parseBlockStatement(context);
-      }
-
-      return {
-        ast: Ast.disc.FunctionDefinition,
-        loc: toLoc(context, start, context.tokenIndex),
-        kind,
-        visibility,
-        mutability,
-        modifiers: [],
-        parameters,
-        returns,
-        name,
-        body,
-      };
+    let body: Ast.BlockStatement | undefined;
+    if (eat(context, Token.disc.Semicolon) === false) {
+      body = parseBlockStatement(context);
     }
 
     return {
@@ -204,17 +198,30 @@ export const parseFunctionDefinition = (context: ParseContext): Ast.FunctionDefi
       mutability,
       modifiers: [],
       parameters,
-      returns: [],
+      returns,
       name,
-      body: parseBlockStatement(context),
+      body,
     };
   }
 
-  throw new UnexpectTokenError({ source: context.source, token: peek(context)! });
+  return {
+    ast: Ast.disc.FunctionDefinition,
+    loc: toLoc(context, start, context.tokenIndex),
+    kind,
+    visibility,
+    mutability,
+    modifiers: [],
+    parameters,
+    returns: [],
+    name,
+    body: parseBlockStatement(context),
+  };
 };
 
 export const parseContractDefinition = (context: ParseContext): Ast.ContractDefinition => {
   const start = context.tokenIndex;
+
+  eat(context, Token.disc.Abstract);
   const kind = next(context) as Ast.ContractDefinition["kind"];
 
   if (
@@ -222,7 +229,7 @@ export const parseContractDefinition = (context: ParseContext): Ast.ContractDefi
     kind.token !== Token.disc.Interface &&
     kind.token !== Token.disc.Library
   ) {
-    throw new UnexpectTokenError(kind);
+    throw new UnexpectTokenError({ source: context.source, token: kind as Token.Token });
   }
 
   const name = peek(context) as Token.Identifier;
@@ -244,6 +251,9 @@ export const parseContractDefinition = (context: ParseContext): Ast.ContractDefi
 
     switch (peek(context)?.token) {
       case Token.disc.Function:
+      case Token.disc.Constructor:
+      case Token.disc.Receive:
+      case Token.disc.Fallback:
         nodes.push(parseFunctionDefinition(context));
         break;
 
@@ -264,7 +274,6 @@ export const parseContractDefinition = (context: ParseContext): Ast.ContractDefi
       case Token.disc.Bool:
       case Token.disc.Mapping:
         nodes.push(parseVariableDefinition(context));
-        expect(context, Token.disc.Semicolon);
         break;
 
       case undefined:
@@ -280,7 +289,7 @@ export const parseEventDefinition = (context: ParseContext): Ast.EventDefinition
   const start = context.tokenIndex;
   expect(context, Token.disc.Event);
 
-  const name = context.tokens[context.tokenIndex] as Token.Identifier;
+  const name = peek(context) as Token.Identifier;
   expect(context, Token.disc.Identifier);
 
   const parameters = parseList(
@@ -344,17 +353,49 @@ export const parseVariableDefinition = (context: ParseContext): Ast.VariableDefi
   const start = context.tokenIndex;
   const type = parseType(context);
 
+  let isConstant = false;
+  let isImmutable = false;
+  let visibility: Ast.VariableDefintion["visibility"];
+  let token = peek(context);
+
+  while (true) {
+    if (eat(context, Token.disc.Immutable)) {
+      isImmutable = true;
+      token = peek(context);
+    } else if (eat(context, Token.disc.Constant)) {
+      isConstant = true;
+      token = peek(context);
+    } else if (
+      eat(context, Token.disc.External) ||
+      eat(context, Token.disc.Public) ||
+      eat(context, Token.disc.Internal) ||
+      eat(context, Token.disc.Private)
+    ) {
+      visibility = token as Ast.VariableDefintion["visibility"];
+      token = peek(context);
+    } else break;
+  }
+
   const identifier = peek(context) as Token.Identifier;
   expect(context, Token.disc.Identifier);
+
+  let initializer: Ast.Expression | undefined;
+
+  if (eat(context, Token.disc.Assign)) {
+    initializer = parseExpression(context);
+  }
+
+  expect(context, Token.disc.Semicolon);
 
   return {
     ast: Ast.disc.VariableDefinition,
     loc: toLoc(context, start, context.tokenIndex),
     type,
     identifier,
-    isConstant: false,
-    isImmutable: false,
-    visibility: undefined,
+    isConstant,
+    isImmutable,
+    visibility,
+    initializer,
   };
 };
 
@@ -419,13 +460,18 @@ export const parseParameter = (context: ParseContext): Ast.Parameter => {
   const start = context.tokenIndex;
   const type = parseType(context);
 
-  let maybeLocation = peek(context) as Token.Storage | Token.Memory | Token.Calldata | undefined;
+  let location: Ast.Parameter["location"];
+  let isIndexed = false;
+  const token = peek(context);
+
   if (
-    eat(context, Token.disc.Storage) === false &&
-    eat(context, Token.disc.Memory) === false &&
-    eat(context, Token.disc.Calldata) === false
+    eat(context, Token.disc.Storage) ||
+    eat(context, Token.disc.Memory) ||
+    eat(context, Token.disc.Calldata)
   ) {
-    maybeLocation = undefined;
+    location = token as Ast.Parameter["location"];
+  } else if (eat(context, Token.disc.Indexed)) {
+    isIndexed = true;
   }
 
   const identifier = peek(context) as Token.Identifier;
@@ -435,8 +481,8 @@ export const parseParameter = (context: ParseContext): Ast.Parameter => {
     loc: toLoc(context, start, context.tokenIndex),
     type,
     identifier: eat(context, Token.disc.Identifier) ? identifier : undefined,
-    location: maybeLocation,
-    isIndexed: false,
+    location,
+    isIndexed,
   };
 };
 
@@ -844,7 +890,6 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
     case Token.disc.AddressLiteral:
     case Token.disc.HexLiteral:
     case Token.disc.NumberLiteral:
-    case Token.disc.RationalNumberLiteral:
     case Token.disc.HexNumberLiteral:
     case Token.disc.BoolLiteral:
       left = {
@@ -1133,7 +1178,17 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
 // types
 
 export const parseType = (context: ParseContext): Ast.Type => {
-  return parseElementaryType(context);
+  if (peek(context)?.token === Token.disc.Mapping) {
+    return parseMapping(context);
+  }
+
+  const index = context.tokenIndex;
+  try {
+    return parseArrayType(context);
+  } catch {
+    context.tokenIndex = index;
+    return parseElementaryType(context);
+  }
 };
 
 export const parseElementaryType = (context: ParseContext): Ast.ElementaryType => {
@@ -1159,17 +1214,73 @@ export const parseElementaryType = (context: ParseContext): Ast.ElementaryType =
 };
 
 export const parseArrayType = (context: ParseContext): Ast.ArrayType => {
-  throw new NotImplementedError({
-    source: context.source,
-    loc: context.tokens[context.tokenIndex]!.loc,
-    feature: "arrays",
-  });
+  const start = context.tokenIndex;
+  let type = parseElementaryType(context) as Ast.Type;
+
+  let isFirstIteration = true;
+  while (true) {
+    if (eat(context, Token.disc.OpenBracket)) {
+      isFirstIteration = false;
+      let length: Ast.ArrayType["length"];
+
+      if (eat(context, Token.disc.CloseBracket) === false) {
+        length = parseExpression(context);
+        expect(context, Token.disc.CloseBracket);
+      } else {
+      }
+
+      type = {
+        ast: Ast.disc.ArrayType,
+        loc: toLoc(context, start, context.tokenIndex),
+        length,
+        type,
+      };
+    } else {
+      if (isFirstIteration) expect(context, Token.disc.CloseBracket);
+      break;
+    }
+  }
+
+  return type as Ast.ArrayType;
 };
 
 export const parseMapping = (context: ParseContext): Ast.Mapping => {
+  const start = context.tokenIndex;
+  expect(context, Token.disc.Mapping);
+  expect(context, Token.disc.OpenParenthesis);
+
+  const keyType = parseType(context);
+  let keyName: Ast.Mapping["keyName"];
+
+  if (peek(context)?.token === Token.disc.Identifier) {
+    keyName = next(context) as Token.Identifier;
+  }
+
+  expect(context, Token.disc.Arrow);
+
+  const valueType = parseType(context);
+  let valueName: Ast.Mapping["valueName"];
+
+  if (peek(context)?.token === Token.disc.Identifier) {
+    valueName = next(context) as Token.Identifier;
+  }
+
+  expect(context, Token.disc.CloseParenthesis);
+
+  return {
+    ast: Ast.disc.Mapping,
+    loc: toLoc(context, start, context.tokenIndex),
+    keyType,
+    keyName,
+    valueType,
+    valueName,
+  };
+};
+
+export const parsePragmentDirective = (context: ParseContext): Ast.PragmaDirective => {
   throw new NotImplementedError({
     source: context.source,
     loc: context.tokens[context.tokenIndex]!.loc,
-    feature: "mapping",
+    feature: "pragma",
   });
 };

@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import path from "node:path";
 import { tokenize } from "./lexer";
 import { Token } from "./types/token";
+import { readdirSync } from "node:fs";
 
 test("symbol", () => {
   const tokens = tokenize(".++");
@@ -17,14 +18,20 @@ test("identifier", () => {
   expect((tokens[0] as Token.Identifier)?.value).toBe("hi");
 });
 
-test.todo("string literal");
+test("string literal", () => {
+  const tokens = tokenize(`"allegedly"`);
+
+  expect(tokens).toHaveLength(1);
+  expect(tokens[0]?.token).toBe(Token.disc.StringLiteral);
+  expect((tokens[0] as Token.StringLiteral)?.value).toBe(`"allegedly"`);
+});
 
 test("bool literal", () => {
   const tokens = tokenize("true");
 
   expect(tokens).toHaveLength(1);
   expect(tokens[0]?.token).toBe(Token.disc.BoolLiteral);
-  expect((tokens[0] as Token.BoolLiteral)?.value).toBe(true);
+  expect((tokens[0] as Token.BoolLiteral)?.value).toBe("true");
 });
 
 test("number literal", () => {
@@ -32,12 +39,16 @@ test("number literal", () => {
 
   expect(tokens).toHaveLength(1);
   expect(tokens[0]?.token).toBe(Token.disc.NumberLiteral);
-  expect((tokens[0] as Token.NumberLiteral)?.value).toBe(898n);
+  expect((tokens[0] as Token.NumberLiteral)?.value).toBe("898");
 });
 
-test.todo("rational number literal");
+test("hex number literal", () => {
+  const tokens = tokenize("0xffff");
 
-test.todo("hex number literal");
+  expect(tokens).toHaveLength(1);
+  expect(tokens[0]?.token).toBe(Token.disc.HexNumberLiteral);
+  expect((tokens[0] as Token.HexNumberLiteral)?.value).toBe("0xffff");
+});
 
 test("address literal", () => {
   const tokens = tokenize("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
@@ -64,16 +75,26 @@ test("whitespace", () => {
 });
 
 test("comments", () => {
-  const tokens = tokenize(`//   
+  let tokens = tokenize(`//   
   hi/* ho */hi
 `);
 
   expect(tokens).toHaveLength(2);
   expect(tokens[0]?.token).toBe(Token.disc.Identifier);
   expect((tokens[0] as Token.Identifier)?.value).toBe("hi");
+
+  tokens = tokenize(`
+/*//////////////////////////////////////////////////////////////
+                          COMMENTS
+//////////////////////////////////////////////////////////////*/
+`);
+
+  expect(tokens).toHaveLength(0);
 });
 
 test("integration", async () => {
-  tokenize(await Bun.file(path.join(import.meta.dir, "_sol", "SimpleStorage.sol")).text());
-  // tokenize(await Bun.file(path.join(import.meta.dir, "_sol", "Erc20.sol")).text());
+  const files = readdirSync(path.join(import.meta.dir, "_sol"));
+  for (const file of files) {
+    tokenize(await Bun.file(path.join(import.meta.dir, "_sol", file)).text());
+  }
 });

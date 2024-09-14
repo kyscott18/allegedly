@@ -1,5 +1,3 @@
-import type { Hex } from "viem";
-import { NotImplementedError } from "./errors/notImplemented";
 import { ReservedKeywordError } from "./errors/reservedKeyword";
 import { UnrecognizedSymbolError } from "./errors/unrecognizedSymbol";
 import { Token } from "./types/token";
@@ -119,6 +117,7 @@ export const tokenize = (source: string): Token.Token[] => {
             if (char === "\n") break;
           }
         } else if (cursor.peek() === "*") {
+          cursor.next();
           for (const char of cursor) {
             if (char === "*" && cursor.peek() === "/") {
               cursor.next();
@@ -236,8 +235,8 @@ export const tokenize = (source: string): Token.Token[] => {
   ]);
 
   const keywordMap = new Map<string, (loc: SourceLocation) => void>([
-    ["true", (loc) => tokens.push({ token: Token.disc.BoolLiteral, loc, value: true })],
-    ["false", (loc) => tokens.push({ token: Token.disc.BoolLiteral, loc, value: false })],
+    ["true", (loc) => tokens.push({ token: Token.disc.BoolLiteral, loc, value: "true" })],
+    ["false", (loc) => tokens.push({ token: Token.disc.BoolLiteral, loc, value: "false" })],
     ["if", (loc) => tokens.push({ token: Token.disc.If, loc })],
     ["else", (loc) => tokens.push({ token: Token.disc.Else, loc })],
     ["while", (loc) => tokens.push({ token: Token.disc.While, loc })],
@@ -260,7 +259,6 @@ export const tokenize = (source: string): Token.Token[] => {
     ["library", (loc) => tokens.push({ token: Token.disc.Library, loc })],
     ["pragma", (loc) => tokens.push({ token: Token.disc.Pragma, loc })],
     ["import", (loc) => tokens.push({ token: Token.disc.Import, loc })],
-    ["from", (loc) => tokens.push({ token: Token.disc.From, loc })],
     ["using", (loc) => tokens.push({ token: Token.disc.Using, loc })],
     ["as", (loc) => tokens.push({ token: Token.disc.As, loc })],
     ["is", (loc) => tokens.push({ token: Token.disc.Is, loc })],
@@ -572,7 +570,21 @@ export const tokenize = (source: string): Token.Token[] => {
     if (symbolMap.has(char)) {
       symbolMap.get(char)!(start);
     } else if (char === '"' || char === "'") {
-      throw new NotImplementedError({ source, loc: toLoc(start, 1), feature: "string literal" });
+      let length = 1;
+      const delim = char;
+
+      for (const char of cursor) {
+        length++;
+        if (char === delim) {
+          break;
+        }
+      }
+
+      tokens.push({
+        token: Token.disc.StringLiteral,
+        loc: toLoc(start, length),
+        value: source.substring(cursor.position - length, cursor.position),
+      });
     } else if (isDigit(char)) {
       if (char === "0" && cursor.peek() === "x") {
         cursor.next();
@@ -591,27 +603,20 @@ export const tokenize = (source: string): Token.Token[] => {
           tokens.push({
             token: Token.disc.AddressLiteral,
             loc: toLoc(start, length),
-            value: source.substring(cursor.position - length, cursor.position) as Hex,
+            value: source.substring(cursor.position - length, cursor.position),
           });
         } else {
-          throw new NotImplementedError({
-            source,
+          tokens.push({
+            token: Token.disc.HexNumberLiteral,
             loc: toLoc(start, length),
-            feature: "hex number literal",
+            value: source.substring(cursor.position - length, cursor.position),
           });
         }
       } else {
         let length = 1;
         for (const char of cursor) {
-          if (isDigit(char)) length++;
+          if (isDigit(char) || char === "." || char === "e") length++;
           else {
-            if (char === "." || (char === "e" && cursor.peek() && isDigit(cursor.peek()!))) {
-              throw new NotImplementedError({
-                source,
-                loc: toLoc(start, length),
-                feature: "rational number literal",
-              });
-            }
             cursor.position--;
             cursor.offset--;
             break;
@@ -621,7 +626,7 @@ export const tokenize = (source: string): Token.Token[] => {
         tokens.push({
           token: Token.disc.NumberLiteral,
           loc: toLoc(start, length),
-          value: BigInt(source.substring(cursor.position - length, cursor.position)),
+          value: source.substring(cursor.position - length, cursor.position),
         });
       }
     } else if (isIndentifierStart(char)) {

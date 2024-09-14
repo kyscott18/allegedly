@@ -39,6 +39,7 @@ export namespace Ast {
     ErrorDefinition,
     StructDefinition,
     ModifierDefinition,
+    PragmaDirective,
   }
 
   // expressions
@@ -57,7 +58,6 @@ export namespace Ast {
       | Token.AddressLiteral
       | Token.HexLiteral
       | Token.NumberLiteral
-      | Token.RationalNumberLiteral
       | Token.HexNumberLiteral
       | Token.BoolLiteral;
   };
@@ -81,7 +81,6 @@ export namespace Ast {
     right: Expression;
   };
 
-  // TODO(kyle) prefix or postfix
   export type UnaryOperation = {
     ast: disc.UnaryOperation;
     loc: SourceLocation;
@@ -297,6 +296,7 @@ export namespace Ast {
     isConstant: boolean;
     isImmutable: boolean;
     visibility: Visibility | undefined;
+    initializer: Expression | undefined;
   };
 
   export type VariableDeclaration = {
@@ -323,7 +323,7 @@ export namespace Ast {
     ast: Ast.disc.FunctionDefinition;
     loc: SourceLocation;
     kind: Token.Function | Token.Receive | Token.Constructor | Token.Fallback;
-    visibility: Visibility;
+    visibility: Visibility | undefined;
     mutability: Mutability | undefined;
     modifiers: Base[];
     parameters: Parameter[];
@@ -377,6 +377,12 @@ export namespace Ast {
     parameters: Parameter[];
   };
 
+  export type PragmaDirective = {
+    ast: disc.PragmaDirective;
+    loc: SourceLocation;
+    version: string;
+  };
+
   export type Visibility = Token.External | Token.Public | Token.Internal | Token.Private;
   export type Mutability = Token.Pure | Token.View | Token.Payable | Token.Nonpayable;
 
@@ -420,7 +426,9 @@ export namespace Ast {
     | StructDefinition
     | ModifierDefinition;
 
-  export type Program = Definition[];
+  export type Directive = PragmaDirective;
+
+  export type Program = (Definition | Directive)[];
 }
 
 /**

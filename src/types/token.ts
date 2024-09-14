@@ -1,5 +1,4 @@
-import type { Hex } from "viem";
-import type { SourceLocation, TODO } from "./utils";
+import type { SourceLocation } from "./utils";
 
 export namespace Token {
   export enum disc {
@@ -8,9 +7,9 @@ export namespace Token {
     AddressLiteral,
     HexLiteral,
     NumberLiteral,
-    RationalNumberLiteral,
     HexNumberLiteral,
     BoolLiteral,
+    Version,
     If,
     Else,
     While,
@@ -162,17 +161,18 @@ export namespace Token {
 
   // literals
 
-  export type StringLiteral = { token: disc.StringLiteral; loc: SourceLocation; value: TODO };
-  export type AddressLiteral = { token: disc.AddressLiteral; loc: SourceLocation; value: Hex };
-  export type HexLiteral = { token: disc.HexLiteral; loc: SourceLocation; value: TODO };
-  export type NumberLiteral = { token: disc.NumberLiteral; loc: SourceLocation; value: bigint };
-  export type RationalNumberLiteral = {
-    token: disc.RationalNumberLiteral;
+  export type StringLiteral = { token: disc.StringLiteral; loc: SourceLocation; value: string };
+  export type AddressLiteral = { token: disc.AddressLiteral; loc: SourceLocation; value: string };
+  export type HexLiteral = { token: disc.HexLiteral; loc: SourceLocation; value: string };
+  export type NumberLiteral = { token: disc.NumberLiteral; loc: SourceLocation; value: string };
+  export type HexNumberLiteral = {
+    token: disc.HexNumberLiteral;
     loc: SourceLocation;
-    value: TODO;
+    value: string;
   };
-  export type HexNumberLiteral = { token: disc.HexNumberLiteral; loc: SourceLocation; value: TODO };
-  export type BoolLiteral = { token: disc.BoolLiteral; loc: SourceLocation; value: boolean };
+  export type BoolLiteral = { token: disc.BoolLiteral; loc: SourceLocation; value: string };
+
+  export type Version = { token: disc.Version; loc: SourceLocation; value: string };
 
   // keywords
 
@@ -378,7 +378,6 @@ export namespace Token {
     | AddressLiteral
     | HexLiteral
     | NumberLiteral
-    | RationalNumberLiteral
     | HexNumberLiteral
     | BoolLiteral
     | If

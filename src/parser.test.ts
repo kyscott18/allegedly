@@ -11,10 +11,13 @@ import {
   parseExpression,
   parseFunctionDefinition,
   parseStatement,
+  parseType,
+  parseVariableDefinition,
 } from "./parser.js";
 import { Ast } from "./types/ast.js";
 import { Token } from "./types/token.js";
 import { never } from "./utils/never.js";
+import { readdirSync } from "node:fs";
 
 const assignmentOperatorToString = (operator: Ast.Assignment["operator"]): string => {
   switch (operator.token) {
@@ -151,29 +154,21 @@ test("identifier", () => {
 });
 
 test("literal", () => {
-  // const stringLiteral = parseExpression({
-  //   tokens: tokenize(`"stringLiteral"`),
+  const stringLiteral = getAst(`"allegedly`, parseExpression) as Ast.Literal;
+  const addressLiteral = getAst("0x0000000000000000000000000000", parseExpression) as Ast.Literal;
+  // const hexLiteral = parseExpression({
+  //   tokens: tokenize(`hex"0x0"`),
   //   tokenIndex: 0,
-  // }) as Ast.Literal
-  // const addressLiteral = parseExpression({
-  //   tokens: tokenize("0x0000000000000000000000000000"),
-  //   tokenIndex: 0,
-  // }) as Ast.Literal
-  // const hexLiteral = parseExpression({ tokens: tokenize(`hex"0x0"`), tokenIndex: 0 }) as
-  //   | Ast.Literal
-  //
+  // }) as Ast.Literal;
   const numberLiteral = getAst("52", parseExpression) as Ast.Literal;
-  // const rationalNumberLiteral = parseExpression({ tokens: tokenize("52.0"), tokenIndex: 0 }) as
-  //   | Ast.Literal
-  //
-  // TODO(kyle): hexNumberLiteral
+  const hexNumberLiteral = getAst("52", parseExpression) as Ast.Literal;
   const boolLiteral = getAst("true", parseExpression) as Ast.Literal;
 
-  // expect(stringLiteral!.ast).toBe(Ast.AstType.Literal);
-  // expect(addressLiteral!.ast).toBe(Ast.AstType.Literal);
-  // expect(hexLiteral!.ast).toBe(Ast.AstType.Literal);
+  expect(stringLiteral!.ast).toBe(Ast.disc.Literal);
+  expect(addressLiteral!.ast).toBe(Ast.disc.Literal);
+  // expect(hexLiteral!.ast).toBe(Ast.disc.Literal);
   expect(numberLiteral!.ast).toBe(Ast.disc.Literal);
-  // expect(rationalNumberLiteral!.ast).toBe(Ast.AstType.Literal);
+  expect(hexNumberLiteral!.ast).toBe(Ast.disc.Literal);
   expect(boolLiteral!.ast).toBe(Ast.disc.Literal);
 });
 
@@ -473,6 +468,22 @@ test("variable declaration", () => {
   expect(initializer!.initializer).toBeDefined();
 });
 
+test("variable definition", () => {
+  const definition = getAst("uint256 a;", parseVariableDefinition);
+  const initializer = getAst("uint256 a = 0;", parseVariableDefinition);
+  const immutable = getAst("uint256 immutable a;", parseVariableDefinition);
+  const visibility = getAst("uint256 private a;", parseVariableDefinition);
+  const constant = getAst("uint256 constant a;", parseVariableDefinition);
+
+  expect(definition!.ast).toBe(Ast.disc.VariableDefinition);
+  expect(initializer!.ast).toBe(Ast.disc.VariableDefinition);
+  expect(immutable!.ast).toBe(Ast.disc.VariableDefinition);
+  expect(visibility!.ast).toBe(Ast.disc.VariableDefinition);
+  expect(constant!.ast).toBe(Ast.disc.VariableDefinition);
+
+  expect(initializer!.initializer).toBeDefined();
+});
+
 test("event definition", () => {
   const event = getAst("event Event();", parseEventDefinition);
   expect(event.ast).toBe(Ast.disc.EventDefinition);
@@ -489,19 +500,58 @@ test("contract definition", () => {
 });
 
 test("function definition", () => {
-  getAst("function fn() external {}", parseFunctionDefinition);
-  getAst("function fn() external view {}", parseFunctionDefinition);
-  getAst("function fn() view external {}", parseFunctionDefinition);
-  getAst("function fn(uint256 a) external {}", parseFunctionDefinition);
+  const definition = getAst("function fn() external {}", parseFunctionDefinition);
+  const mutability = getAst("function fn() view external {}", parseFunctionDefinition);
+  const parameters = getAst("function fn(uint256 a) external {}", parseFunctionDefinition);
+  const returns = getAst("function fn() external returns (uint256) {}", parseFunctionDefinition);
+  const constructor = getAst("constructor() {}", parseFunctionDefinition);
+  const receive = getAst("receive() {}", parseFunctionDefinition);
+  const fallback = getAst("fallback() {}", parseFunctionDefinition);
+
+  expect(definition.ast).toBe(Ast.disc.FunctionDefinition);
+  expect(mutability.ast).toBe(Ast.disc.FunctionDefinition);
+  expect(parameters.ast).toBe(Ast.disc.FunctionDefinition);
+  expect(returns.ast).toBe(Ast.disc.FunctionDefinition);
+  expect(constructor.ast).toBe(Ast.disc.FunctionDefinition);
+  expect(receive.ast).toBe(Ast.disc.FunctionDefinition);
+  expect(fallback.ast).toBe(Ast.disc.FunctionDefinition);
 });
 
 test.todo("struct definition");
 
 test.todo("modifier definition");
 
+test("array type", () => {
+  const fixed = getAst("uint256[1]", parseType) as Ast.ArrayType;
+  const dynamic = getAst("uint256[]", parseType) as Ast.ArrayType;
+  const nested = getAst("uint256[][]", parseType) as Ast.ArrayType;
+
+  expect(fixed.ast).toBe(Ast.disc.ArrayType);
+  expect(dynamic.ast).toBe(Ast.disc.ArrayType);
+  expect(nested.ast).toBe(Ast.disc.ArrayType);
+
+  expect(nested.type.ast).toBe(Ast.disc.ArrayType);
+});
+
+test("mapping type", () => {
+  const _type = getAst("mapping(address => uint256)", parseType) as Ast.Mapping;
+  const named = getAst("mapping(address key => uint256 value)", parseType) as Ast.Mapping;
+  const nested = getAst(
+    "mapping(address => mapping(address => uint256))",
+    parseType,
+  ) as Ast.Mapping;
+
+  expect(_type.ast).toBe(Ast.disc.Mapping);
+  expect(named.ast).toBe(Ast.disc.Mapping);
+  expect(nested.ast).toBe(Ast.disc.Mapping);
+
+  expect(nested.valueType.ast).toBe(Ast.disc.Mapping);
+});
+
 test("integration", async () => {
-  let source = await Bun.file(path.join(import.meta.dir, "_sol", "SimpleStorage.sol")).text();
-  parse(source, tokenize(source));
-  source = await Bun.file(path.join(import.meta.dir, "_sol", "GetBalance.sol")).text();
-  parse(source, tokenize(source));
+  const files = readdirSync(path.join(import.meta.dir, "_sol"));
+  for (const file of files) {
+    const source = await Bun.file(path.join(import.meta.dir, "_sol", file)).text();
+    parse(source, tokenize(source));
+  }
 });

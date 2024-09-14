@@ -369,13 +369,6 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             isLiteral: true,
           };
 
-        case Token.disc.RationalNumberLiteral:
-          return {
-            type: Type.disc.Elementary,
-            value: { token: Token.disc.Uint, size: 256 },
-            isLiteral: true,
-          };
-
         case Token.disc.HexNumberLiteral:
           return {
             type: Type.disc.Elementary,

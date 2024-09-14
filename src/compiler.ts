@@ -419,10 +419,6 @@ const compileExpression = (
           };
         }
 
-        case Token.disc.RationalNumberLiteral: {
-          throw new InvariantViolationError();
-        }
-
         case Token.disc.HexNumberLiteral: {
           throw new InvariantViolationError();
         }
