@@ -12,6 +12,7 @@ export namespace Ast {
     FunctionCallExpression,
     MemberAccessExpression,
     IndexAccessExpression,
+    IndexRangeAccessExpression,
     NewExpression,
     TupleExpression,
     ExpressionStatement,
@@ -149,6 +150,14 @@ export namespace Ast {
     loc: SourceLocation;
     base: Expression;
     index: Expression;
+  };
+
+  export type IndexRangeAccessExpression = {
+    ast: disc.IndexRangeAccessExpression;
+    loc: SourceLocation;
+    base: Expression;
+    start: Expression | undefined;
+    end: Expression | undefined;
   };
 
   export type NewExpression = {
@@ -396,6 +405,7 @@ export namespace Ast {
     | FunctionCallExpression
     | MemberAccessExpression
     | IndexAccessExpression
+    | IndexRangeAccessExpression
     | NewExpression
     | TupleExpression;
 
@@ -434,9 +444,15 @@ export namespace Ast {
 /**
  * Not Implemented
  *
- * functionCallBlock
- * ArrayIndexRange
- * UserDefinedType
- * functionType
- * enum
+ * UserType
+ * FunctionType
+ * Enum
+ * TryStatement
+ * UserTypeDefintion
+ * FunctionCallOptions
+ * ImportDirective
+ * UsingDirective
+ * NamedFunctionParameters
+ * Yul
+ * Inheritance
  */

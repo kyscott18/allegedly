@@ -308,6 +308,19 @@ test("index access expression", () => {
   expect(indexAccess!.index.ast).toBe(Ast.disc.Literal);
 });
 
+test("index range access expression", () => {
+  const indexRangeAccess = getAst("a[0:1]", parseExpression) as Ast.IndexRangeAccessExpression;
+  const indexRangeAccessNoStart = getAst(
+    "a[0:1]",
+    parseExpression,
+  ) as Ast.IndexRangeAccessExpression;
+  const indexRangeAccessNoEnd = getAst("a[0:1]", parseExpression) as Ast.IndexRangeAccessExpression;
+
+  expect(indexRangeAccess!.ast).toBe(Ast.disc.IndexRangeAccessExpression);
+  expect(indexRangeAccessNoStart!.ast).toBe(Ast.disc.IndexRangeAccessExpression);
+  expect(indexRangeAccessNoEnd!.ast).toBe(Ast.disc.IndexRangeAccessExpression);
+});
+
 test("new expression", () => {
   const _new = getAst("new Contract()", parseExpression);
   expect(_new!.ast).toBe(Ast.disc.NewExpression);
@@ -320,6 +333,28 @@ test("tuple expression", () => {
 });
 
 // statements
+
+test("variable declaration", () => {
+  const noInitializer = getAst("uint256 a;", parseStatement) as Ast.VariableDeclaration;
+  const initializer = getAst("uint256 a = 0;", parseStatement) as Ast.VariableDeclaration;
+  const location = getAst("uint256 memory a;", parseStatement) as Ast.VariableDeclaration;
+  const plural = getAst(
+    "(uint256 a, uint256 b) = (1, 2);",
+    parseStatement,
+  ) as Ast.VariableDeclaration;
+  const pluralWithUnidentified = getAst(
+    "(uint256, uint256 b) = (1, 2);",
+    parseStatement,
+  ) as Ast.VariableDeclaration;
+
+  expect(noInitializer!.ast).toBe(Ast.disc.VariableDeclaration);
+  expect(initializer!.ast).toBe(Ast.disc.VariableDeclaration);
+  expect(location!.ast).toBe(Ast.disc.VariableDeclaration);
+  expect(plural!.ast).toBe(Ast.disc.VariableDeclaration);
+  expect(pluralWithUnidentified!.ast).toBe(Ast.disc.VariableDeclaration);
+
+  expect(initializer!.initializer).toBeDefined();
+});
 
 test("expression statement", () => {
   const identifier = getAst("a;", parseStatement);
@@ -446,80 +481,25 @@ test("placehoder statement", () => {
   expect(placeholder!.ast).toBe(Ast.disc.PlaceholderStatement);
 });
 
-test("variable declaration", () => {
-  const noInitializer = getAst("uint256 a;", parseStatement) as Ast.VariableDeclaration;
-  const initializer = getAst("uint256 a = 0;", parseStatement) as Ast.VariableDeclaration;
-  const location = getAst("uint256 memory a;", parseStatement) as Ast.VariableDeclaration;
-  const plural = getAst(
-    "(uint256 a, uint256 b) = (1, 2);",
-    parseStatement,
-  ) as Ast.VariableDeclaration;
-  const pluralWithUnidentified = getAst(
-    "(uint256, uint256 b) = (1, 2);",
-    parseStatement,
-  ) as Ast.VariableDeclaration;
+// types
 
-  expect(noInitializer!.ast).toBe(Ast.disc.VariableDeclaration);
-  expect(initializer!.ast).toBe(Ast.disc.VariableDeclaration);
-  expect(location!.ast).toBe(Ast.disc.VariableDeclaration);
-  expect(plural!.ast).toBe(Ast.disc.VariableDeclaration);
-  expect(pluralWithUnidentified!.ast).toBe(Ast.disc.VariableDeclaration);
+test("elementary type", () => {
+  const address = getAst("address", parseType);
+  const string = getAst("string", parseType);
+  const uint = getAst("uint256", parseType);
+  const int = getAst("int256", parseType);
+  const byte = getAst("bytes32", parseType);
+  const bytes = getAst("bytes", parseType);
+  const bool = getAst("bool", parseType);
 
-  expect(initializer!.initializer).toBeDefined();
+  expect(address.ast).toBe(Ast.disc.ElementaryType);
+  expect(string.ast).toBe(Ast.disc.ElementaryType);
+  expect(uint.ast).toBe(Ast.disc.ElementaryType);
+  expect(int.ast).toBe(Ast.disc.ElementaryType);
+  expect(byte.ast).toBe(Ast.disc.ElementaryType);
+  expect(bytes.ast).toBe(Ast.disc.ElementaryType);
+  expect(bool.ast).toBe(Ast.disc.ElementaryType);
 });
-
-test("variable definition", () => {
-  const definition = getAst("uint256 a;", parseVariableDefinition);
-  const initializer = getAst("uint256 a = 0;", parseVariableDefinition);
-  const immutable = getAst("uint256 immutable a;", parseVariableDefinition);
-  const visibility = getAst("uint256 private a;", parseVariableDefinition);
-  const constant = getAst("uint256 constant a;", parseVariableDefinition);
-
-  expect(definition!.ast).toBe(Ast.disc.VariableDefinition);
-  expect(initializer!.ast).toBe(Ast.disc.VariableDefinition);
-  expect(immutable!.ast).toBe(Ast.disc.VariableDefinition);
-  expect(visibility!.ast).toBe(Ast.disc.VariableDefinition);
-  expect(constant!.ast).toBe(Ast.disc.VariableDefinition);
-
-  expect(initializer!.initializer).toBeDefined();
-});
-
-test("event definition", () => {
-  const event = getAst("event Event();", parseEventDefinition);
-  expect(event.ast).toBe(Ast.disc.EventDefinition);
-});
-
-test("error definition", () => {
-  const error = getAst("error Error();", parseErrorDefinition);
-  expect(error.ast).toBe(Ast.disc.ErrorDefinition);
-});
-
-test("contract definition", () => {
-  const contract = getAst("contract C {}", parseContractDefinition);
-  expect(contract.ast).toBe(Ast.disc.ContractDefinition);
-});
-
-test("function definition", () => {
-  const definition = getAst("function fn() external {}", parseFunctionDefinition);
-  const mutability = getAst("function fn() view external {}", parseFunctionDefinition);
-  const parameters = getAst("function fn(uint256 a) external {}", parseFunctionDefinition);
-  const returns = getAst("function fn() external returns (uint256) {}", parseFunctionDefinition);
-  const constructor = getAst("constructor() {}", parseFunctionDefinition);
-  const receive = getAst("receive() {}", parseFunctionDefinition);
-  const fallback = getAst("fallback() {}", parseFunctionDefinition);
-
-  expect(definition.ast).toBe(Ast.disc.FunctionDefinition);
-  expect(mutability.ast).toBe(Ast.disc.FunctionDefinition);
-  expect(parameters.ast).toBe(Ast.disc.FunctionDefinition);
-  expect(returns.ast).toBe(Ast.disc.FunctionDefinition);
-  expect(constructor.ast).toBe(Ast.disc.FunctionDefinition);
-  expect(receive.ast).toBe(Ast.disc.FunctionDefinition);
-  expect(fallback.ast).toBe(Ast.disc.FunctionDefinition);
-});
-
-test.todo("struct definition");
-
-test.todo("modifier definition");
 
 test("array type", () => {
   const fixed = getAst("uint256[1]", parseType) as Ast.ArrayType;
@@ -547,6 +527,63 @@ test("mapping type", () => {
 
   expect(nested.valueType.ast).toBe(Ast.disc.Mapping);
 });
+
+// definitions
+
+test("variable definition", () => {
+  const definition = getAst("uint256 a;", parseVariableDefinition);
+  const initializer = getAst("uint256 a = 0;", parseVariableDefinition);
+  const immutable = getAst("uint256 immutable a;", parseVariableDefinition);
+  const visibility = getAst("uint256 private a;", parseVariableDefinition);
+  const constant = getAst("uint256 constant a;", parseVariableDefinition);
+
+  expect(definition!.ast).toBe(Ast.disc.VariableDefinition);
+  expect(initializer!.ast).toBe(Ast.disc.VariableDefinition);
+  expect(immutable!.ast).toBe(Ast.disc.VariableDefinition);
+  expect(visibility!.ast).toBe(Ast.disc.VariableDefinition);
+  expect(constant!.ast).toBe(Ast.disc.VariableDefinition);
+
+  expect(initializer!.initializer).toBeDefined();
+});
+
+test("function definition", () => {
+  const definition = getAst("function fn() external {}", parseFunctionDefinition);
+  const mutability = getAst("function fn() view external {}", parseFunctionDefinition);
+  const parameters = getAst("function fn(uint256 a) external {}", parseFunctionDefinition);
+  const returns = getAst("function fn() external returns (uint256) {}", parseFunctionDefinition);
+  const constructor = getAst("constructor() {}", parseFunctionDefinition);
+  const receive = getAst("receive() {}", parseFunctionDefinition);
+  const fallback = getAst("fallback() {}", parseFunctionDefinition);
+
+  expect(definition.ast).toBe(Ast.disc.FunctionDefinition);
+  expect(mutability.ast).toBe(Ast.disc.FunctionDefinition);
+  expect(parameters.ast).toBe(Ast.disc.FunctionDefinition);
+  expect(returns.ast).toBe(Ast.disc.FunctionDefinition);
+  expect(constructor.ast).toBe(Ast.disc.FunctionDefinition);
+  expect(receive.ast).toBe(Ast.disc.FunctionDefinition);
+  expect(fallback.ast).toBe(Ast.disc.FunctionDefinition);
+});
+
+test("event definition", () => {
+  const event = getAst("event Event();", parseEventDefinition);
+  expect(event.ast).toBe(Ast.disc.EventDefinition);
+});
+
+test("error definition", () => {
+  const error = getAst("error Error();", parseErrorDefinition);
+  expect(error.ast).toBe(Ast.disc.ErrorDefinition);
+});
+
+test("contract definition", () => {
+  const contract = getAst("contract C {}", parseContractDefinition);
+  expect(contract.ast).toBe(Ast.disc.ContractDefinition);
+});
+
+test.todo("struct definition");
+
+test.todo("modifier definition");
+
+test.todo("pragma directive");
 
 test("integration", async () => {
   const files = readdirSync(path.join(import.meta.dir, "_sol"));

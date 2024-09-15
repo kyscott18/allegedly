@@ -1066,14 +1066,38 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
       next(context);
 
       if (operator.token === Token.disc.OpenBracket) {
-        const right = parseExpression(context, 0);
-        expect(context, Token.disc.CloseBracket);
-        left = {
-          ast: Ast.disc.IndexAccessExpression,
-          loc: toLoc(context, start, context.tokenIndex),
-          base: left,
-          index: right,
-        };
+        if (eat(context, Token.disc.Colon)) {
+          const endExpresssion = parseExpression(context, 0);
+          expect(context, Token.disc.CloseBracket);
+          left = {
+            ast: Ast.disc.IndexRangeAccessExpression,
+            loc: toLoc(context, start, context.tokenIndex),
+            base: left,
+            start: undefined,
+            end: endExpresssion,
+          };
+        } else {
+          const right = parseExpression(context, 0);
+          if (eat(context, Token.disc.Colon)) {
+            const endExpresssion = parseExpression(context, 0);
+            expect(context, Token.disc.CloseBracket);
+            left = {
+              ast: Ast.disc.IndexRangeAccessExpression,
+              loc: toLoc(context, start, context.tokenIndex),
+              base: left,
+              start: right,
+              end: endExpresssion,
+            };
+          } else {
+            expect(context, Token.disc.CloseBracket);
+            left = {
+              ast: Ast.disc.IndexAccessExpression,
+              loc: toLoc(context, start, context.tokenIndex),
+              base: left,
+              index: right,
+            };
+          }
+        }
       } else if (operator.token === Token.disc.OpenParenthesis) {
         context.tokenIndex--;
         const right = parseList(
