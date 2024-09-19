@@ -88,6 +88,13 @@ export const compile = (
           feature: "modifiers",
         });
 
+      case Ast.disc.PragmaDirective:
+        throw new NotImplementedError({
+          source: context.source,
+          loc: defintion.loc,
+          feature: "pragma",
+        });
+
       default:
         never(defintion);
     }
@@ -114,6 +121,7 @@ const addSymbol = (context: CompileBytecodeContext, symbol: string): Hex => {
   return location;
 };
 
+// TODO(kyle) this could take an lvalue ast node
 const resolveSymbol = (context: CompileBytecodeContext, symbol: string): { location: Hex } => {
   for (let i = context.symbols.length - 1; i >= 0; i--) {
     const scope = context.symbols[i];
@@ -123,6 +131,30 @@ const resolveSymbol = (context: CompileBytecodeContext, symbol: string): { locat
   }
 
   throw new InvariantViolationError();
+};
+
+const compileLiteral = (value: Ast.Literal["token"]): Hex => {
+  switch (value.token) {
+    case Token.disc.AddressLiteral: {
+      return value.value as Hex;
+    }
+
+    case Token.disc.NumberLiteral: {
+      return toHex(BigInt(value.value));
+    }
+
+    case Token.disc.HexNumberLiteral: {
+      return value.value as Hex;
+    }
+
+    case Token.disc.BoolLiteral: {
+      return value.value === "true" ? "0x01" : "0x00";
+    }
+
+    default:
+      never(value);
+      throw new InvariantViolationError();
+  }
 };
 
 const compileContract = (context: CompileBytecodeContext, node: Ast.ContractDefinition): Hex => {
@@ -175,10 +207,10 @@ const compileContract = (context: CompileBytecodeContext, node: Ast.ContractDefi
   // Fallback
 
   let code = concat([
-    push(numberToHex(0)), //   [0]
-    Code.CALLDATALOAD, //      [calldata]
-    push(numberToHex(224)), // [224, calldata]
-    Code.SHR, //               [function_selector]
+    push(0), //           [0]
+    Code.CALLDATALOAD, // [calldata]
+    push(224), //         [224, calldata]
+    Code.SHR, //          [function_selector]
   ]);
 
   const fallbackSize = size(code) + 11 * context.functions.size + 1;
@@ -224,12 +256,7 @@ const compileFunction = (context: CompileBytecodeContext, node: Ast.FunctionDefi
   for (const parameter of node.parameters) {
     if (parameter.identifier === undefined) continue;
     const location = addSymbol(context, parameter.identifier.value);
-    code = concat([
-      push(numberToHex(0x20)),
-      push(numberToHex(inputOffset)),
-      push(location),
-      Code.CALLDATACOPY,
-    ]);
+    code = concat([push(0x20), push(inputOffset), push(location), Code.CALLDATACOPY]);
     inputOffset += 0x20;
   }
 
@@ -256,7 +283,7 @@ const compileFunction = (context: CompileBytecodeContext, node: Ast.FunctionDefi
 const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement): Hex => {
   switch (node.ast) {
     case Ast.disc.VariableDeclaration: {
-      const location = addSymbol(context, node.identifier.value);
+      const location = addSymbol(context, node.declarations[0]!.identifier!.value);
       if (node.initializer) {
         return concat([
           compileExpression(context, node.initializer).code,
@@ -400,27 +427,18 @@ const compileExpression = (
           throw new InvariantViolationError();
         }
 
-        case Token.disc.AddressLiteral: {
-          return {
-            code: push(node.token.value),
-            stack: 1,
-          };
-        }
-
         case Token.disc.HexLiteral: {
           throw new InvariantViolationError();
         }
 
+        case Token.disc.AddressLiteral:
+        case Token.disc.HexNumberLiteral:
         case Token.disc.BoolLiteral:
         case Token.disc.NumberLiteral: {
           return {
-            code: push(toHex(node.token.value)),
+            code: push(compileLiteral(node.token)),
             stack: 1,
           };
-        }
-
-        case Token.disc.HexNumberLiteral: {
-          throw new InvariantViolationError();
         }
 
         default:
@@ -441,14 +459,85 @@ const compileExpression = (
             code: concat([
               _expression.code, // [value]
               Code.NOT, //         [~value]
-              push("0x1"), //      [1, ~value]
+              push(1), //          [1, ~value]
               Code.ADD, //         [~value + 1]
             ]),
             stack: 1,
           };
 
+        case Token.disc.Increment:
+        case Token.disc.Decrement: {
+          // This assumes `node.expression` is an identifier lvalue
+          const { location } = resolveSymbol(
+            context,
+            (node.expression as Ast.Identifier).token.value,
+          );
+
+          // TODO(kyle) safe math
+
+          const op = node.operator.token === Token.disc.Increment ? Code.ADD : Code.SUB;
+
+          if (node.prefix) {
+            return {
+              code: concat([
+                push(1), //          [1]
+                _expression.code, // [value, 1]
+                op, //               [value +- 1]
+                Code.DUP1, //        [value +- 1, value +- 1]
+                push(location), //   [location, value +- 1, value +- 1]
+                Code.MSTORE, //      [value + 1]
+              ]),
+              stack: 1,
+            };
+          }
+
+          return {
+            code: concat([
+              _expression.code, // [value]
+              push(1), //          [1, value]
+              Code.DUP2, //        [value, 1, value]
+              op, //               [value +- 1, value]
+              push(location), //   [location, value +- 1, value]
+              Code.MSTORE, //      [value]
+            ]),
+            stack: 1,
+          };
+        }
+
+        case Token.disc.Delete: {
+          // This assumes `node.expression` is an identifier lvalue
+          const { location } = resolveSymbol(
+            context,
+            (node.expression as Ast.Identifier).token.value,
+          );
+
+          return {
+            code: concat([
+              push(0), //        [0]
+              push(location), // [location, 0]
+              Code.MSTORE, //    []
+            ]),
+            stack: 1,
+          };
+        }
+
+        case Token.disc.Not: {
+          return {
+            code: concat([_expression.code, push(1), Code.XOR]),
+            stack: 1,
+          };
+        }
+
+        case Token.disc.BitwiseNot: {
+          return {
+            code: concat([_expression.code, Code.NOT]),
+            stack: 1,
+          };
+        }
+
         default:
-          throw new NotImplementedError();
+          never(node.operator);
+          throw new InvariantViolationError();
       }
     }
 
@@ -477,7 +566,7 @@ const compileExpression = (
           input = concat([
             input,
             compileExpression(context, node.arguments[i]!).code,
-            push(numberToHex(context.freeMemoryPointer)),
+            push(context.freeMemoryPointer),
             Code.MSTORE,
           ]);
 
@@ -485,27 +574,23 @@ const compileExpression = (
         }
 
         const call = concat([
-          expression.code, //                                [address]
-          push(numberToHex(context.freeMemoryPointer)), //   [ret_offset, address]
-          push(numberToHex(functionType.parameters.length * 0x20)), //                 [arg_size, ret_offset, address]
-          push(numberToHex(inputLocation)), //               [arg_offset, arg_size, ret_offset, address]
-          push(numberToHex(0)), //                           [value, arg_offset, arg_size, ret_offset, address]
-          push(numberToHex(functionType.returns.length * 0x20)), // [ret_size, value, arg_offset, arg_size, ret_offset, address]
-          Code.SWAP5, //                                     [address, value, arg_offset, arg_size, ret_offset, ret_size]
-          Code.GAS, //                                       [gas, address, value, arg_offset, arg_size, ret_offset, ret_size]
-          Code.CALL, //                                      [success]
-          Code.POP, //                                       []
+          expression.code, //                             [address]
+          push(context.freeMemoryPointer), //             [ret_offset, address]
+          push(functionType.parameters.length * 0x20), // [arg_size, ret_offset, address]
+          push(inputLocation), //                         [arg_offset, arg_size, ret_offset, address]
+          push(0), //                                     [value, arg_offset, arg_size, ret_offset, address]
+          push(functionType.returns.length * 0x20), //    [ret_size, value, arg_offset, arg_size, ret_offset, address]
+          Code.SWAP5, //                                  [address, value, arg_offset, arg_size, ret_offset, ret_size]
+          Code.GAS, //                                    [gas, address, value, arg_offset, arg_size, ret_offset, ret_size]
+          Code.CALL, //                                   [success]
+          Code.POP, //                                    []
         ]);
 
         let _return: Hex = "0x";
         for (let i = 0; i < functionType.returns.length; i++) {
           _return = concat([
             _return,
-            push(
-              numberToHex(
-                context.freeMemoryPointer + functionType.returns.length * 0x20 - (i + 1) * 0x20,
-              ),
-            ),
+            push(context.freeMemoryPointer + functionType.returns.length * 0x20 - (i + 1) * 0x20),
             Code.MLOAD,
           ]);
         }

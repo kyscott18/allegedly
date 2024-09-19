@@ -25,6 +25,10 @@ const printStack = (result: ExecResult) => {
   console.log(result.runState?.stack.getStack().map((x) => toHex(x)));
 };
 
+const getStack = (result: ExecResult, i = 0) => {
+  return toHex(result.runState?.stack.getStack()[i]!);
+};
+
 ////////
 // Function statements
 ////////
@@ -33,8 +37,7 @@ test("empty block", async () => {
   const { result } = await getCode(
     `
 contract C {
-  function run() external {
-  }
+  function run() external { }
 }`,
     toFunctionSelector("function run()"),
   );
@@ -115,7 +118,13 @@ test("literal", async () => {
     `
 contract C {
   function run() external {
+    // address
+    0xa83114A443dA1CecEFC50368531cACE9F37fCCcb;
+    // uint256;
     10;
+    // bytes32
+    0x01;
+    // boolean;
     true;
   }
 }`,
@@ -123,9 +132,115 @@ contract C {
   );
 
   expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result, 0)).toBe("0xa83114a443da1cecefc50368531cace9f37fcccb");
+  expect(getStack(result, 1)).toBe("0xa");
+  expect(getStack(result, 2)).toBe("0x1");
+  expect(getStack(result, 3)).toBe("0x1");
 });
 
-test("literal assignment", async () => {
+test("negative", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external returns (int256) {
+    -10;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe(
+    "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6",
+  );
+});
+
+test("increment", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external returns (int256) {
+    uint256 x = 10;
+    x++;
+    ++x;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result, 0)).toBe("0xa");
+  expect(getStack(result, 1)).toBe("0xc");
+});
+
+test("decrement", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external returns (int256) {
+    uint256 x = 10;
+    x--;
+    --x;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result, 0)).toBe("0xa");
+  expect(getStack(result, 1)).toBe("0x8");
+});
+
+test("delete", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external returns (int256) {
+    uint256 x = 10;
+    delete x;
+    x;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result, 0)).toBe("0x0");
+});
+
+test("not", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external returns (int256) {
+    !true;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x0");
+});
+
+test("bitwise not", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external returns (int256) {
+    ~10;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe(
+    "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5",
+  );
+});
+
+test("variable assignment", async () => {
   const { result } = await getCode(
     `
 contract C {
@@ -152,9 +267,10 @@ contract C {
   );
 
   expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0xa");
 });
 
-test.only("assignment", async () => {
+test.skip("assignment", async () => {
   const { result } = await getCode(
     `
 contract C {

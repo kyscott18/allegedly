@@ -1,8 +1,16 @@
 import { expect, test } from "bun:test";
-import { type CheckContext, checkExpression, checkStatement, defaultSymbols } from "./checker";
+import fs from "node:fs";
+import path from "node:path";
+import {
+  check,
+  type CheckContext,
+  checkExpression,
+  checkStatement,
+  defaultSymbols,
+} from "./checker";
 import type { TypeError } from "./errors/type";
 import { tokenize } from "./lexer";
-import { type ParseContext, parseBlockStatement, parseExpression } from "./parser";
+import { type ParseContext, parse, parseBlockStatement, parseExpression } from "./parser";
 import type { Ast } from "./types/ast";
 
 const getError = <ast extends Ast.Statement | Ast.Definition | Ast.Expression>(
@@ -77,8 +85,35 @@ test("2333", () => {
   expect(error!.code).toBe(2333);
 });
 
+test("4247", () => {
+  let error = getError(
+    `
+  {
+    uint256 a;
+    ++a++;
+  }`,
+    parseBlockStatement,
+    checkStatement,
+  );
+
+  expect(error).toBeDefined();
+  expect(error!.code).toBe(4247);
+
+  error = getError(
+    `
+  {
+    delete 10;
+  }`,
+    parseBlockStatement,
+    checkStatement,
+  );
+
+  expect(error).toBeDefined();
+  expect(error!.code).toBe(4247);
+});
+
 test("4907", () => {
-  const error = getError(
+  let error = getError(
     `
   {
     uint256 a;
@@ -90,6 +125,46 @@ test("4907", () => {
 
   expect(error).toBeDefined();
   expect(error!.code).toBe(4907);
+
+  error = getError(
+    `
+  {
+    uint256 a;
+    !a;
+  }`,
+    parseBlockStatement,
+    checkStatement,
+  );
+
+  expect(error).toBeDefined();
+  expect(error!.code).toBe(4907);
+
+  error = getError(
+    `
+  {
+    address a;
+    ~a;
+  }`,
+    parseBlockStatement,
+    checkStatement,
+  );
+
+  expect(error).toBeDefined();
+  expect(error!.code).toBe(4907);
+});
+
+test.todo("4937", () => {
+  const error = getError(
+    `
+  {
+    function fn() {}
+  }`,
+    parseBlockStatement,
+    checkStatement,
+  );
+
+  expect(error).toBeDefined();
+  expect(error!.code).toBe(4937);
 });
 
 test("5704", () => {
@@ -420,4 +495,39 @@ address(uint160(10));
   );
 
   expect(error).toBeUndefined();
+});
+
+test("9767", () => {
+  const error = getError(
+    `
+{
+  address x;
+  x++;
+}`,
+    parseBlockStatement,
+    checkStatement,
+  );
+
+  expect(error).toBeDefined();
+  expect(error!.code).toBe(9767);
+
+  //   error = getError(
+  //     `
+  // {
+  //   delete 10;
+  // }`,
+  //     parseBlockStatement,
+  //     checkStatement,
+  //   );
+
+  //   expect(error).toBeDefined();
+  //   expect(error!.code).toBe(9767);
+});
+
+test.skip("integration", async () => {
+  const files = fs.readdirSync(path.join(import.meta.dir, "_sol"));
+  for (const file of files) {
+    const source = await Bun.file(path.join(import.meta.dir, "_sol", file)).text();
+    check(source, parse(source, tokenize(source)));
+  }
 });

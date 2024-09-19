@@ -1,3 +1,1 @@
-export const never = (_: never) => {
-  throw "never";
-};
+export const never = (_: never) => {};

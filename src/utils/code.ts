@@ -1,9 +1,11 @@
-import { type Hex, concat, padHex } from "viem";
+import { type Hex, concat, padHex, toHex } from "viem";
 
 export enum Code {
   STOP = "0x00",
   ADD = "0x01",
+  SUB = "0x03",
   EQ = "0x14",
+  XOR = "0x18",
   NOT = "0x19",
   SHR = "0x1c",
   CALLDATALOAD = "0x35",
@@ -49,14 +51,29 @@ export enum Code {
   PUSH31 = "0x7e",
   PUSH32 = "0x7f",
   DUP1 = "0x80",
+  DUP2 = "0x81",
+  DUP3 = "0x82",
+  DUP4 = "0x83",
+  DUP5 = "0x84",
+  DUP6 = "0x85",
+  DUP7 = "0x86",
+  DUP8 = "0x87",
+  DUP9 = "0x88",
+  DUP10 = "0x89",
+  DUP11 = "0x8a",
+  DUP12 = "0x8b",
+  DUP13 = "0x8c",
+  DUP14 = "0x8d",
+  DUP15 = "0x8e",
+  DUP16 = "0x8f",
   SWAP5 = "0x94",
   CALL = "0xf1",
   RETURN = "0xf3",
   INVALID = "0xfe",
 }
 
-export const push = (x: Hex): Hex => {
-  const hex = pad(x);
+export const push = (x: number | bigint | Hex): Hex => {
+  const hex = pad(typeof x === "string" ? x : toHex(x));
 
   switch (hex.length - 2) {
     case 2:

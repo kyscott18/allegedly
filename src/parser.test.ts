@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import fs from "node:fs";
 import path from "node:path";
 import { InvariantViolationError } from "./errors/invariantViolation.js";
 import { tokenize } from "./lexer.js";
@@ -17,7 +18,6 @@ import {
 import { Ast } from "./types/ast.js";
 import { Token } from "./types/token.js";
 import { never } from "./utils/never.js";
-import { readdirSync } from "node:fs";
 
 const assignmentOperatorToString = (operator: Ast.Assignment["operator"]): string => {
   switch (operator.token) {
@@ -586,7 +586,7 @@ test.todo("modifier definition");
 test.todo("pragma directive");
 
 test("integration", async () => {
-  const files = readdirSync(path.join(import.meta.dir, "_sol"));
+  const files = fs.readdirSync(path.join(import.meta.dir, "_sol"));
   for (const file of files) {
     const source = await Bun.file(path.join(import.meta.dir, "_sol", file)).text();
     parse(source, tokenize(source));

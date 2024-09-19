@@ -180,7 +180,9 @@ export const check = (source: string, program: Ast.Program): TypeAnnotations => 
   };
 
   for (const definition of program) {
-    checkDefinition(context, definition);
+    if (definition.ast !== Ast.disc.PragmaDirective) {
+      checkDefinition(context, definition);
+    }
   }
 
   return context.annotations;
@@ -271,13 +273,22 @@ export const checkDefinition = (context: CheckContext, definition: Ast.Definitio
 export const checkStatement = (context: CheckContext, statement: Ast.Statement): void => {
   switch (statement.ast) {
     case Ast.disc.VariableDeclaration:
-      addSymbol(context, statement.identifier.value, Type.convertAst(statement.type));
+      for (const declaration of statement.declarations) {
+        if (declaration.identifier) {
+          addSymbol(context, declaration.identifier.value, Type.convertAst(declaration.type));
+        }
+      }
       if (statement.initializer) {
         const initializer = checkExpression(context, statement.initializer);
         context.annotations.set(statement.initializer, initializer);
-        if (isImplicitlyConvertibleTo(initializer, Type.convertAst(statement.type)) === false) {
+        if (
+          isImplicitlyConvertibleTo(
+            initializer,
+            Type.convertAst(statement.declarations[0]!.type),
+          ) === false
+        ) {
           throw new TypeError(
-            `Type ${initializer} is not implicitly convertible to expected type ${statement.type}`,
+            `Type ${initializer} is not implicitly convertible to expected type ${statement.declarations[0]!.type}`,
             9574,
           );
         }
@@ -404,35 +415,91 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       return right;
     }
 
-    case Ast.disc.UnaryOperation:
-      {
-        const _expression = checkExpression(context, expression.expression);
-        context.annotations.set(expression.expression, _expression);
+    case Ast.disc.UnaryOperation: {
+      const _expression = checkExpression(context, expression.expression);
+      context.annotations.set(expression.expression, _expression);
 
-        switch (expression.operator.token) {
-          case Token.disc.Increment:
-          case Token.disc.Decrement:
-            break;
+      // TODO(kyle) annotate result types?
+      switch (expression.operator.token) {
+        case Token.disc.Increment:
+        case Token.disc.Decrement:
+          if (isLValue(context, expression.expression) === false) {
+            throw new TypeError("Expression has to be an lvalue", 4247);
+          }
 
-          case Token.disc.Subtract:
-            if (
-              _expression.type !== Type.disc.Elementary ||
-              _expression.value.token !== Token.disc.Int
-            ) {
-              throw new TypeError(
-                `Built-in unary operator ${expression.operator} cannot be applied to type ${_expression}`,
-                4907,
-              );
-            }
-            break;
+          if (
+            _expression.type !== Type.disc.Elementary ||
+            (_expression.value.token !== Token.disc.Uint &&
+              _expression.value.token !== Token.disc.Int) ||
+            _expression.isLiteral
+          ) {
+            throw new TypeError("Built-in unary operator ++ cannot be applied to type ${}", 9767);
+          }
+          break;
 
-          case Token.disc.Delete:
-          case Token.disc.Not:
-          case Token.disc.BitwiseNot:
-            break;
+        case Token.disc.Subtract: {
+          if (
+            _expression.type !== Type.disc.Elementary ||
+            // TODO(kyle) allow uint literals
+            (_expression.value.token !== Token.disc.Int && _expression.isLiteral === false)
+          ) {
+            throw new TypeError(
+              `Built-in unary operator ${expression.operator} cannot be applied to type ${_expression}`,
+              4907,
+            );
+          }
+
+          return {
+            type: Type.disc.Elementary,
+            isLiteral: _expression.isLiteral,
+            value: Type.staticIntSize(_expression.type).value,
+          };
         }
+
+        case Token.disc.Delete: {
+          if (isLValue(context, expression.expression) === false) {
+            throw new TypeError("Expression has to be an lvalue", 4247);
+          }
+
+          if (_expression.type !== Type.disc.Elementary || _expression.isLiteral) {
+            throw new TypeError(
+              "Built-in unary operator delete cannot be applied to type ${}",
+              9767,
+            );
+          }
+
+          // TODO(kyle) is there a way to represent this differently?
+          return {
+            type: Type.disc.Tuple,
+            elements: [],
+          };
+        }
+
+        case Token.disc.Not: {
+          if (
+            _expression.type !== Type.disc.Elementary ||
+            _expression.value.token !== Token.disc.Bool
+          ) {
+            throw new TypeError("Built-in unary operator ! cannot be applied to type ${}", 4907);
+          }
+          break;
+        }
+
+        case Token.disc.BitwiseNot:
+          if (
+            _expression.type !== Type.disc.Elementary ||
+            (_expression.value.token !== Token.disc.Uint &&
+              _expression.value.token !== Token.disc.Int &&
+              _expression.value.token !== Token.disc.Byte)
+          ) {
+            throw new TypeError("Built-in unary operator ~ cannot be applied to type ${}", 4907);
+          }
+
+          break;
       }
-      break;
+
+      return _expression;
+    }
 
     case Ast.disc.BinaryOperation: {
       const left = checkExpression(context, expression.left);
@@ -549,6 +616,13 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         source: context.source,
         loc: expression.loc,
         feature: "index access",
+      });
+
+    case Ast.disc.IndexRangeAccessExpression:
+      throw new NotImplementedError({
+        source: context.source,
+        loc: expression.loc,
+        feature: "index range access",
       });
 
     case Ast.disc.NewExpression:
@@ -719,4 +793,9 @@ const isElementaryTypeEqual = (a: Type.Elementary, b: Type.Elementary): boolean 
     case Token.disc.Byte:
       return a.value.token === b.value.token && a.value.size === b.value.size;
   }
+};
+
+const isLValue = (_context: CheckContext, expression: Ast.Expression) => {
+  if (expression.ast !== Ast.disc.Identifier) return false;
+  return true;
 };

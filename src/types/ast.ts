@@ -446,13 +446,13 @@ export namespace Ast {
  *
  * UserType
  * FunctionType
- * Enum
  * TryStatement
  * UserTypeDefintion
  * FunctionCallOptions
  * ImportDirective
  * UsingDirective
  * NamedFunctionParameters
+ * Enum
  * Yul
  * Inheritance
  */
