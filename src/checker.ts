@@ -339,14 +339,16 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
     case Ast.disc.Identifier: {
       const symbol = resolveSymbol(context, expression.token.value);
 
-      if (symbol.type === Type.disc.Contract) {
-        return {
-          type: Type.disc.Function,
-          parameters: [symbol],
-          returns: [symbol],
-          isTypeConversion: true,
-        };
-      }
+      // TODO(kyle) add to context when a contract is defined
+      // if (symbol.type === Type.disc.Contract) {
+      //   return {
+      //     type: Type.disc.Function,
+      //     parameters: [symbol],
+      //     returns: [symbol],
+      //     isTypeConversion: true,
+      //   };
+      // }
+
       return symbol;
     }
 
@@ -405,21 +407,117 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       context.annotations.set(expression.left, left);
       context.annotations.set(expression.right, right);
 
-      if (isImplicitlyConvertibleTo(left, right) === false) {
-        throw new TypeError(
-          `Type ${left} is not implicitly convertible to expected type ${right}`,
-          7407,
-        );
-      }
+      switch (expression.operator.token) {
+        case Token.disc.Assign: {
+          if (isLValue(context, expression.left) === false) {
+            throw new TypeError("Expression has to be an lvalue", 4247);
+          }
 
-      return right;
+          if (isImplicitlyConvertibleTo(left, right) === false) {
+            throw new TypeError(
+              `Type ${left} is not implicitly convertible to expected type ${right}`,
+              7407,
+            );
+          }
+
+          return left;
+        }
+
+        case Token.disc.AddAssign:
+        case Token.disc.SubtractAssign:
+        case Token.disc.MulAssign:
+        case Token.disc.DivideAssign: {
+          if (
+            left.type !== Type.disc.Elementary ||
+            right.type !== Type.disc.Elementary ||
+            (left.value.token !== Token.disc.Uint && left.value.token !== Token.disc.Int) ||
+            (right.value.token !== Token.disc.Uint && right.value.token !== Token.disc.Int) ||
+            left.value.token !== right.value.token ||
+            left.value.size < right.value.size
+          ) {
+            throw new TypeError(
+              `Operator ${expression.operator} not compatible with types ${left.type} and ${right.type}`,
+              7366,
+            );
+          }
+
+          return left;
+        }
+
+        case Token.disc.ModuloAssign: {
+          if (
+            left.type !== Type.disc.Elementary ||
+            right.type !== Type.disc.Elementary ||
+            (left.value.token !== Token.disc.Uint && left.value.token !== Token.disc.Int) ||
+            (right.value.token !== Token.disc.Uint && right.value.token !== Token.disc.Int) ||
+            left.value.token !== right.value.token ||
+            left.value.size < right.value.size
+          ) {
+            throw new TypeError(
+              `Operator ${expression.operator} not compatible with types ${left.type} and ${right.type}`,
+              7366,
+            );
+          }
+
+          return left;
+        }
+
+        case Token.disc.BitwiseAndAssign:
+        case Token.disc.BitwiseOrAssign:
+        case Token.disc.BitwiseXOrAssign: {
+          if (
+            left.type !== Type.disc.Elementary ||
+            right.type !== Type.disc.Elementary ||
+            (left.value.token !== Token.disc.Uint &&
+              left.value.token !== Token.disc.Int &&
+              left.value.token !== Token.disc.Byte) ||
+            (right.value.token !== Token.disc.Uint &&
+              right.value.token !== Token.disc.Int &&
+              right.value.token !== Token.disc.Byte) ||
+            left.value.token !== right.value.token ||
+            left.value.size < right.value.size
+          ) {
+            throw new TypeError(
+              `Operator ${expression.operator} not compatible with types ${left.type} and ${right.type}`,
+              7366,
+            );
+          }
+
+          return left;
+        }
+
+        case Token.disc.ShiftLeftAssign:
+        case Token.disc.ShiftRightAssign: {
+          if (
+            left.type !== Type.disc.Elementary ||
+            right.type !== Type.disc.Elementary ||
+            (left.value.token !== Token.disc.Uint &&
+              left.value.token !== Token.disc.Int &&
+              left.value.token !== Token.disc.Byte) ||
+            (right.value.token !== Token.disc.Uint &&
+              right.value.token !== Token.disc.Int &&
+              right.value.token !== Token.disc.Byte) ||
+            left.value.token !== right.value.token
+          ) {
+            throw new TypeError(
+              `Operator ${expression.operator} not compatible with types ${left.type} and ${right.type}`,
+              7366,
+            );
+          }
+
+          return left;
+        }
+
+        default:
+          never(expression.operator);
+          throw new InvariantViolationError();
+      }
     }
 
     case Ast.disc.UnaryOperation: {
       const _expression = checkExpression(context, expression.expression);
       context.annotations.set(expression.expression, _expression);
 
-      // TODO(kyle) annotate result types?
       switch (expression.operator.token) {
         case Token.disc.Increment:
         case Token.disc.Decrement:
@@ -496,6 +594,10 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
           }
 
           break;
+
+        default:
+          never(expression.operator);
+          throw new InvariantViolationError();
       }
 
       return _expression;
@@ -507,13 +609,196 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       context.annotations.set(expression.left, left);
       context.annotations.set(expression.right, right);
 
-      if (isImplicitlyConvertibleTo(left, right) === false)
-        throw new TypeError(
-          `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
-          2271,
-        );
+      switch (expression.operator.token) {
+        case Token.disc.Add:
+        case Token.disc.Subtract:
+        case Token.disc.Mul:
+        case Token.disc.Divide: {
+          if (
+            left.type !== Type.disc.Elementary ||
+            right.type !== Type.disc.Elementary ||
+            (left.value.token !== Token.disc.Uint && left.value.token !== Token.disc.Int) ||
+            (right.value.token !== Token.disc.Uint && right.value.token !== Token.disc.Int) ||
+            left.value.token !== right.value.token
+          ) {
+            throw new TypeError(
+              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
+              2271,
+            );
+          }
 
-      return right;
+          return {
+            type: Type.disc.Elementary,
+            value: {
+              token: left.value.token,
+              size: Math.max(left.value.size, right.value.size),
+            },
+            isLiteral: false,
+          };
+        }
+
+        case Token.disc.Modulo: {
+          if (
+            left.type !== Type.disc.Elementary ||
+            right.type !== Type.disc.Elementary ||
+            (left.value.token !== Token.disc.Uint && left.value.token !== Token.disc.Int) ||
+            (right.value.token !== Token.disc.Uint && right.value.token !== Token.disc.Int)
+          ) {
+            throw new TypeError(
+              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
+              2271,
+            );
+          }
+
+          const isSigned =
+            left.value.token === Token.disc.Int || right.value.token === Token.disc.Int;
+          return {
+            type: Type.disc.Elementary,
+            value: {
+              token: isSigned ? Token.disc.Int : Token.disc.Uint,
+              size: Math.max(left.value.size, right.value.size),
+            },
+            isLiteral: false,
+          };
+        }
+
+        case Token.disc.Power: {
+          if (
+            left.type !== Type.disc.Elementary ||
+            right.type !== Type.disc.Elementary ||
+            (left.value.token !== Token.disc.Uint && left.value.token !== Token.disc.Int) ||
+            right.value.token !== Token.disc.Uint
+          ) {
+            throw new TypeError(
+              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
+              2271,
+            );
+          }
+
+          if (left.value.size < right.value.size && right.isLiteral === false) {
+            throw new TypeError(
+              `The result type of the exponentiation operation is equal to the type of the first operand (${left.type}) ignoring the (larger) type of the second operand (${right.type}) which might be unexpected. Silence this warning by either converting the first or the second operand to the type of the other.`,
+              3149,
+            );
+          }
+
+          return {
+            type: Type.disc.Elementary,
+            value: left.value,
+            isLiteral: false,
+          };
+        }
+
+        case Token.disc.And:
+        case Token.disc.Or: {
+          if (
+            left.type !== Type.disc.Elementary ||
+            right.type !== Type.disc.Elementary ||
+            left.value.token !== Token.disc.Bool ||
+            right.value.token !== Token.disc.Bool
+          ) {
+            throw new TypeError(
+              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
+              2271,
+            );
+          }
+
+          return Type.staticBool;
+        }
+
+        case Token.disc.Equal:
+        case Token.disc.NotEqual: {
+          if (
+            left.type !== Type.disc.Elementary ||
+            right.type !== Type.disc.Elementary ||
+            left.value.token === Token.disc.String ||
+            left.value.token === Token.disc.Bytes ||
+            right.value.token === Token.disc.String ||
+            right.value.token === Token.disc.Bytes ||
+            left.value.token !== right.value.token
+          ) {
+            throw new TypeError(
+              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
+              2271,
+            );
+          }
+
+          return Type.staticBool;
+        }
+
+        case Token.disc.Less:
+        case Token.disc.LessEqual:
+        case Token.disc.More:
+        case Token.disc.MoreEqual: {
+          if (
+            left.type !== Type.disc.Elementary ||
+            right.type !== Type.disc.Elementary ||
+            left.value.token === Token.disc.String ||
+            left.value.token === Token.disc.Bytes ||
+            left.value.token === Token.disc.Bool ||
+            right.value.token === Token.disc.String ||
+            right.value.token === Token.disc.Bytes ||
+            right.value.token === Token.disc.Bool ||
+            left.value.token !== right.value.token
+          ) {
+            throw new TypeError(
+              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
+              2271,
+            );
+          }
+
+          return Type.staticBool;
+        }
+
+        case Token.disc.BitwiseAnd:
+        case Token.disc.BitwiseOr:
+        case Token.disc.BitwiseXOr: {
+          if (
+            left.type !== Type.disc.Elementary ||
+            right.type !== Type.disc.Elementary ||
+            (left.value.token !== Token.disc.Uint &&
+              left.value.token !== Token.disc.Int &&
+              left.value.token !== Token.disc.Byte) ||
+            (right.value.token !== Token.disc.Uint &&
+              right.value.token !== Token.disc.Int &&
+              right.value.token !== Token.disc.Byte) ||
+            left.value.token !== right.value.token
+          ) {
+            throw new TypeError(
+              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
+              2271,
+            );
+          }
+
+          return left;
+        }
+
+        case Token.disc.ShiftRight:
+        case Token.disc.ShiftLeft: {
+          if (
+            left.type !== Type.disc.Elementary ||
+            right.type !== Type.disc.Elementary ||
+            (left.value.token !== Token.disc.Uint &&
+              left.value.token !== Token.disc.Int &&
+              left.value.token !== Token.disc.Byte) ||
+            (right.value.token !== Token.disc.Uint &&
+              right.value.token !== Token.disc.Int &&
+              right.value.token !== Token.disc.Byte) ||
+            left.value.token !== right.value.token
+          ) {
+            throw new TypeError(
+              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
+              2271,
+            );
+          }
+
+          return left;
+        }
+
+        default:
+          never(expression.operator);
+          throw new InvariantViolationError();
+      }
     }
 
     case Ast.disc.ConditionalExpression: {
@@ -589,10 +874,6 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       const _expression = checkExpression(context, expression.expression);
       context.annotations.set(expression.expression, _expression);
 
-      if (expression.member.token.token !== Token.disc.Identifier) {
-        throw new TypeError(`Expected identifer but got ${expression.member.token}`, 2314);
-      }
-
       if (_expression.type === Type.disc.Contract) {
         // TODO(kyle) fn overloading
         // @ts-ignore
@@ -632,12 +913,15 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         feature: "contract creation",
       });
 
-    case Ast.disc.TupleExpression:
-      throw new NotImplementedError({
-        source: context.source,
-        loc: expression.loc,
-        feature: "tuple",
+    case Ast.disc.TupleExpression: {
+      const elements = expression.elements.map((e) => {
+        const type = checkExpression(context, e);
+        context.annotations.set(e, type);
+        return type;
       });
+
+      return { type: Type.disc.Tuple, elements };
+    }
 
     default:
       never(expression);
@@ -775,6 +1059,12 @@ const isImplicitlyConvertibleTo = (from: Type.Type, to: Type.Type): boolean => {
     ) {
       return true;
     }
+  } else if (
+    from.type === Type.disc.Tuple &&
+    to.type === Type.disc.Tuple &&
+    from.elements.length === to.elements.length
+  ) {
+    return true;
   }
 
   return false;
@@ -795,7 +1085,14 @@ const isElementaryTypeEqual = (a: Type.Elementary, b: Type.Elementary): boolean 
   }
 };
 
-const isLValue = (_context: CheckContext, expression: Ast.Expression) => {
-  if (expression.ast !== Ast.disc.Identifier) return false;
-  return true;
+const isLValue = (context: CheckContext, expression: Ast.Expression) => {
+  if (expression.ast === Ast.disc.Identifier) return true;
+  if (
+    expression.ast === Ast.disc.TupleExpression &&
+    expression.elements.every((e) => isLValue(context, e))
+  ) {
+    return true;
+  }
+
+  return false;
 };

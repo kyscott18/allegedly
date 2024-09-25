@@ -1,7 +1,14 @@
 contract Assignment {
-  function run() external returns (uint256) {
+  function run() external {
     uint256 x;
+    uint256 y; 
+
     x = 10;
-    return x;
+
+    // nested assign
+    y = x = 5; 
+    
+    // tuple assign
+    (x, y) = (10, 12);
   }
 }

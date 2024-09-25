@@ -117,8 +117,8 @@ export namespace Ast {
       | Token.BitwiseAnd
       | Token.BitwiseOr
       | Token.BitwiseXOr
-      | Token.ShiftRight
-      | Token.ShiftLeft;
+      | Token.ShiftLeft
+      | Token.ShiftRight;
     left: Expression;
     right: Expression;
   };

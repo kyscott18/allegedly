@@ -100,7 +100,7 @@ test("function selectors without match", async () => {
   const { result } = await getCode(
     `
 contract C {
-  function run() external returns (uint256) {
+  function run() external {
   }
 }`,
     toFunctionSelector("function bun()"),
@@ -142,7 +142,7 @@ test("negative", async () => {
   const { result } = await getCode(
     `
 contract C {
-  function run() external returns (int256) {
+  function run() external {
     -10;
   }
 }`,
@@ -159,7 +159,7 @@ test("increment", async () => {
   const { result } = await getCode(
     `
 contract C {
-  function run() external returns (int256) {
+  function run() external {
     uint256 x = 10;
     x++;
     ++x;
@@ -177,7 +177,7 @@ test("decrement", async () => {
   const { result } = await getCode(
     `
 contract C {
-  function run() external returns (int256) {
+  function run() external {
     uint256 x = 10;
     x--;
     --x;
@@ -195,7 +195,7 @@ test("delete", async () => {
   const { result } = await getCode(
     `
 contract C {
-  function run() external returns (int256) {
+  function run() external {
     uint256 x = 10;
     delete x;
     x;
@@ -212,7 +212,7 @@ test("not", async () => {
   const { result } = await getCode(
     `
 contract C {
-  function run() external returns (int256) {
+  function run() external {
     !true;
   }
 }`,
@@ -227,7 +227,7 @@ test("bitwise not", async () => {
   const { result } = await getCode(
     `
 contract C {
-  function run() external returns (int256) {
+  function run() external {
     ~10;
   }
 }`,
@@ -238,6 +238,309 @@ contract C {
   expect(getStack(result)).toBe(
     "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5",
   );
+});
+
+test("add", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    10 + 2;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0xc");
+});
+
+test("sub", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    10 - 2;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x8");
+});
+
+test("mul", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    10 * 2;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x14");
+});
+
+test("div", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    10 / 2;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x5");
+});
+
+test("mod", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    10 % 3;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x1");
+});
+
+test("pow", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    2 ** 3;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x8");
+});
+
+test("and", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    true && false;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x0");
+});
+
+test("or", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    true || false;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x1");
+});
+
+test("eq", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    10 == 19;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x0");
+});
+
+test("not eq", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    10 != 19;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x1");
+});
+
+test("less", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    10 < 19;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x1");
+});
+
+test("less eq", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    19 <= 19;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x1");
+});
+
+test("more", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    10 > 19;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x0");
+});
+
+test("more eq", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    8 >= 3;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x1");
+});
+
+test("bitwise and", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    6 & 3;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x2");
+});
+
+test("bitwise or", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    6 | 3;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x7");
+});
+
+test("bitwise xor", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    10 ^ 3;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x9");
+});
+
+test("shift left", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    6 << 2;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x18");
+});
+
+test("shift right", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    10 >> 1;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x5");
+});
+
+test("conditional", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    true ? 10 : 8;
+    false ? 10 : 8;
+
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0xa");
+  expect(getStack(result, 1)).toBe("0x8");
 });
 
 test("variable assignment", async () => {
@@ -268,41 +571,4 @@ contract C {
 
   expect(result.exceptionError).toBeUndefined();
   expect(getStack(result)).toBe("0xa");
-});
-
-test.skip("assignment", async () => {
-  const { result } = await getCode(
-    `
-contract C {
-  function run() external {
-    uint256 x;
-    x = 10;
-  }
-}`,
-    toFunctionSelector("function run()"),
-  );
-
-  expect(result.exceptionError).toBeUndefined();
-});
-
-test.skip("function call", async () => {
-  const { result } = await getCode(
-    `
-contract Identity {
-  function identity(uint256 a) external view returns (uint256) {
-    return 10;
-  }
-}
-
-contract C {
-  function run() external {
-    return Identity(0x0000000000000000000000000000000000000004).identity(10);
-  }
-}`,
-    toFunctionSelector("function run()"),
-  );
-
-  expect(result.exceptionError).toBeUndefined();
-
-  expect(bytesToBigint(result.returnValue)).toBe(10n);
 });

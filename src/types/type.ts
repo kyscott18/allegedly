@@ -10,6 +10,7 @@ export namespace Type {
     Tuple,
   }
 
+  // TODO(kyle) repesent literals as a separate type
   export type Elementary<value = Ast.ElementaryType["type"]> = {
     type: disc.Elementary;
     value: value extends value ? Omit<value, "loc"> : never;

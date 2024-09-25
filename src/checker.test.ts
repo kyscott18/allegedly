@@ -2,8 +2,8 @@ import { expect, test } from "bun:test";
 import fs from "node:fs";
 import path from "node:path";
 import {
-  check,
   type CheckContext,
+  check,
   checkExpression,
   checkStatement,
   defaultSymbols,
@@ -83,6 +83,20 @@ test("2333", () => {
 
   expect(error).toBeDefined();
   expect(error!.code).toBe(2333);
+});
+
+test("3149", () => {
+  const error = getError(
+    `
+{
+  uint128(5) ** uint256(10);
+}`,
+    parseBlockStatement,
+    checkStatement,
+  );
+
+  expect(error).toBeDefined();
+  expect(error!.code).toBe(3149);
 });
 
 test("4247", () => {
@@ -206,6 +220,12 @@ test("6160", () => {
   expect(error).toBeDefined();
   expect(error!.code).toBe(6160);
 });
+
+test.todo("6473");
+
+test.todo("6933");
+
+test.todo("7366");
 
 test("7407", () => {
   let error = getError(
