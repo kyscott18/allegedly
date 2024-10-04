@@ -20,13 +20,15 @@ contract GetBalance {
 
 ## [`solc`](https://github.com/ethereum/solidity)
 
-This project is not meant to replace `solc`. Instead, it is smaller, faster, more modular alternative, that produces less efficient and less secure bytecode.
+This project is not meant to replace `solc`. Instead, it is a smaller, faster, more modular alternative, that produces less efficient and less secure bytecode.
 
 ## Supported Language Features
 
 ### Functions
 
-- [x] type conversions
+- [x] `uint{size}()`
+- [x] `int{size}()`
+- [x] `bytes{size}()`
 - [ ] `keccak256()`
 - [ ] `abi.encode()`
 - [ ] `abi.encodePacked()`
@@ -62,32 +64,32 @@ This project is not meant to replace `solc`. Instead, it is smaller, faster, mor
 
 ### Expressions
 
-- [ ] `x++` or `++x`
-- [ ] `x--` or `--x`
-- [ ] `-x`
-- [ ] `delete x`
-- [ ] `!x`
-- [ ] `~x`
-- [ ] `x + y`
-- [ ] `x - y`
-- [ ] `x * y`
-- [ ] `x / y`
-- [ ] `x % y`
-- [ ] `x ** y`
-- [ ] `x && y`
-- [ ] `x || y`
-- [ ] `x == y`
-- [ ] `x != y`
-- [ ] `x < y`
-- [ ] `x <= y`
-- [ ] `x > y`
-- [ ] `x >= y`
-- [ ] `x & y`
-- [ ] `x | y`
-- [ ] `x ^ y`
-- [ ] `x >> y`
-- [ ] `x << y`
-- [ ] `x ? y : z`
+- [x] `x++` or `++x`
+- [x] `x--` or `--x`
+- [x] `-x`
+- [x] `delete x`
+- [x] `!x`
+- [x] `~x`
+- [x] `x + y`
+- [x] `x - y`
+- [x] `x * y`
+- [x] `x / y`
+- [x] `x % y`
+- [x] `x ** y`
+- [x] `x && y`
+- [x] `x || y`
+- [x] `x == y`
+- [x] `x != y`
+- [x] `x < y`
+- [x] `x <= y`
+- [x] `x > y`
+- [x] `x >= y`
+- [x] `x & y`
+- [x] `x | y`
+- [x] `x ^ y`
+- [x] `x >> y`
+- [x] `x << y`
+- [x] `x ? y : z`
 
 ### Errors
 
@@ -104,7 +106,7 @@ This project is not meant to replace `solc`. Instead, it is smaller, faster, mor
 ### Directives
 
 - [ ] `import "file.sol";`
-- [ ] `pragma solidity 0.minor.patch;`
+- [ ] `pragma solidity major.minor.patch;`
 - [ ] `// SPDX-License-Identifier: ...`
 - [ ] `using UserType for {type}`
 
