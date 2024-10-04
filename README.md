@@ -115,3 +115,19 @@ This project is not meant to replace `solc`. Instead, it is smaller, faster, mor
 ### Inheritance
 
 ### Miscellaneous
+
+## Architecture
+
+```mermaid
+graph TD
+  A[source code]
+  B[tokens]
+  C[ast]
+  D[type annotations]
+  E[bytecode + abi]
+  A -- lexer --> B
+  B -- parser --> C
+  C -- checker --> D
+  C -- compiler --> E
+  D -- compiler --> E
+```
