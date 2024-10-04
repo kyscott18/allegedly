@@ -4,13 +4,13 @@
   "version": "0.0.1-alpha.0",
   "module": "src/index.ts",
   "devDependencies": {
-    "@biomejs/biome": "^1.9.1",
-    "@changesets/cli": "^2.27.8",
+    "@biomejs/biome": "^1.9.3",
+    "@changesets/cli": "^2.27.9",
     "@ethereumjs/evm": "^3.1.1",
-    "@size-limit/preset-small-lib": "^11.1.5",
-    "@types/bun": "^1.1.9",
+    "@size-limit/preset-small-lib": "^11.1.6",
+    "@types/bun": "^1.1.10",
     "mitata": "^0.1.14",
-    "size-limit": "^11.1.5"
+    "size-limit": "^11.1.6"
   },
   "peerDependencies": {
     "abitype": "^1.0.6",
