@@ -24,32 +24,84 @@ This project is not meant to replace `solc`. Instead, it is a smaller, faster, m
 
 ## Supported Language Features
 
-### Functions
+### Built-in
 
 - [x] `uint{size}()`
 - [x] `int{size}()`
 - [x] `bytes{size}()`
-- [ ] `keccak256()`
+- [ ] `address()`
+- [ ] `payable()`
+- [ ] `bool()`
+- [ ] `string()`
+- [ ] `bytes()`
 - [ ] `abi.encode()`
 - [ ] `abi.encodePacked()`
+- [ ] `abi.encodeWithSelector()`
+- [ ] `abi.encodeWithSignature()`
+- [ ] `abi.encodeCall()`
+- [ ] `abi.decode()`
+- [ ] `bytes.concat()`
+- [ ] `string.concat()`
+- [ ] `keccak256()`
+- [ ] `sha256()`
+- [ ] `ripemd160()`
+- [ ] `ecrecover()`
+- [ ] `addmod()`
+- [ ] `mulmod()`
+- [ ] `this`
+- [ ] `super`
+- [ ] `selfDestruct()`
+- [ ] `type().name`
+- [ ] `type().creationCode`
+- [ ] `type().runtimeCode`
+- [ ] `type().interfaceId`
+- [ ] `type().min`
+- [ ] `type().max`
+- [ ] `blockHash()`
+- [ ] `blobHash()`
+- [ ] `block.basefee`
+- [ ] `block.blobbasefee`
+- [ ] `block.chainid`
+- [ ] `block.coinbase`
+- [ ] `block.difficulty`
+- [ ] `block.gaslimit`
+- [ ] `block.number`
+- [ ] `block.prevrandao`
+- [ ] `block.timestamp`
+- [ ] `gasleft()`
+- [ ] `msg.data`
+- [ ] `msg.sender`
+- [ ] `msg.sig`
+- [ ] `msg.value`
+- [ ] `tx.gasprice`
+- [ ] `tx.origin`
 
-### Variables
+### Contracts
+
+- [x] `interface I { }`
+- [x] `contract C { }`
+- [ ] `new c()`
+- [ ] `new C{ salt }()`
 
 ### Types
 
-- [ ] `address`
-- [ ] `uint{size}`
-- [ ] `int{size}`
-- [ ] `bytes{size}`
+- [x] `uint{size}`
+- [x] `int{size}`
+- [x] `bytes{size}`
+- [x] `address`
+- [ ] `address payable`
+- [x] `bool`
 - [ ] `string`
 - [ ] `bytes`
-- [ ] `bool`
-- [ ] tuple
-- [ ] struct
-- [ ] enum
-- [ ] mapping
-- [ ] array
-- [ ] user-defined: `type UserType is uint256;`
+- [ ] `struct S { }`
+- [ ] `enum E { }`
+- [ ] `mapping`
+- [ ] `{type}[]` (array type)
+- [x] `Contract c` (contract type)
+- [ ] `type C is V;` (user defined value type)
+- [ ] function type
+- [ ] `ufixedMxN`
+- [ ] `fixedMxN`
 
 ### Statements
 
@@ -61,6 +113,7 @@ This project is not meant to replace `solc`. Instead, it is a smaller, faster, m
 - [ ] `continue`
 - [ ] `return`
 - [ ] `unchecked { }`
+- [ ] `try` / `catch`
 
 ### Expressions
 
@@ -87,13 +140,46 @@ This project is not meant to replace `solc`. Instead, it is a smaller, faster, m
 - [x] `x & y`
 - [x] `x | y`
 - [x] `x ^ y`
-- [x] `x >> y`
 - [x] `x << y`
+- [x] `x >> y`
 - [x] `x ? y : z`
 
-### Errors
+### Variables
 
-### Events
+- [ ] `constant`
+- [ ] `immutable`
+- [ ] `storage`
+- [ ] `memory`
+- [ ] `calldata`
+- [ ] `(x, y) = ...`
+- [ ] `=`
+- [ ] `+=`
+- [ ] `-=`
+- [ ] `*=`
+- [ ] `/=`
+- [ ] `&=`
+- [ ] `|=`
+- [ ] `<<=`
+- [ ] `>>=`
+
+### Functions
+
+- [ ] `fn()`
+- [ ] `fn{ value: }()`
+- [ ] `fn({x: x})`
+- [ ] `pure`
+- [ ] `view`
+- [ ] `payable`
+- [ ] `external`
+- [ ] `public`
+- [ ] `internal`
+- [ ] `private`
+- [ ] `constructor`
+- [ ] `receive`
+- [ ] `fallback`
+- [x] overloading
+- [ ] modifers
+- [ ] return variables
 
 ### Data locations
 
@@ -108,13 +194,60 @@ This project is not meant to replace `solc`. Instead, it is a smaller, faster, m
 - [ ] `import "file.sol";`
 - [ ] `pragma solidity major.minor.patch;`
 - [ ] `// SPDX-License-Identifier: ...`
-- [ ] `using UserType for {type}`
+- [ ] `using UserType for {type};`
+
+### Address
+
+- [ ] `{address}.balance`
+- [ ] `{address}.code`
+- [ ] `{address}.codehash`
+- [ ] `{address}.call()`
+- [ ] `{address}.delegateCall()`
+- [ ] `{address}.staticCall()`
+- [ ] `{address payable}.send()`
+- [ ] `{address payable}.transfer()`
+
+### Arrays
+
+- [ ] `{array}.length`
+- [ ] `{array}.push()`
+- [ ] `{array}.pop()`
+
+### Literals
+
+- [ ] `hex""`
+- [ ] `unicode""`
+
+### Units
+
+- [ ] `wei`
+- [ ] `gwei`
+- [ ] `ether`
+- [ ] `seconds`
+- [ ] `minutes`
+- [ ] `hours`
+- [ ] `days`
+- [ ] `weeks`
+
+### Errors
+
+- [x] `none`
+
+### Events
+
+- [x] `none`
+
+### Modifiers
+
+- [x] `none`
 
 ### Yul
 
-- [ ] `assembly { }`
+- [x] none
 
 ### Inheritance
+
+- [x] none
 
 ### Miscellaneous
 
