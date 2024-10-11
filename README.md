@@ -97,7 +97,7 @@ This project is not meant to replace `solc`. Instead, it is a smaller, faster, m
 - [ ] `enum E { }`
 - [ ] `mapping`
 - [ ] `{type}[]` (array type)
-- [x] `Contract c` (contract type)
+- [ ] `Contract c` (contract type)
 - [ ] `type C is V;` (user defined value type)
 - [ ] function type
 - [ ] `ufixedMxN`
@@ -177,7 +177,7 @@ This project is not meant to replace `solc`. Instead, it is a smaller, faster, m
 - [ ] `constructor`
 - [ ] `receive`
 - [ ] `fallback`
-- [x] overloading
+- [ ] overloading
 - [ ] modifers
 - [ ] return variables
 
