@@ -10,7 +10,8 @@ export namespace Type {
     Tuple,
   }
 
-  // TODO(kyle) repesent literals as a separate type
+  // TODO(kyle) type Literal
+
   export type Elementary<value = Ast.ElementaryType["type"]> = {
     type: disc.Elementary;
     value: value extends value ? Omit<value, "loc"> : never;
@@ -26,7 +27,7 @@ export namespace Type {
 
   export type Contract = {
     type: disc.Contract;
-    functions: [string, Function][];
+    functions: Map<string, Function[]>;
   };
 
   export type Struct = {
@@ -46,22 +47,24 @@ export namespace Type {
     }
 
     if (ast.ast === Ast.disc.ContractDefinition) {
-      return {
-        type: disc.Contract,
-        functions: ast.nodes
-          .filter(
-            (node): node is Ast.FunctionDefinition => node.ast === Ast.disc.FunctionDefinition,
-          )
-          .map((node) => [
-            node.name!.value,
-            {
-              type: disc.Function,
-              parameters: node.parameters.map((param) => convertAst(param.type)),
-              returns: node.returns.map((ret) => convertAst(ret.type)),
-              isTypeConversion: false,
-            },
-          ]),
-      };
+      const functions = new Map<string, Function[]>();
+
+      for (const node of ast.nodes) {
+        if (node.ast === Ast.disc.FunctionDefinition) {
+          if (functions.has(node.name!.value) === false) {
+            functions.set(node.name!.value, []);
+          }
+
+          functions.get(node.name!.value)!.push({
+            type: disc.Function,
+            parameters: node.parameters.map((param) => convertAst(param.type)),
+            returns: node.returns.map((ret) => convertAst(ret.type)),
+            isTypeConversion: false,
+          });
+        }
+      }
+
+      return { type: disc.Contract, functions };
     }
 
     throw new Error("bad");

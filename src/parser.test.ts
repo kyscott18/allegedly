@@ -528,6 +528,12 @@ test("mapping type", () => {
   expect(nested.valueType.ast).toBe(Ast.disc.Mapping);
 });
 
+test("user defined type", () => {
+  const userDefined = getAst("Erc20 c", parseType) as Ast.UserDefinedType;
+
+  expect(userDefined.ast).toBe(Ast.disc.UserDefinedType);
+});
+
 // definitions
 
 test("variable definition", () => {

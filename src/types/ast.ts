@@ -31,6 +31,7 @@ export namespace Ast {
     ElementaryType,
     ArrayType,
     Mapping,
+    UserDefinedType,
     VariableDefinition,
     VariableDeclaration,
     Parameter,
@@ -76,8 +77,8 @@ export namespace Ast {
       | Token.BitwiseAndAssign
       | Token.BitwiseOrAssign
       | Token.BitwiseXOrAssign
-      | Token.ShiftRightAssign
-      | Token.ShiftLeftAssign;
+      | Token.ShiftLeftAssign
+      | Token.ShiftRightAssign;
     left: Expression;
     right: Expression;
   };
@@ -287,6 +288,12 @@ export namespace Ast {
     valueName: Token.Identifier | undefined;
   };
 
+  export type UserDefinedType = {
+    ast: disc.UserDefinedType;
+    loc: SourceLocation;
+    type: Token.Identifier;
+  };
+
   // defintions
 
   /**
@@ -409,6 +416,8 @@ export namespace Ast {
     | NewExpression
     | TupleExpression;
 
+  // TODO(kyle) PrimaryExpression
+
   export type Statement =
     | VariableDeclaration
     | ExpressionStatement
@@ -425,7 +434,7 @@ export namespace Ast {
     | ReturnStatement
     | PlaceholderStatement;
 
-  export type Type = ElementaryType | ArrayType | Mapping;
+  export type Type = ElementaryType | ArrayType | Mapping | UserDefinedType;
 
   export type Definition =
     | VariableDefintion

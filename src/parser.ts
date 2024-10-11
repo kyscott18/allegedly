@@ -502,10 +502,10 @@ export const parseStatement = (context: ParseContext): Ast.Statement => {
     case Token.disc.OpenParenthesis: {
       const index = context.tokenIndex;
       try {
-        return parseVariableDeclaration(context);
+        return parseExpressionStatement(context);
       } catch {
         context.tokenIndex = index;
-        return parseExpressionStatement(context);
+        return parseVariableDeclaration(context);
       }
     }
 
@@ -549,8 +549,15 @@ export const parseStatement = (context: ParseContext): Ast.Statement => {
     case undefined:
       throw new EOFError();
 
-    default:
-      return parseExpressionStatement(context);
+    default: {
+      const index = context.tokenIndex;
+      try {
+        return parseExpressionStatement(context);
+      } catch {
+        context.tokenIndex = index;
+        return parseVariableDeclaration(context);
+      }
+    }
   }
 };
 
@@ -1211,8 +1218,19 @@ export const parseType = (context: ParseContext): Ast.Type => {
     return parseArrayType(context);
   } catch {
     context.tokenIndex = index;
-    return parseElementaryType(context);
+    try {
+      return parseElementaryType(context);
+    } catch {
+      context.tokenIndex = index;
+      try {
+        return parseUserDefinedType(context);
+      } catch {
+        context.tokenIndex = index;
+      }
+    }
   }
+
+  throw new UnexpectTokenError({ source: context.source, token: peek(context)! });
 };
 
 export const parseElementaryType = (context: ParseContext): Ast.ElementaryType => {
@@ -1299,6 +1317,21 @@ export const parseMapping = (context: ParseContext): Ast.Mapping => {
     valueType,
     valueName,
   };
+};
+
+export const parseUserDefinedType = (context: ParseContext): Ast.UserDefinedType => {
+  const start = context.tokenIndex;
+  const token = next(context);
+
+  if (token.token === Token.disc.Identifier) {
+    return {
+      ast: Ast.disc.UserDefinedType,
+      loc: toLoc(context, start, context.tokenIndex),
+      type: token,
+    };
+  }
+
+  throw new UnexpectTokenError({ source: context.source, token: token! });
 };
 
 export const parsePragmentDirective = (context: ParseContext): Ast.PragmaDirective => {

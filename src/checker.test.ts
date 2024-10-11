@@ -6,6 +6,7 @@ import {
   check,
   checkExpression,
   checkStatement,
+  defaultFunctionSymbols,
   defaultSymbols,
 } from "./checker";
 import type { TypeError } from "./errors/type";
@@ -22,7 +23,14 @@ const getError = <ast extends Ast.Statement | Ast.Definition | Ast.Expression>(
     const tokens = tokenize(source);
 
     checker(
-      { source, symbols: [defaultSymbols], annotations: new Map(), isContractScope: false },
+      {
+        source,
+        symbols: [defaultSymbols],
+        functionSymbols: [defaultFunctionSymbols],
+        annotations: new Map(),
+        arguments: new Map(),
+        isContractScope: false,
+      },
       parser({ source, tokens, tokenIndex: 0 }),
     );
 
@@ -43,6 +51,8 @@ test("no 1080", () => {
   const error = getError("true ? 10 : 8", parseExpression, checkExpression);
   expect(error).toBeUndefined();
 });
+
+test.todo("1686");
 
 test("2271", () => {
   let error = getError("10 + true", parseExpression, checkExpression);
@@ -84,6 +94,8 @@ test("2333", () => {
   expect(error).toBeDefined();
   expect(error!.code).toBe(2333);
 });
+
+test.todo("2558");
 
 test("3149", () => {
   const error = getError(
