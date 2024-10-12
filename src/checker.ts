@@ -1,3 +1,5 @@
+import { type Hex, checksumAddress, size } from "viem";
+import { compileLiteral } from "./compiler";
 import { InvariantViolationError } from "./errors/invariantViolation";
 import { NotImplementedError } from "./errors/notImplemented";
 import { TypeError } from "./errors/type";
@@ -267,8 +269,6 @@ const resolveFunctionSymbol = (
     }
   }
 
-  console.log(symbol, argumentTypes);
-
   throw new TypeError("Undeclared identifier", 7576);
 };
 
@@ -453,54 +453,9 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       return resolveSymbol(context, expression.token.value);
     }
 
-    case Ast.disc.Literal:
-      switch (expression.token.token) {
-        case Token.disc.AddressLiteral:
-          return {
-            type: Type.disc.Elementary,
-            value: { token: Token.disc.Address },
-            isLiteral: true,
-          };
-
-        case Token.disc.StringLiteral:
-          return {
-            type: Type.disc.Elementary,
-            value: { token: Token.disc.String },
-            isLiteral: true,
-          };
-
-        case Token.disc.HexLiteral:
-          return {
-            type: Type.disc.Elementary,
-            value: { token: Token.disc.Bytes },
-            isLiteral: true,
-          };
-
-        case Token.disc.NumberLiteral:
-          return {
-            type: Type.disc.Elementary,
-            value: { token: Token.disc.Uint, size: 256 },
-            isLiteral: true,
-          };
-
-        case Token.disc.HexNumberLiteral:
-          return {
-            type: Type.disc.Elementary,
-            value: { token: Token.disc.Uint, size: 256 },
-            isLiteral: true,
-          };
-
-        case Token.disc.BoolLiteral:
-          return {
-            type: Type.disc.Elementary,
-            value: { token: Token.disc.Bool },
-            isLiteral: true,
-          };
-
-        default:
-          never(expression.token);
-      }
-      break;
+    case Ast.disc.Literal: {
+      return { type: Type.disc.Literal, value: expression.token };
+    }
 
     case Ast.disc.Assignment: {
       const left = checkExpression(context, expression.left);
@@ -514,7 +469,7 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             throw new TypeError("Expression has to be an lvalue", 4247);
           }
 
-          if (isImplicitlyConvertibleTo(left, right) === false) {
+          if (isImplicitlyConvertibleTo(right, left) === false) {
             throw new TypeError(
               `Type ${left} is not implicitly convertible to expected type ${right}`,
               7407,
@@ -616,8 +571,8 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
     }
 
     case Ast.disc.UnaryOperation: {
-      const _expression = checkExpression(context, expression.expression);
-      context.annotations.set(expression.expression, _expression);
+      const expressionType = checkExpression(context, expression.expression);
+      context.annotations.set(expression.expression, expressionType);
 
       switch (expression.operator.token) {
         case Token.disc.Increment:
@@ -627,10 +582,9 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
           }
 
           if (
-            _expression.type !== Type.disc.Elementary ||
-            (_expression.value.token !== Token.disc.Uint &&
-              _expression.value.token !== Token.disc.Int) ||
-            _expression.isLiteral
+            expressionType.type !== Type.disc.Elementary ||
+            (expressionType.value.token !== Token.disc.Uint &&
+              expressionType.value.token !== Token.disc.Int)
           ) {
             throw new TypeError("Built-in unary operator ++ cannot be applied to type ${}", 9767);
           }
@@ -638,20 +592,20 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 
         case Token.disc.Subtract: {
           if (
-            _expression.type !== Type.disc.Elementary ||
-            // TODO(kyle) allow uint literals
-            (_expression.value.token !== Token.disc.Int && _expression.isLiteral === false)
+            (expressionType.type !== Type.disc.Elementary ||
+              expressionType.value.token !== Token.disc.Int) &&
+            (expressionType.type !== Type.disc.Literal ||
+              expressionType.value.token !== Token.disc.NumberLiteral)
           ) {
             throw new TypeError(
-              `Built-in unary operator ${expression.operator} cannot be applied to type ${_expression}`,
+              `Built-in unary operator ${expression.operator} cannot be applied to type ${expressionType}`,
               4907,
             );
           }
 
           return {
             type: Type.disc.Elementary,
-            isLiteral: _expression.isLiteral,
-            value: Type.staticIntSize(_expression.type).value,
+            value: Type.staticIntSize(expressionType.type).value,
           };
         }
 
@@ -660,14 +614,13 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             throw new TypeError("Expression has to be an lvalue", 4247);
           }
 
-          if (_expression.type !== Type.disc.Elementary || _expression.isLiteral) {
+          if (expressionType.type !== Type.disc.Elementary) {
             throw new TypeError(
               "Built-in unary operator delete cannot be applied to type ${}",
               9767,
             );
           }
 
-          // TODO(kyle) is there a way to represent this differently?
           return {
             type: Type.disc.Tuple,
             elements: [],
@@ -676,8 +629,8 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 
         case Token.disc.Not: {
           if (
-            _expression.type !== Type.disc.Elementary ||
-            _expression.value.token !== Token.disc.Bool
+            expressionType.type !== Type.disc.Elementary ||
+            expressionType.value.token !== Token.disc.Bool
           ) {
             throw new TypeError("Built-in unary operator ! cannot be applied to type ${}", 4907);
           }
@@ -686,10 +639,10 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 
         case Token.disc.BitwiseNot:
           if (
-            _expression.type !== Type.disc.Elementary ||
-            (_expression.value.token !== Token.disc.Uint &&
-              _expression.value.token !== Token.disc.Int &&
-              _expression.value.token !== Token.disc.Byte)
+            expressionType.type !== Type.disc.Elementary ||
+            (expressionType.value.token !== Token.disc.Uint &&
+              expressionType.value.token !== Token.disc.Int &&
+              expressionType.value.token !== Token.disc.Byte)
           ) {
             throw new TypeError("Built-in unary operator ~ cannot be applied to type ${}", 4907);
           }
@@ -701,7 +654,7 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
           throw new InvariantViolationError();
       }
 
-      return _expression;
+      return expressionType;
     }
 
     case Ast.disc.BinaryOperation: {
@@ -715,12 +668,12 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         case Token.disc.Subtract:
         case Token.disc.Mul:
         case Token.disc.Divide: {
+          const commonType = getCommonType(left, right);
           if (
-            left.type !== Type.disc.Elementary ||
-            right.type !== Type.disc.Elementary ||
-            (left.value.token !== Token.disc.Uint && left.value.token !== Token.disc.Int) ||
-            (right.value.token !== Token.disc.Uint && right.value.token !== Token.disc.Int) ||
-            left.value.token !== right.value.token
+            commonType === undefined ||
+            commonType.type !== Type.disc.Elementary ||
+            (commonType.value.token !== Token.disc.Uint &&
+              commonType.value.token !== Token.disc.Int)
           ) {
             throw new TypeError(
               `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
@@ -728,22 +681,16 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             );
           }
 
-          return {
-            type: Type.disc.Elementary,
-            value: {
-              token: left.value.token,
-              size: Math.max(left.value.size, right.value.size),
-            },
-            isLiteral: false,
-          };
+          return commonType;
         }
 
         case Token.disc.Modulo: {
+          const commonType = getCommonType(left, right);
           if (
-            left.type !== Type.disc.Elementary ||
-            right.type !== Type.disc.Elementary ||
-            (left.value.token !== Token.disc.Uint && left.value.token !== Token.disc.Int) ||
-            (right.value.token !== Token.disc.Uint && right.value.token !== Token.disc.Int)
+            commonType === undefined ||
+            commonType.type !== Type.disc.Elementary ||
+            (commonType.value.token !== Token.disc.Uint &&
+              commonType.value.token !== Token.disc.Int)
           ) {
             throw new TypeError(
               `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
@@ -752,23 +699,27 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
           }
 
           const isSigned =
-            left.value.token === Token.disc.Int || right.value.token === Token.disc.Int;
+            (left.type === Type.disc.Elementary && left.value.token === Token.disc.Int) ||
+            (right.type === Type.disc.Elementary && right.value.token === Token.disc.Int);
           return {
             type: Type.disc.Elementary,
             value: {
               token: isSigned ? Token.disc.Int : Token.disc.Uint,
-              size: Math.max(left.value.size, right.value.size),
+              size: commonType.value.size,
             },
-            isLiteral: false,
           };
         }
 
         case Token.disc.Power: {
+          const weakLeft =
+            left.type === Type.disc.Literal ? convertLiteralToElementary(left) : left;
+          const weakRight =
+            right.type === Type.disc.Literal ? convertLiteralToElementary(right) : right;
           if (
-            left.type !== Type.disc.Elementary ||
-            right.type !== Type.disc.Elementary ||
-            (left.value.token !== Token.disc.Uint && left.value.token !== Token.disc.Int) ||
-            right.value.token !== Token.disc.Uint
+            weakLeft.type !== Type.disc.Elementary ||
+            weakRight.type !== Type.disc.Elementary ||
+            (weakLeft.value.token !== Token.disc.Uint && weakLeft.value.token !== Token.disc.Int) ||
+            weakRight.value.token !== Token.disc.Uint
           ) {
             throw new TypeError(
               `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
@@ -776,7 +727,7 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             );
           }
 
-          if (left.value.size < right.value.size && right.isLiteral === false) {
+          if (weakLeft.value.size < weakRight.value.size) {
             throw new TypeError(
               `The result type of the exponentiation operation is equal to the type of the first operand (${left.type}) ignoring the (larger) type of the second operand (${right.type}) which might be unexpected. Silence this warning by either converting the first or the second operand to the type of the other.`,
               3149,
@@ -785,18 +736,21 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 
           return {
             type: Type.disc.Elementary,
-            value: left.value,
-            isLiteral: false,
+            value: weakLeft.value,
           };
         }
 
         case Token.disc.And:
         case Token.disc.Or: {
+          const weakLeft =
+            left.type === Type.disc.Literal ? convertLiteralToElementary(left) : left;
+          const weakRight =
+            right.type === Type.disc.Literal ? convertLiteralToElementary(right) : right;
           if (
-            left.type !== Type.disc.Elementary ||
-            right.type !== Type.disc.Elementary ||
-            left.value.token !== Token.disc.Bool ||
-            right.value.token !== Token.disc.Bool
+            weakLeft.type !== Type.disc.Elementary ||
+            weakRight.type !== Type.disc.Elementary ||
+            weakLeft.value.token !== Token.disc.Bool ||
+            weakRight.value.token !== Token.disc.Bool
           ) {
             throw new TypeError(
               `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
@@ -809,14 +763,18 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 
         case Token.disc.Equal:
         case Token.disc.NotEqual: {
+          const weakLeft =
+            left.type === Type.disc.Literal ? convertLiteralToElementary(left) : left;
+          const weakRight =
+            right.type === Type.disc.Literal ? convertLiteralToElementary(right) : right;
           if (
-            left.type !== Type.disc.Elementary ||
-            right.type !== Type.disc.Elementary ||
-            left.value.token === Token.disc.String ||
-            left.value.token === Token.disc.Bytes ||
-            right.value.token === Token.disc.String ||
-            right.value.token === Token.disc.Bytes ||
-            left.value.token !== right.value.token
+            weakLeft.type !== Type.disc.Elementary ||
+            weakRight.type !== Type.disc.Elementary ||
+            weakLeft.value.token === Token.disc.String ||
+            weakLeft.value.token === Token.disc.Bytes ||
+            weakRight.value.token === Token.disc.String ||
+            weakRight.value.token === Token.disc.Bytes ||
+            weakLeft.value.token !== weakRight.value.token
           ) {
             throw new TypeError(
               `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
@@ -831,16 +789,20 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         case Token.disc.LessEqual:
         case Token.disc.More:
         case Token.disc.MoreEqual: {
+          const weakLeft =
+            left.type === Type.disc.Literal ? convertLiteralToElementary(left) : left;
+          const weakRight =
+            right.type === Type.disc.Literal ? convertLiteralToElementary(right) : right;
           if (
-            left.type !== Type.disc.Elementary ||
-            right.type !== Type.disc.Elementary ||
-            left.value.token === Token.disc.String ||
-            left.value.token === Token.disc.Bytes ||
-            left.value.token === Token.disc.Bool ||
-            right.value.token === Token.disc.String ||
-            right.value.token === Token.disc.Bytes ||
-            right.value.token === Token.disc.Bool ||
-            left.value.token !== right.value.token
+            weakLeft.type !== Type.disc.Elementary ||
+            weakRight.type !== Type.disc.Elementary ||
+            weakLeft.value.token === Token.disc.String ||
+            weakLeft.value.token === Token.disc.Bytes ||
+            weakLeft.value.token === Token.disc.Bool ||
+            weakRight.value.token === Token.disc.String ||
+            weakRight.value.token === Token.disc.Bytes ||
+            weakRight.value.token === Token.disc.Bool ||
+            weakLeft.value.token !== weakRight.value.token
           ) {
             throw new TypeError(
               `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
@@ -854,16 +816,20 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         case Token.disc.BitwiseAnd:
         case Token.disc.BitwiseOr:
         case Token.disc.BitwiseXOr: {
+          const weakLeft =
+            left.type === Type.disc.Literal ? convertLiteralToElementary(left) : left;
+          const weakRight =
+            right.type === Type.disc.Literal ? convertLiteralToElementary(right) : right;
           if (
-            left.type !== Type.disc.Elementary ||
-            right.type !== Type.disc.Elementary ||
-            (left.value.token !== Token.disc.Uint &&
-              left.value.token !== Token.disc.Int &&
-              left.value.token !== Token.disc.Byte) ||
-            (right.value.token !== Token.disc.Uint &&
-              right.value.token !== Token.disc.Int &&
-              right.value.token !== Token.disc.Byte) ||
-            left.value.token !== right.value.token
+            weakLeft.type !== Type.disc.Elementary ||
+            weakRight.type !== Type.disc.Elementary ||
+            (weakLeft.value.token !== Token.disc.Uint &&
+              weakLeft.value.token !== Token.disc.Int &&
+              weakLeft.value.token !== Token.disc.Byte) ||
+            (weakRight.value.token !== Token.disc.Uint &&
+              weakRight.value.token !== Token.disc.Int &&
+              weakRight.value.token !== Token.disc.Byte) ||
+            weakLeft.value.token !== weakRight.value.token
           ) {
             throw new TypeError(
               `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
@@ -871,21 +837,25 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             );
           }
 
-          return left;
+          return weakLeft;
         }
 
         case Token.disc.ShiftRight:
         case Token.disc.ShiftLeft: {
+          const weakLeft =
+            left.type === Type.disc.Literal ? convertLiteralToElementary(left) : left;
+          const weakRight =
+            right.type === Type.disc.Literal ? convertLiteralToElementary(right) : right;
           if (
-            left.type !== Type.disc.Elementary ||
-            right.type !== Type.disc.Elementary ||
-            (left.value.token !== Token.disc.Uint &&
-              left.value.token !== Token.disc.Int &&
-              left.value.token !== Token.disc.Byte) ||
-            (right.value.token !== Token.disc.Uint &&
-              right.value.token !== Token.disc.Int &&
-              right.value.token !== Token.disc.Byte) ||
-            left.value.token !== right.value.token
+            weakLeft.type !== Type.disc.Elementary ||
+            weakRight.type !== Type.disc.Elementary ||
+            (weakLeft.value.token !== Token.disc.Uint &&
+              weakLeft.value.token !== Token.disc.Int &&
+              weakLeft.value.token !== Token.disc.Byte) ||
+            (weakRight.value.token !== Token.disc.Uint &&
+              weakRight.value.token !== Token.disc.Int &&
+              weakRight.value.token !== Token.disc.Byte) ||
+            weakLeft.value.token !== weakRight.value.token
           ) {
             throw new TypeError(
               `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
@@ -893,7 +863,7 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             );
           }
 
-          return left;
+          return weakLeft;
         }
 
         default:
@@ -914,7 +884,6 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         isImplicitlyConvertibleTo(condition, {
           type: Type.disc.Elementary,
           value: { token: Token.disc.Bool },
-          isLiteral: false,
         }) === false
       ) {
         throw new TypeError(
@@ -922,14 +891,17 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
           7407,
         );
       }
-      if (isImplicitlyConvertibleTo(trueExpression, falseExpression) === false) {
+
+      const commonType = getCommonType(trueExpression, falseExpression);
+
+      if (commonType === undefined) {
         throw new TypeError(
           `True expressions's type ${trueExpression} does not match false expressions type ${falseExpression}`,
           1080,
         );
       }
 
-      return trueExpression;
+      return commonType;
     }
 
     case Ast.disc.FunctionCallExpression: {
@@ -1148,6 +1120,66 @@ const isExplicitlyConvertibleTo = (from: Type.Type, to: Type.Type): boolean => {
 };
 
 const isImplicitlyConvertibleTo = (from: Type.Type, to: Type.Type): boolean => {
+  if (from.type === Type.disc.Literal && to.type === Type.disc.Elementary) {
+    // literal to bool
+    if (from.value.token === Token.disc.BoolLiteral && to.value.token === Token.disc.Bool) {
+      return true;
+    }
+
+    // literal to integer
+    // see: https://docs.soliditylang.org/en/v0.8.28/types.html#integer-types
+
+    if (
+      (from.value.token === Token.disc.NumberLiteral ||
+        from.value.token === Token.disc.HexNumberLiteral) &&
+      (to.value.token === Token.disc.Uint || to.value.token === Token.disc.Int) &&
+      size(compileLiteral(from.value)) <= to.value.size / 8
+    ) {
+      return true;
+    }
+
+    // literal to fixed bytes
+    // see: https://docs.soliditylang.org/en/v0.8.28/types.html#index-34
+
+    if (
+      from.value.token === Token.disc.HexNumberLiteral &&
+      to.value.token === Token.disc.Byte &&
+      size(from.value.value as Hex) === to.value.size
+    ) {
+      return true;
+    }
+
+    // exception for zero
+    if (
+      from.value.token === Token.disc.NumberLiteral &&
+      to.value.token === Token.disc.Byte &&
+      from.value.value === "0"
+    ) {
+      return true;
+    }
+
+    // exception for zero
+    if (
+      from.value.token === Token.disc.HexNumberLiteral &&
+      to.value.token === Token.disc.Byte &&
+      from.value.value === "0x0"
+    ) {
+      return true;
+    }
+
+    // literal to address
+    // see: https://docs.soliditylang.org/en/v0.8.28/types.html#addresses
+
+    if (
+      from.value.token === Token.disc.HexNumberLiteral &&
+      to.value.token === Token.disc.Address &&
+      size(from.value.value as Hex) === 20 &&
+      checksumAddress(from.value.value as Hex) === from.value.value
+    ) {
+      return true;
+    }
+  }
+
   if (from.type === Type.disc.Elementary && to.type === Type.disc.Elementary) {
     if (isElementaryTypeEqual(from, to)) return true;
 
@@ -1159,15 +1191,6 @@ const isImplicitlyConvertibleTo = (from: Type.Type, to: Type.Type): boolean => {
       (from.value.token === Token.disc.Int &&
         to.value.token === Token.disc.Int &&
         from.value.size <= to.value.size)
-    ) {
-      return true;
-    }
-
-    // integer literal
-    if (
-      from.value.token === Token.disc.Uint &&
-      from.isLiteral &&
-      (to.value.token === Token.disc.Uint || to.value.token === Token.disc.Int)
     ) {
       return true;
     }
@@ -1192,6 +1215,44 @@ const isImplicitlyConvertibleTo = (from: Type.Type, to: Type.Type): boolean => {
   }
 
   return false;
+};
+
+const convertLiteralToElementary = (type: Type.Literal): Type.Elementary => {
+  switch (type.value.token) {
+    case Token.disc.NumberLiteral:
+    case Token.disc.HexNumberLiteral: {
+      const bytes = size(compileLiteral(type.value));
+
+      if (bytes === 20 && checksumAddress(type.value.value as Hex) === type.value.value) {
+        return Type.staticAddress;
+      }
+
+      return Type.staticUintSize(size(compileLiteral(type.value)) * 8);
+    }
+
+    case Token.disc.BoolLiteral: {
+      return Type.staticBool;
+    }
+
+    case Token.disc.HexLiteral:
+    case Token.disc.StringLiteral:
+      throw new InvariantViolationError();
+  }
+};
+
+const getCommonType = (a: Type.Type, b: Type.Type): Type.Type | undefined => {
+  const weakA = a.type === Type.disc.Literal ? convertLiteralToElementary(a) : a;
+  const weakB = b.type === Type.disc.Literal ? convertLiteralToElementary(b) : b;
+
+  if (isImplicitlyConvertibleTo(weakB, weakA)) {
+    return weakA;
+  }
+
+  if (isImplicitlyConvertibleTo(weakA, weakB)) {
+    weakB;
+  }
+
+  return undefined;
 };
 
 const isElementaryTypeEqual = (a: Type.Elementary, b: Type.Elementary): boolean => {

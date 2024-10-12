@@ -163,12 +163,8 @@ const getBits = (context: CompileBytecodeContext, node: Ast.BinaryOperation) => 
   return type.value.token === Token.disc.Byte ? type.value.size * 8 : type.value.size;
 };
 
-const compileLiteral = (value: Ast.Literal["token"]): Hex => {
+export const compileLiteral = (value: Omit<Ast.Literal["token"], "loc">): Hex => {
   switch (value.token) {
-    case Token.disc.AddressLiteral: {
-      return value.value as Hex;
-    }
-
     case Token.disc.NumberLiteral: {
       return toHex(BigInt(value.value));
     }

@@ -599,19 +599,11 @@ export const tokenize = (source: string): Token.Token[] => {
           }
         }
 
-        if (length === 42) {
-          tokens.push({
-            token: Token.disc.AddressLiteral,
-            loc: toLoc(start, length),
-            value: source.substring(cursor.position - length, cursor.position),
-          });
-        } else {
-          tokens.push({
-            token: Token.disc.HexNumberLiteral,
-            loc: toLoc(start, length),
-            value: source.substring(cursor.position - length, cursor.position),
-          });
-        }
+        tokens.push({
+          token: Token.disc.HexNumberLiteral,
+          loc: toLoc(start, length),
+          value: source.substring(cursor.position - length, cursor.position),
+        });
       } else {
         let length = 1;
         for (const char of cursor) {

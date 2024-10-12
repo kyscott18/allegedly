@@ -57,7 +57,6 @@ export namespace Ast {
     loc: SourceLocation;
     token:
       | Token.StringLiteral
-      | Token.AddressLiteral
       | Token.HexLiteral
       | Token.NumberLiteral
       | Token.HexNumberLiteral

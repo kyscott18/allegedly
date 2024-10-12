@@ -162,7 +162,6 @@ export namespace Token {
   // literals
 
   export type StringLiteral = { token: disc.StringLiteral; loc: SourceLocation; value: string };
-  export type AddressLiteral = { token: disc.AddressLiteral; loc: SourceLocation; value: string };
   export type HexLiteral = { token: disc.HexLiteral; loc: SourceLocation; value: string };
   export type NumberLiteral = { token: disc.NumberLiteral; loc: SourceLocation; value: string };
   export type HexNumberLiteral = {
@@ -375,7 +374,6 @@ export namespace Token {
   export type Token =
     | Identifier
     | StringLiteral
-    | AddressLiteral
     | HexLiteral
     | NumberLiteral
     | HexNumberLiteral

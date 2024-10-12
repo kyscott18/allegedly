@@ -894,7 +894,6 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
   let left: Ast.Expression | undefined;
   switch (token.token) {
     case Token.disc.StringLiteral:
-    case Token.disc.AddressLiteral:
     case Token.disc.HexLiteral:
     case Token.disc.NumberLiteral:
     case Token.disc.HexNumberLiteral:

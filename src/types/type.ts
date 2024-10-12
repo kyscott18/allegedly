@@ -3,6 +3,7 @@ import { Token } from "./token";
 
 export namespace Type {
   export enum disc {
+    Literal,
     Elementary,
     Function,
     Contract,
@@ -10,12 +11,14 @@ export namespace Type {
     Tuple,
   }
 
-  // TODO(kyle) type Literal
+  export type Literal = {
+    type: disc.Literal;
+    value: Omit<Ast.Literal["token"], "loc">;
+  };
 
   export type Elementary<value = Ast.ElementaryType["type"]> = {
     type: disc.Elementary;
     value: value extends value ? Omit<value, "loc"> : never;
-    isLiteral: boolean;
   };
 
   export type Function = {
@@ -43,7 +46,7 @@ export namespace Type {
   /** Convert `Ast.Type | Ast.ContractDefinition` to `Type.Type` */
   export const convertAst = (ast: Ast.Type | Ast.ContractDefinition): Type => {
     if (ast.ast === Ast.disc.ElementaryType) {
-      return { type: disc.Elementary, value: ast.type, isLiteral: false };
+      return { type: disc.Elementary, value: ast.type };
     }
 
     if (ast.ast === Ast.disc.ContractDefinition) {
@@ -79,46 +82,39 @@ export namespace Type {
   export const staticAddress = {
     type: disc.Elementary,
     value: { token: Token.disc.Address },
-    isLiteral: false,
   } satisfies Elementary;
 
   export const staticString = {
     type: disc.Elementary,
     value: { token: Token.disc.String },
-    isLiteral: false,
   } satisfies Elementary;
 
   export const staticBytes = {
     type: disc.Elementary,
     value: { token: Token.disc.Bytes },
-    isLiteral: false,
   } satisfies Elementary;
 
   export const staticBool = {
     type: disc.Elementary,
     value: { token: Token.disc.Bool },
-    isLiteral: false,
   } satisfies Elementary;
 
   export const staticUintSize = (size: number) =>
     ({
       type: disc.Elementary,
       value: { token: Token.disc.Uint, size },
-      isLiteral: false,
     }) satisfies Elementary;
 
   export const staticIntSize = (size: number) =>
     ({
       type: disc.Elementary,
       value: { token: Token.disc.Int, size },
-      isLiteral: false,
     }) satisfies Elementary;
 
   export const staticBytesSize = (size: number) =>
     ({
       type: disc.Elementary,
       value: { token: Token.disc.Byte, size },
-      isLiteral: false,
     }) satisfies Elementary;
 
   export const conversion = (type: Elementary): Function => {
@@ -130,5 +126,5 @@ export namespace Type {
     };
   };
 
-  export type Type = Elementary | Function | Contract | Struct | Tuple;
+  export type Type = Literal | Elementary | Function | Contract | Struct | Tuple;
 }

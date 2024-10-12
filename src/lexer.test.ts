@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
+import { readdirSync } from "node:fs";
 import path from "node:path";
 import { tokenize } from "./lexer";
 import { Token } from "./types/token";
-import { readdirSync } from "node:fs";
 
 test("symbol", () => {
   const tokens = tokenize(".++");
@@ -48,16 +48,6 @@ test("hex number literal", () => {
   expect(tokens).toHaveLength(1);
   expect(tokens[0]?.token).toBe(Token.disc.HexNumberLiteral);
   expect((tokens[0] as Token.HexNumberLiteral)?.value).toBe("0xffff");
-});
-
-test("address literal", () => {
-  const tokens = tokenize("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
-
-  expect(tokens).toHaveLength(1);
-  expect(tokens[0]?.token).toBe(Token.disc.AddressLiteral);
-  expect((tokens[0] as Token.AddressLiteral)?.value).toBe(
-    "0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5",
-  );
 });
 
 test("empty", () => {
