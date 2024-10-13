@@ -1024,6 +1024,8 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 };
 
 const isExplicitlyConvertibleTo = (from: Type.Type, to: Type.Type): boolean => {
+  // TODO(kyle) determine when to use "weak" types for literals
+
   if (isImplicitlyConvertibleTo(from, to)) return true;
 
   if (from.type === Type.disc.Elementary && to.type === Type.disc.Elementary) {
@@ -1091,6 +1093,22 @@ const isExplicitlyConvertibleTo = (from: Type.Type, to: Type.Type): boolean => {
       from.value.token === Token.disc.Address &&
       to.value.token === Token.disc.Byte &&
       to.value.size === 20
+    ) {
+      return true;
+    }
+
+    // integer to bool
+    if (
+      (from.value.token === Token.disc.Uint || from.value.token === Token.disc.Int) &&
+      to.value.token === Token.disc.Bool
+    ) {
+      return true;
+    }
+
+    // bool to integer
+    if (
+      from.value.token === Token.disc.Bool &&
+      (to.value.token === Token.disc.Uint || to.value.token === Token.disc.Int)
     ) {
       return true;
     }

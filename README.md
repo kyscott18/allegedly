@@ -29,9 +29,9 @@ This project is not meant to replace `solc`. Instead, it is a smaller, faster, m
 - [x] `uint{size}()`
 - [x] `int{size}()`
 - [x] `bytes{size}()`
-- [ ] `address()`
+- [x] `address()`
 - [ ] `payable()`
-- [ ] `bool()`
+- [x] `bool()`
 - [ ] `string()`
 - [ ] `bytes()`
 - [ ] `abi.encode()`
