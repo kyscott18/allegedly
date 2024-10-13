@@ -574,6 +574,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       const expressionType = checkExpression(context, expression.expression);
       context.annotations.set(expression.expression, expressionType);
 
+      const weakType =
+        expressionType.type === Type.disc.Literal
+          ? convertLiteralToElementary(expressionType)
+          : expressionType;
+
       switch (expression.operator.token) {
         case Token.disc.Increment:
         case Token.disc.Decrement:
@@ -592,10 +597,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 
         case Token.disc.Subtract: {
           if (
-            (expressionType.type !== Type.disc.Elementary ||
-              expressionType.value.token !== Token.disc.Int) &&
-            (expressionType.type !== Type.disc.Literal ||
-              expressionType.value.token !== Token.disc.NumberLiteral)
+            (weakType.type !== Type.disc.Elementary || weakType.value.token !== Token.disc.Int) &&
+            (weakType.type !== Type.disc.Elementary ||
+              (weakType.value.token !== Token.disc.Uint &&
+                weakType.value.token !== Token.disc.Int) ||
+              expressionType.type !== Type.disc.Literal)
           ) {
             throw new TypeError(
               `Built-in unary operator ${expression.operator} cannot be applied to type ${expressionType}`,
@@ -605,7 +611,7 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 
           return {
             type: Type.disc.Elementary,
-            value: Type.staticIntSize(expressionType.type).value,
+            value: Type.staticIntSize(weakType.value.size).value,
           };
         }
 
@@ -628,21 +634,19 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         }
 
         case Token.disc.Not: {
-          if (
-            expressionType.type !== Type.disc.Elementary ||
-            expressionType.value.token !== Token.disc.Bool
-          ) {
+          if (weakType.type !== Type.disc.Elementary || weakType.value.token !== Token.disc.Bool) {
             throw new TypeError("Built-in unary operator ! cannot be applied to type ${}", 4907);
           }
-          break;
+
+          return weakType;
         }
 
         case Token.disc.BitwiseNot:
           if (
-            expressionType.type !== Type.disc.Elementary ||
-            (expressionType.value.token !== Token.disc.Uint &&
-              expressionType.value.token !== Token.disc.Int &&
-              expressionType.value.token !== Token.disc.Byte)
+            weakType.type !== Type.disc.Elementary ||
+            (weakType.value.token !== Token.disc.Uint &&
+              weakType.value.token !== Token.disc.Int &&
+              weakType.value.token !== Token.disc.Byte)
           ) {
             throw new TypeError("Built-in unary operator ~ cannot be applied to type ${}", 4907);
           }

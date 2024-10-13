@@ -136,31 +136,41 @@ const resolveSymbol = (context: CompileBytecodeContext, symbol: string): { locat
 const isSignedArithmetic = (context: CompileBytecodeContext, node: Ast.Expression) => {
   const type = context.annotations.get(node)!;
 
-  if (
-    type.type !== Type.disc.Elementary ||
-    (type.value.token !== Token.disc.Int &&
-      type.value.token !== Token.disc.Uint &&
-      type.value.token !== Token.disc.Byte)
-  ) {
-    throw new InvariantViolationError();
+  if (type.type === Type.disc.Elementary && type.value.token === Token.disc.Int) {
+    return true;
   }
 
-  return type.value.token === Token.disc.Int;
+  if (
+    type.type === Type.disc.Elementary &&
+    (type.value.token === Token.disc.Uint || type.value.token === Token.disc.Byte)
+  ) {
+    return false;
+  }
+
+  if (type.type === Type.disc.Literal) return false;
+
+  throw new InvariantViolationError();
 };
 
 const getBits = (context: CompileBytecodeContext, node: Ast.BinaryOperation) => {
   const type = context.annotations.get(node)!;
 
   if (
-    type.type !== Type.disc.Elementary ||
-    (type.value.token !== Token.disc.Int &&
-      type.value.token !== Token.disc.Uint &&
-      type.value.token !== Token.disc.Byte)
+    type.type === Type.disc.Elementary &&
+    (type.value.token === Token.disc.Uint || type.value.token === Token.disc.Int)
   ) {
-    throw new InvariantViolationError();
+    return type.value.size;
   }
 
-  return type.value.token === Token.disc.Byte ? type.value.size * 8 : type.value.size;
+  if (type.type === Type.disc.Elementary && type.value.token === Token.disc.Byte) {
+    return type.value.size * 8;
+  }
+
+  if (type.type === Type.disc.Literal) {
+    return size(compileLiteral(type.value));
+  }
+
+  throw new InvariantViolationError();
 };
 
 export const compileLiteral = (value: Omit<Ast.Literal["token"], "loc">): Hex => {
@@ -291,6 +301,7 @@ const compileFunction = (context: CompileBytecodeContext, node: Ast.FunctionDefi
   }
 
   if (
+    node.visibility === undefined ||
     node.visibility.token === Token.disc.External ||
     node.visibility.token === Token.disc.Public
   ) {
@@ -457,7 +468,6 @@ const compileExpression = (
           throw new InvariantViolationError();
         }
 
-        case Token.disc.AddressLiteral:
         case Token.disc.HexNumberLiteral:
         case Token.disc.BoolLiteral:
         case Token.disc.NumberLiteral: {
@@ -574,7 +584,7 @@ const compileExpression = (
       switch (node.operator.token) {
         case Token.disc.Add: {
           const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([getMask(bits), Code.AND]);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
             code: concat([right.code, left.code, Code.ADD, mask]),
             stack: 1,
@@ -583,7 +593,7 @@ const compileExpression = (
 
         case Token.disc.Subtract: {
           const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([getMask(bits), Code.AND]);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
             code: concat([right.code, left.code, Code.SUB, mask]),
             stack: 1,
@@ -592,7 +602,7 @@ const compileExpression = (
 
         case Token.disc.Mul: {
           const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([getMask(bits), Code.AND]);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
             code: concat([right.code, left.code, Code.MUL, mask]),
             stack: 1,
@@ -601,7 +611,7 @@ const compileExpression = (
 
         case Token.disc.Divide: {
           const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([getMask(bits), Code.AND]);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
             code: concat([
               right.code,
@@ -615,7 +625,7 @@ const compileExpression = (
 
         case Token.disc.Modulo: {
           const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([getMask(bits), Code.AND]);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
             code: concat([
               right.code,
@@ -629,7 +639,7 @@ const compileExpression = (
 
         case Token.disc.Power: {
           const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([getMask(bits), Code.AND]);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
             code: concat([right.code, left.code, Code.EXP, mask]),
             stack: 1,
@@ -730,7 +740,7 @@ const compileExpression = (
 
         case Token.disc.BitwiseAnd: {
           const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([getMask(bits), Code.AND]);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
             code: concat([right.code, left.code, Code.AND, mask]),
             stack: 1,
@@ -739,7 +749,7 @@ const compileExpression = (
 
         case Token.disc.BitwiseOr: {
           const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([getMask(bits), Code.AND]);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
             code: concat([right.code, left.code, Code.OR, mask]),
             stack: 1,
@@ -748,7 +758,7 @@ const compileExpression = (
 
         case Token.disc.BitwiseXOr: {
           const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([getMask(bits), Code.AND]);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
             code: concat([right.code, left.code, Code.XOR, mask]),
             stack: 1,
@@ -757,7 +767,7 @@ const compileExpression = (
 
         case Token.disc.ShiftLeft: {
           const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([getMask(bits), Code.AND]);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
             code: concat([left.code, right.code, Code.SHL, mask]),
             stack: 1,
@@ -766,7 +776,7 @@ const compileExpression = (
 
         case Token.disc.ShiftRight: {
           const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([getMask(bits), Code.AND]);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
             code: concat([left.code, right.code, Code.SHR, mask]),
             stack: 1,
