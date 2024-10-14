@@ -152,7 +152,7 @@ const isSignedArithmetic = (context: CompileBytecodeContext, node: Ast.Expressio
   throw new InvariantViolationError();
 };
 
-const getBits = (context: CompileBytecodeContext, node: Ast.BinaryOperation) => {
+const getBits = (context: CompileBytecodeContext, node: Ast.BinaryOperation | Ast.Assignment) => {
   const type = context.annotations.get(node)!;
 
   if (
@@ -484,7 +484,219 @@ const compileExpression = (
     }
 
     case Ast.disc.Assignment: {
-      throw new NotImplementedError();
+      switch (node.operator.token) {
+        case Token.disc.Assign: {
+          // TODO(kyle) support multiple assignment
+          const { location } = resolveSymbol(context, (node.left as Ast.Identifier).token.value);
+
+          return {
+            code: concat([
+              compileExpression(context, node.right).code,
+              Code.DUP1,
+              push(location),
+              Code.MSTORE,
+            ]),
+            stack: 1,
+          };
+        }
+
+        case Token.disc.AddAssign: {
+          const { location } = resolveSymbol(context, (node.left as Ast.Identifier).token.value);
+          const bits = getBits(context, node);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
+
+          return {
+            code: concat([
+              compileExpression(context, node.right).code,
+              push(location),
+              Code.MLOAD,
+              Code.ADD,
+              mask,
+              Code.DUP1,
+              push(location),
+              Code.MSTORE,
+            ]),
+            stack: 1,
+          };
+        }
+
+        case Token.disc.SubtractAssign: {
+          const { location } = resolveSymbol(context, (node.left as Ast.Identifier).token.value);
+          const bits = getBits(context, node);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
+
+          return {
+            code: concat([
+              compileExpression(context, node.right).code,
+              push(location),
+              Code.MLOAD,
+              Code.SUB,
+              mask,
+              Code.DUP1,
+              push(location),
+              Code.MSTORE,
+            ]),
+            stack: 1,
+          };
+        }
+
+        case Token.disc.MulAssign: {
+          const { location } = resolveSymbol(context, (node.left as Ast.Identifier).token.value);
+          const bits = getBits(context, node);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
+
+          return {
+            code: concat([
+              compileExpression(context, node.right).code,
+              push(location),
+              Code.MLOAD,
+              Code.MUL,
+              mask,
+              Code.DUP1,
+              push(location),
+              Code.MSTORE,
+            ]),
+            stack: 1,
+          };
+        }
+
+        case Token.disc.DivideAssign: {
+          const { location } = resolveSymbol(context, (node.left as Ast.Identifier).token.value);
+          const bits = getBits(context, node);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
+
+          return {
+            code: concat([
+              compileExpression(context, node.right).code,
+              push(location),
+              Code.MLOAD,
+              isSignedArithmetic(context, node) ? Code.SDIV : Code.DIV,
+              mask,
+              Code.DUP1,
+              push(location),
+              Code.MSTORE,
+            ]),
+            stack: 1,
+          };
+        }
+
+        case Token.disc.ModuloAssign: {
+          const { location } = resolveSymbol(context, (node.left as Ast.Identifier).token.value);
+          const bits = getBits(context, node);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
+
+          return {
+            code: concat([
+              compileExpression(context, node.right).code,
+              push(location),
+              Code.MLOAD,
+              isSignedArithmetic(context, node) ? Code.SMOD : Code.MOD,
+              mask,
+              Code.DUP1,
+              push(location),
+              Code.MSTORE,
+            ]),
+            stack: 1,
+          };
+        }
+
+        case Token.disc.BitwiseAndAssign: {
+          const { location } = resolveSymbol(context, (node.left as Ast.Identifier).token.value);
+
+          return {
+            code: concat([
+              compileExpression(context, node.right).code,
+              push(location),
+              Code.MLOAD,
+              Code.AND,
+              Code.DUP1,
+              push(location),
+              Code.MSTORE,
+            ]),
+            stack: 1,
+          };
+        }
+
+        case Token.disc.BitwiseOrAssign: {
+          const { location } = resolveSymbol(context, (node.left as Ast.Identifier).token.value);
+
+          return {
+            code: concat([
+              compileExpression(context, node.right).code,
+              push(location),
+              Code.MLOAD,
+              Code.OR,
+              Code.DUP1,
+              push(location),
+              Code.MSTORE,
+            ]),
+            stack: 1,
+          };
+        }
+
+        case Token.disc.BitwiseXOrAssign: {
+          const { location } = resolveSymbol(context, (node.left as Ast.Identifier).token.value);
+
+          return {
+            code: concat([
+              compileExpression(context, node.right).code,
+              push(location),
+              Code.MLOAD,
+              Code.XOR,
+              Code.DUP1,
+              push(location),
+              Code.MSTORE,
+            ]),
+            stack: 1,
+          };
+        }
+
+        case Token.disc.ShiftLeftAssign: {
+          const { location } = resolveSymbol(context, (node.left as Ast.Identifier).token.value);
+          const bits = getBits(context, node);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
+
+          return {
+            code: concat([
+              compileExpression(context, node.right).code,
+              push(location),
+              Code.MLOAD,
+              Code.SWAP1,
+              Code.SHL,
+              mask,
+              Code.DUP1,
+              push(location),
+              Code.MSTORE,
+            ]),
+            stack: 1,
+          };
+        }
+
+        case Token.disc.ShiftRightAssign: {
+          const { location } = resolveSymbol(context, (node.left as Ast.Identifier).token.value);
+          const bits = getBits(context, node);
+          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
+
+          return {
+            code: concat([
+              compileExpression(context, node.right).code,
+              push(location),
+              Code.MLOAD,
+              Code.SWAP1,
+              Code.SHR,
+              mask,
+              Code.DUP1,
+              push(location),
+              Code.MSTORE,
+            ]),
+            stack: 1,
+          };
+        }
+
+        default:
+          never(node.operator);
+          throw new InvariantViolationError();
+      }
     }
 
     case Ast.disc.UnaryOperation: {
@@ -739,28 +951,22 @@ const compileExpression = (
         }
 
         case Token.disc.BitwiseAnd: {
-          const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
-            code: concat([right.code, left.code, Code.AND, mask]),
+            code: concat([right.code, left.code, Code.AND]),
             stack: 1,
           };
         }
 
         case Token.disc.BitwiseOr: {
-          const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
-            code: concat([right.code, left.code, Code.OR, mask]),
+            code: concat([right.code, left.code, Code.OR]),
             stack: 1,
           };
         }
 
         case Token.disc.BitwiseXOr: {
-          const bits = getBits(context, node);
-          const mask = bits === 256 ? "0x" : concat([push(getMask(bits)), Code.AND]);
           return {
-            code: concat([right.code, left.code, Code.XOR, mask]),
+            code: concat([right.code, left.code, Code.XOR]),
             stack: 1,
           };
         }

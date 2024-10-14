@@ -23,20 +23,6 @@ export type CheckContext = {
 
 export type TypeAnnotations = CheckContext["annotations"];
 
-// abi
-// keccak256
-// blockhash
-// blobhash
-// gasleft
-// sha256
-// ripemd160
-// ecrecover
-// addmod
-// mulmod
-// this
-// super
-// selfdestruct
-
 export const defaultSymbols = new Map<string, Type.Type>([
   [
     "block",
@@ -483,13 +469,17 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         case Token.disc.SubtractAssign:
         case Token.disc.MulAssign:
         case Token.disc.DivideAssign: {
+          const weakRight =
+            right.type === Type.disc.Literal ? convertLiteralToElementary(right) : right;
+
           if (
             left.type !== Type.disc.Elementary ||
-            right.type !== Type.disc.Elementary ||
+            weakRight.type !== Type.disc.Elementary ||
             (left.value.token !== Token.disc.Uint && left.value.token !== Token.disc.Int) ||
-            (right.value.token !== Token.disc.Uint && right.value.token !== Token.disc.Int) ||
-            left.value.token !== right.value.token ||
-            left.value.size < right.value.size
+            (weakRight.value.token !== Token.disc.Uint &&
+              weakRight.value.token !== Token.disc.Int) ||
+            left.value.token !== weakRight.value.token ||
+            left.value.size < weakRight.value.size
           ) {
             throw new TypeError(
               `Operator ${expression.operator} not compatible with types ${left.type} and ${right.type}`,
@@ -501,13 +491,17 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         }
 
         case Token.disc.ModuloAssign: {
+          const weakRight =
+            right.type === Type.disc.Literal ? convertLiteralToElementary(right) : right;
+
           if (
             left.type !== Type.disc.Elementary ||
-            right.type !== Type.disc.Elementary ||
+            weakRight.type !== Type.disc.Elementary ||
             (left.value.token !== Token.disc.Uint && left.value.token !== Token.disc.Int) ||
-            (right.value.token !== Token.disc.Uint && right.value.token !== Token.disc.Int) ||
-            left.value.token !== right.value.token ||
-            left.value.size < right.value.size
+            (weakRight.value.token !== Token.disc.Uint &&
+              weakRight.value.token !== Token.disc.Int) ||
+            left.value.token !== weakRight.value.token ||
+            left.value.size < weakRight.value.size
           ) {
             throw new TypeError(
               `Operator ${expression.operator} not compatible with types ${left.type} and ${right.type}`,
@@ -521,17 +515,20 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         case Token.disc.BitwiseAndAssign:
         case Token.disc.BitwiseOrAssign:
         case Token.disc.BitwiseXOrAssign: {
+          const weakRight =
+            right.type === Type.disc.Literal ? convertLiteralToElementary(right) : right;
+
           if (
             left.type !== Type.disc.Elementary ||
-            right.type !== Type.disc.Elementary ||
+            weakRight.type !== Type.disc.Elementary ||
             (left.value.token !== Token.disc.Uint &&
               left.value.token !== Token.disc.Int &&
               left.value.token !== Token.disc.Byte) ||
-            (right.value.token !== Token.disc.Uint &&
-              right.value.token !== Token.disc.Int &&
-              right.value.token !== Token.disc.Byte) ||
-            left.value.token !== right.value.token ||
-            left.value.size < right.value.size
+            (weakRight.value.token !== Token.disc.Uint &&
+              weakRight.value.token !== Token.disc.Int &&
+              weakRight.value.token !== Token.disc.Byte) ||
+            left.value.token !== weakRight.value.token ||
+            left.value.size < weakRight.value.size
           ) {
             throw new TypeError(
               `Operator ${expression.operator} not compatible with types ${left.type} and ${right.type}`,
@@ -544,16 +541,19 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 
         case Token.disc.ShiftLeftAssign:
         case Token.disc.ShiftRightAssign: {
+          const weakRight =
+            right.type === Type.disc.Literal ? convertLiteralToElementary(right) : right;
+
           if (
             left.type !== Type.disc.Elementary ||
-            right.type !== Type.disc.Elementary ||
+            weakRight.type !== Type.disc.Elementary ||
             (left.value.token !== Token.disc.Uint &&
               left.value.token !== Token.disc.Int &&
               left.value.token !== Token.disc.Byte) ||
-            (right.value.token !== Token.disc.Uint &&
-              right.value.token !== Token.disc.Int &&
-              right.value.token !== Token.disc.Byte) ||
-            left.value.token !== right.value.token
+            (weakRight.value.token !== Token.disc.Uint &&
+              weakRight.value.token !== Token.disc.Int &&
+              weakRight.value.token !== Token.disc.Byte) ||
+            left.value.token !== weakRight.value.token
           ) {
             throw new TypeError(
               `Operator ${expression.operator} not compatible with types ${left.type} and ${right.type}`,

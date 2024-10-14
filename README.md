@@ -151,16 +151,18 @@ This project is not meant to replace `solc`. Instead, it is a smaller, faster, m
 - [ ] `storage`
 - [ ] `memory`
 - [ ] `calldata`
+- [x] `=`
 - [ ] `(x, y) = ...`
-- [ ] `=`
-- [ ] `+=`
-- [ ] `-=`
-- [ ] `*=`
-- [ ] `/=`
-- [ ] `&=`
-- [ ] `|=`
-- [ ] `<<=`
-- [ ] `>>=`
+- [x] `+=`
+- [x] `-=`
+- [x] `*=`
+- [x] `/=`
+- [x] `%=`
+- [x] `&=`
+- [x] `|=`
+- [x] `^=`
+- [x] `<<=`
+- [x] `>>=`
 
 ### Functions
 

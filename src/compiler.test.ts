@@ -572,3 +572,163 @@ contract C {
   expect(result.exceptionError).toBeUndefined();
   expect(getStack(result)).toBe("0xa");
 });
+
+test("assign", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    uint256 x;
+    x = 10;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0xa");
+});
+
+test("add assign", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    uint256 x = 5;
+    x += 10;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0xf");
+});
+
+test("sub assign", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    uint256 x = 5;
+    x -= 2;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x3");
+});
+
+test("mul assign", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    uint256 x = 5;
+    x *= 2;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0xa");
+});
+
+test("div assign", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    uint256 x = 15;
+    x /= 3;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x5");
+});
+
+test("bitwise and assign", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    uint256 x = 6;
+    x &= 3;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x2");
+});
+
+test("bitwise or assign", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    uint256 x = 6;
+    x |= 3;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x7");
+});
+
+test("bitwise xor assign", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    uint256 x = 10;
+    x ^= 3;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x9");
+});
+
+test("shift left assign", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    uint256 x = 6;
+    x <<= 2;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x18");
+});
+
+test("shift right assign", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    uint256 x = 10;
+    x >>= 1;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x5");
+});
