@@ -45,7 +45,7 @@ export enum Code {
   SELFBALANCE = "0x47",
   BASEFEE = "0x48",
   BLOBHASH = "0x49",
-  BLOBBASEFEE = "0x50",
+  BLOBBASEFEE = "0x4a",
   POP = "0x50",
   MLOAD = "0x51",
   MSTORE = "0x52",
