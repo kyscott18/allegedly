@@ -59,22 +59,22 @@ This project is not meant to replace `solc`. Instead, it is a smaller, faster, m
 - [ ] `type().max`
 - [ ] `blockHash()`
 - [ ] `blobHash()`
-- [ ] `block.basefee`
-- [ ] `block.blobbasefee`
-- [ ] `block.chainid`
-- [ ] `block.coinbase`
-- [ ] `block.difficulty`
-- [ ] `block.gaslimit`
-- [ ] `block.number`
-- [ ] `block.prevrandao`
-- [ ] `block.timestamp`
 - [ ] `gasleft()`
+- [x] `block.basefee`
+- [x] `block.blobbasefee`
+- [x] `block.chainid`
+- [x] `block.coinbase`
+- [x] `block.difficulty`
+- [x] `block.gaslimit`
+- [x] `block.number`
+- [x] `block.prevrandao`
+- [x] `block.timestamp`
 - [ ] `msg.data`
-- [ ] `msg.sender`
-- [ ] `msg.sig`
-- [ ] `msg.value`
-- [ ] `tx.gasprice`
-- [ ] `tx.origin`
+- [x] `msg.sender`
+- [x] `msg.sig`
+- [x] `msg.value`
+- [x] `tx.gasprice`
+- [x] `tx.origin`
 
 ### Contracts
 

@@ -1086,8 +1086,91 @@ const compileExpression = (
 
       throw new NotImplementedError();
 
-    case Ast.disc.MemberAccessExpression:
-      throw new NotImplementedError();
+    case Ast.disc.MemberAccessExpression: {
+      if (node.expression.ast === Ast.disc.Identifier && node.expression.token.value === "block") {
+        switch (node.member.token.value) {
+          case "basefee": {
+            return { code: Code.BASEFEE, stack: 1 };
+          }
+
+          case "blobbasefee": {
+            return { code: Code.BLOBBASEFEE, stack: 1 };
+          }
+
+          case "chainid": {
+            return { code: Code.CHAINID, stack: 1 };
+          }
+
+          case "coinbase": {
+            return { code: Code.COINBASE, stack: 1 };
+          }
+
+          case "difficulty": {
+            return { code: Code.PREVRANDAO, stack: 1 };
+          }
+
+          case "gaslimit": {
+            return { code: Code.GASLIMIT, stack: 1 };
+          }
+
+          case "number": {
+            return { code: Code.NUMBER, stack: 1 };
+          }
+
+          case "prevrandao": {
+            return { code: Code.PREVRANDAO, stack: 1 };
+          }
+
+          case "timestamp": {
+            return { code: Code.TIMESTAMP, stack: 1 };
+          }
+
+          default:
+            throw new InvariantViolationError();
+        }
+      }
+
+      if (node.expression.ast === Ast.disc.Identifier && node.expression.token.value === "tx") {
+        switch (node.member.token.value) {
+          case "gasprice": {
+            return { code: Code.GASPRICE, stack: 1 };
+          }
+
+          case "origin": {
+            return { code: Code.ORIGIN, stack: 1 };
+          }
+
+          default:
+            throw new InvariantViolationError();
+        }
+      }
+
+      if (node.expression.ast === Ast.disc.Identifier && node.expression.token.value === "msg") {
+        switch (node.member.token.value) {
+          // case "data": { }
+
+          case "sender": {
+            return { code: Code.CALLER, stack: 1 };
+          }
+
+          case "sig": {
+            return {
+              code: concat([push(0), Code.CALLDATALOAD, push(getMask(32)), Code.AND]),
+              stack: 1,
+            };
+          }
+
+          case "value": {
+            return { code: Code.CALLVALUE, stack: 1 };
+          }
+
+          default:
+            throw new InvariantViolationError();
+        }
+      }
+
+      throw new InvariantViolationError();
+    }
 
     case Ast.disc.IndexAccessExpression:
       throw new InvariantViolationError();

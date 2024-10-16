@@ -732,3 +732,69 @@ contract C {
   expect(result.exceptionError).toBeUndefined();
   expect(getStack(result)).toBe("0x5");
 });
+
+test("built-in block", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    // block.basefee;
+    // block.blobbasefee;
+    block.chainid;
+    block.coinbase;
+    block.difficulty;
+    block.gaslimit;
+    block.number;
+    block.prevrandao;
+    block.timestamp;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x1");
+  expect(getStack(result, 1)).toBe("0x0");
+  expect(getStack(result, 2)).toBe("0x0");
+  expect(getStack(result, 3)).toBe("0x0");
+  expect(getStack(result, 4)).toBe("0x0");
+  expect(getStack(result, 5)).toBe("0x0");
+  expect(getStack(result, 6)).toBe("0x0");
+});
+
+test("built-in tx", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    tx.gasprice;
+    tx.origin;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x0");
+  expect(getStack(result, 1)).toBe("0x0");
+});
+
+test("built-in msg", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    // msg.data;
+    msg.sender;
+    msg.sig;
+    msg.value;
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x0");
+  expect(getStack(result, 1)).toBe("0x0");
+  expect(getStack(result, 2)).toBe("0x0");
+});
