@@ -15,7 +15,7 @@
   "peerDependencies": {
     "abitype": "^1.0.6",
     "typescript": "^5.6.3",
-    "viem": "^2.21.22"
+    "viem": "^2.21.27"
   },
   "files": ["dist"],
   "scripts": {
