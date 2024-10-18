@@ -26,7 +26,10 @@ const printStack = (result: ExecResult) => {
 };
 
 const getStack = (result: ExecResult, i = 0) => {
-  return toHex(result.runState?.stack.getStack()[i]!);
+  const stack = result.runState?.stack.getStack();
+
+  if (stack?.[i] === undefined) throw new Error("stack item undefined");
+  return toHex(stack[i]!);
 };
 
 ////////
@@ -543,12 +546,30 @@ contract C {
   expect(getStack(result, 1)).toBe("0x8");
 });
 
-test("variable assignment", async () => {
+test("tuple", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    (1, 2);
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x1");
+  expect(getStack(result, 1)).toBe("0x2");
+});
+
+test("variable declaration", async () => {
   const { result } = await getCode(
     `
 contract C {
   function run() external {
     uint256 x = 10;
+    (uint256 y, uint256 z) = (3, 4);
+    (uint256 u, , uint256 v) = (7, 8, 9);
   }
 }`,
     toFunctionSelector("function run()"),
@@ -731,6 +752,24 @@ contract C {
 
   expect(result.exceptionError).toBeUndefined();
   expect(getStack(result)).toBe("0x5");
+});
+
+test("tuple assign", async () => {
+  const { result } = await getCode(
+    `
+contract C {
+  function run() external {
+    uint256 x;
+    uint256 y;
+    (x, , y) = (1, 2, 3);
+  }
+}`,
+    toFunctionSelector("function run()"),
+  );
+
+  expect(result.exceptionError).toBeUndefined();
+  expect(getStack(result)).toBe("0x1");
+  expect(getStack(result, 1)).toBe("0x2");
 });
 
 test("built-in block", async () => {

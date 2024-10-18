@@ -40,6 +40,8 @@ const getError = <ast extends Ast.Statement | Ast.Definition | Ast.Expression>(
   }
 };
 
+// Error codes
+
 test("1080", () => {
   const error = getError("true ? 10 : false", parseExpression, checkExpression);
 
@@ -237,6 +239,8 @@ test.todo("6473");
 
 test.todo("6933");
 
+test.todo("7364");
+
 test.todo("7366");
 
 test("7407", () => {
@@ -311,6 +315,8 @@ test("7576", () => {
   expect(error).toBeDefined();
   expect(error!.code).toBe(7576);
 });
+
+test.todo("8381");
 
 test.todo("9553");
 
@@ -554,6 +560,38 @@ test("9767", () => {
 
   //   expect(error).toBeDefined();
   //   expect(error!.code).toBe(9767);
+});
+
+// no error ast nodes
+
+test("variable declaration", () => {
+  const error = getError(
+    `
+{
+    uint256 x;
+    uint256 y = x;
+    (uint256 u, , uint256 v) = (1, 2, 3);
+}`,
+    parseBlockStatement,
+    checkStatement,
+  );
+  expect(error).toBeUndefined();
+});
+
+test("tuple assignment", () => {
+  const error = getError(
+    `
+{
+    uint256 x;
+    uint256 y;
+    (x, y) = (1, 2);
+    (x, y, ) = (4, 5, 6);
+
+}`,
+    parseBlockStatement,
+    checkStatement,
+  );
+  expect(error).toBeUndefined();
 });
 
 test.skip("integration", async () => {

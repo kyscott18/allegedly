@@ -40,7 +40,7 @@ export namespace Type {
 
   export type Tuple = {
     type: disc.Tuple;
-    elements: Type[];
+    elements: (Type | undefined)[];
   };
 
   /** Convert `Ast.Type | Ast.ContractDefinition` to `Type.Type` */

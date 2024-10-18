@@ -320,15 +320,30 @@ const compileFunction = (context: CompileBytecodeContext, node: Ast.FunctionDefi
 const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement): Hex => {
   switch (node.ast) {
     case Ast.disc.VariableDeclaration: {
-      const location = addSymbol(context, node.declarations[0]!.identifier!.value);
       if (node.initializer) {
-        return concat([
-          compileExpression(context, node.initializer).code,
-          push(location),
-          Code.MSTORE,
-        ]);
+        let code = compileExpression(context, node.initializer).code;
+
+        for (const declaration of node.declarations) {
+          if (declaration?.identifier) {
+            const location = addSymbol(context, declaration.identifier.value);
+            code = concat([code, push(location), Code.MSTORE]);
+          } else {
+            concat([Code.POP]);
+          }
+        }
+        return code;
       }
-      return concat([push("0x0"), push(location), Code.MSTORE]);
+
+      let code: Hex = "0x";
+
+      for (const declaration of node.declarations) {
+        if (declaration?.identifier) {
+          const location = addSymbol(context, declaration.identifier.value);
+          code = concat([code, push(0), push(location), Code.MSTORE]);
+        }
+      }
+
+      return code;
     }
 
     case Ast.disc.ExpressionStatement: {
@@ -486,9 +501,38 @@ const compileExpression = (
     case Ast.disc.Assignment: {
       switch (node.operator.token) {
         case Token.disc.Assign: {
-          // TODO(kyle) support multiple assignment
+          if (node.left.ast === Ast.disc.TupleExpression) {
+            const expression = compileExpression(context, node.right);
+
+            const length = node.left.elements.length;
+            let code = expression.code;
+
+            code = concat([
+              code,
+              ...node.left.elements.map(() => Code[`DUP${length}` as keyof typeof Code]),
+            ]);
+
+            for (const element of node.left.elements) {
+              if (element) {
+                const { location } = resolveSymbol(
+                  context,
+                  (element as Ast.Identifier).token.value,
+                );
+
+                code = concat([code, push(location), Code.MSTORE]);
+              } else {
+                code = concat([code, Code.POP]);
+              }
+            }
+
+            return { code, stack: expression.stack };
+          }
+
+          // type: Identifier
+
           const { location } = resolveSymbol(context, (node.left as Ast.Identifier).token.value);
 
+          // TODO(kyle) fix stack "leak"
           return {
             code: concat([
               compileExpression(context, node.right).code,
@@ -1178,7 +1222,16 @@ const compileExpression = (
     case Ast.disc.NewExpression:
       throw new InvariantViolationError();
 
-    case Ast.disc.TupleExpression:
-      throw new InvariantViolationError();
+    case Ast.disc.TupleExpression: {
+      let code: Hex = "0x";
+      let stack = 0;
+
+      for (const element of node.elements) {
+        const expression = compileExpression(context, element!);
+        code = concat([code, expression.code]);
+        stack += expression.stack;
+      }
+      return { code, stack };
+    }
   }
 };

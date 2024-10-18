@@ -19,6 +19,7 @@ export type CheckContext = {
    */
   arguments: Map<Ast.Expression, Type.Type[]>;
   isContractScope: boolean;
+  isLValueScope: boolean;
 };
 
 export type TypeAnnotations = CheckContext["annotations"];
@@ -176,6 +177,7 @@ export const check = (source: string, program: Ast.Program): TypeAnnotations => 
     annotations: new Map(),
     arguments: new Map(),
     isContractScope: false,
+    isLValueScope: false,
   };
 
   for (const definition of program) {
@@ -355,7 +357,7 @@ export const checkStatement = (context: CheckContext, statement: Ast.Statement):
   switch (statement.ast) {
     case Ast.disc.VariableDeclaration:
       for (const declaration of statement.declarations) {
-        if (declaration.identifier) {
+        if (declaration?.identifier) {
           let type: Type.Type;
           if (declaration.type.ast === Ast.disc.UserDefinedType) {
             // Identifier not found or not unique.solidity(7920)
@@ -368,20 +370,63 @@ export const checkStatement = (context: CheckContext, statement: Ast.Statement):
       }
       if (statement.initializer) {
         const initializer = checkExpression(context, statement.initializer);
+        // TODO(kyle) should the annotations be what the type is or what it will be?
         context.annotations.set(statement.initializer, initializer);
-        // TODO(kyle) support array of declarations
 
         let type: Type.Type;
-        if (statement.declarations[0]!.type.ast === Ast.disc.UserDefinedType) {
-          type = resolveSymbol(context, statement.declarations[0]!.type.type.value);
+
+        if (statement.declarations.length > 1) {
+          type = {
+            type: Type.disc.Tuple,
+            elements: [],
+          };
+
+          for (const astType of statement.declarations) {
+            if (astType === undefined) {
+              type.elements.push(undefined);
+            } else if (astType.type.ast === Ast.disc.UserDefinedType) {
+              type.elements.push(resolveSymbol(context, astType.type.type.value));
+            } else {
+              type.elements.push(Type.convertAst(astType.type));
+            }
+          }
+
+          if (
+            initializer.type !== Type.disc.Tuple ||
+            type.elements.length !== initializer.elements.length
+          ) {
+            throw new TypeError(
+              `Different number of components on the left hand side (${type.elements.length}) than on the right hand side (${initializer.type !== Type.disc.Tuple ? 1 : initializer.elements.length})`,
+              7364,
+            );
+          }
+
+          for (let i = 0; i < type.elements.length; i++) {
+            if (
+              type.elements[i] &&
+              isImplicitlyConvertibleTo(initializer.elements[i]!, type.elements[i]!) === false
+            ) {
+              throw new TypeError(
+                `Type ${initializer} is not implicitly convertible to expected type ${statement.declarations[0]!.type}`,
+                9574,
+              );
+            }
+          }
         } else {
-          type = Type.convertAst(statement.declarations[0]!.type);
-        }
-        if (isImplicitlyConvertibleTo(initializer, type) === false) {
-          throw new TypeError(
-            `Type ${initializer} is not implicitly convertible to expected type ${statement.declarations[0]!.type}`,
-            9574,
-          );
+          const astType = statement.declarations[0]!;
+
+          if (astType.type.ast === Ast.disc.UserDefinedType) {
+            type = resolveSymbol(context, astType.type.type.value);
+          } else {
+            type = Type.convertAst(astType.type);
+          }
+
+          if (isImplicitlyConvertibleTo(initializer, type) === false) {
+            throw new TypeError(
+              `Type ${initializer} is not implicitly convertible to expected type ${statement.declarations[0]!.type}`,
+              9574,
+            );
+          }
         }
       }
       break;
@@ -444,8 +489,12 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
     }
 
     case Ast.disc.Assignment: {
+      context.isLValueScope = true;
       const left = checkExpression(context, expression.left);
+      context.isLValueScope = false;
+
       const right = checkExpression(context, expression.right);
+
       context.annotations.set(expression.left, left);
       context.annotations.set(expression.right, right);
 
@@ -1012,6 +1061,10 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 
     case Ast.disc.TupleExpression: {
       const elements = expression.elements.map((e) => {
+        if (e === undefined) {
+          if (context.isLValueScope === true) return undefined;
+          throw new TypeError("Tuple component cannot be empty", 8381);
+        }
         const type = checkExpression(context, e);
         context.annotations.set(e, type);
         return type;
@@ -1225,13 +1278,19 @@ const isImplicitlyConvertibleTo = (from: Type.Type, to: Type.Type): boolean => {
     ) {
       return true;
     }
-  } else if (
+  }
+
+  if (
     from.type === Type.disc.Tuple &&
     to.type === Type.disc.Tuple &&
     from.elements.length === to.elements.length
   ) {
-    return true;
-  } else if (from.type === Type.disc.Contract && to.type === Type.disc.Contract) {
+    return from.elements.every((f, i) =>
+      to.elements[i] === undefined ? true : isImplicitlyConvertibleTo(f!, to.elements[i]!),
+    );
+  }
+
+  if (from.type === Type.disc.Contract && to.type === Type.disc.Contract) {
     // TODO(kyle) deep comparison
     return true;
   }
@@ -1296,7 +1355,7 @@ const isLValue = (context: CheckContext, expression: Ast.Expression) => {
   if (expression.ast === Ast.disc.Identifier) return true;
   if (
     expression.ast === Ast.disc.TupleExpression &&
-    expression.elements.every((e) => isLValue(context, e))
+    expression.elements.every((e) => e === undefined || isLValue(context, e))
   ) {
     return true;
   }

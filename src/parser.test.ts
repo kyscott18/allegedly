@@ -184,6 +184,7 @@ test("assignment", () => {
   const bitwiseXOrAssign = getAst("a ^= b", parseExpression);
   const shiftRightAssign = getAst("a >>= b", parseExpression);
   const shiftLeftAssign = getAst("a <<= b", parseExpression);
+  const tupleAssign = getAst("(a, , b) = (1, 2, 3)", parseExpression);
 
   expect(assign!.ast).toBe(Ast.disc.Assignment);
   expect(addAssign!.ast).toBe(Ast.disc.Assignment);
@@ -196,6 +197,7 @@ test("assignment", () => {
   expect(bitwiseXOrAssign!.ast).toBe(Ast.disc.Assignment);
   expect(shiftRightAssign!.ast).toBe(Ast.disc.Assignment);
   expect(shiftLeftAssign!.ast).toBe(Ast.disc.Assignment);
+  expect(tupleAssign!.ast).toBe(Ast.disc.Assignment);
 });
 
 test("unary operation", () => {
@@ -346,12 +348,17 @@ test("variable declaration", () => {
     "(uint256, uint256 b) = (1, 2);",
     parseStatement,
   ) as Ast.VariableDeclaration;
+  const pluralWithEmpty = getAst(
+    "(, uint256 b) = (1, 2);",
+    parseStatement,
+  ) as Ast.VariableDeclaration;
 
   expect(noInitializer!.ast).toBe(Ast.disc.VariableDeclaration);
   expect(initializer!.ast).toBe(Ast.disc.VariableDeclaration);
   expect(location!.ast).toBe(Ast.disc.VariableDeclaration);
   expect(plural!.ast).toBe(Ast.disc.VariableDeclaration);
   expect(pluralWithUnidentified!.ast).toBe(Ast.disc.VariableDeclaration);
+  expect(pluralWithEmpty!.ast).toBe(Ast.disc.VariableDeclaration);
 
   expect(initializer!.initializer).toBeDefined();
 });

@@ -403,6 +403,12 @@ export const parseVariableDeclaration = (context: ParseContext): Ast.VariableDec
   const start = context.tokenIndex;
 
   const parseDeclaration = (context: ParseContext) => {
+    if (
+      peek(context)?.token === Token.disc.Comma ||
+      peek(context)?.token === Token.disc.CloseParenthesis
+    )
+      return undefined;
+
     const type = parseType(context);
 
     let location = peek(context) as Token.Storage | Token.Memory | Token.Calldata | undefined;
@@ -1021,27 +1027,33 @@ export const parseExpression = (context: ParseContext, minBp = 0): Ast.Expressio
       }
       break;
 
-    case Token.disc.OpenParenthesis:
-      left = parseExpression(context, 0);
+    case Token.disc.OpenParenthesis: {
+      const elements: (Ast.Expression | undefined)[] = [];
 
-      if (peek(context)?.token === Token.disc.Comma) {
-        const elements: Ast.Expression[] = [left];
-        while (true) {
+      while (true) {
+        if (eat(context, Token.disc.Comma)) {
+          elements.push(undefined);
           if (eat(context, Token.disc.CloseParenthesis)) break;
-          expect(context, Token.disc.Comma);
-          elements.push(parseExpression(context));
+          continue;
         }
-        left = {
-          ast: Ast.disc.TupleExpression,
-          loc: toLoc(context, start, context.tokenIndex),
-          elements,
-        };
-        break;
+
+        elements.push(parseExpression(context));
+
+        if (eat(context, Token.disc.CloseParenthesis)) break;
+        expect(context, Token.disc.Comma);
+
+        if (eat(context, Token.disc.CloseParenthesis)) {
+          elements.push(undefined);
+          break;
+        }
       }
-
-      expect(context, Token.disc.CloseParenthesis);
-
+      left = {
+        ast: Ast.disc.TupleExpression,
+        loc: toLoc(context, start, context.tokenIndex),
+        elements,
+      };
       break;
+    }
 
     case Token.disc.New:
       left = {

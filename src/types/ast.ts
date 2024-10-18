@@ -169,7 +169,7 @@ export namespace Ast {
   export type TupleExpression = {
     ast: disc.TupleExpression;
     loc: SourceLocation;
-    elements: Expression[];
+    elements: (Expression | undefined)[];
   };
 
   // statements
@@ -317,11 +317,14 @@ export namespace Ast {
   export type VariableDeclaration = {
     ast: disc.VariableDeclaration;
     loc: SourceLocation;
-    declarations: {
-      type: Type;
-      identifier: Token.Identifier | undefined;
-      location: Token.Storage | Token.Memory | Token.Calldata | undefined;
-    }[];
+    declarations: (
+      | {
+          type: Type;
+          identifier: Token.Identifier | undefined;
+          location: Token.Storage | Token.Memory | Token.Calldata | undefined;
+        }
+      | undefined
+    )[];
     initializer: Expression | undefined;
   };
 
