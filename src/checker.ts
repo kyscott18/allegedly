@@ -242,7 +242,6 @@ const resolveSymbol = (context: CheckContext, symbol: string): Type.Type => {
     if (scope?.has(symbol)) return scope.get(symbol)!;
   }
   // TODO(kyle) Identifier not found or not unique.solidity(7920)
-  console.log(symbol);
   throw new TypeError("Undeclared identifier", 7576);
 };
 
