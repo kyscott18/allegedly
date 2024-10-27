@@ -20,7 +20,7 @@
   "files": ["dist"],
   "scripts": {
     "format": "biome format . --write",
-    "lint": "biome lint . --apply",
+    "lint": "biome lint . --write",
     "build": "bun build src/index.ts --outdir dist"
   },
   "size-limit": [
