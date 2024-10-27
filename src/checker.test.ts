@@ -29,7 +29,10 @@ const getError = <ast extends Ast.Statement | Ast.Definition | Ast.Expression>(
         functionSymbols: [defaultFunctionSymbols],
         annotations: new Map(),
         arguments: new Map(),
+        isDeclarationPass: false,
         isContractScope: false,
+        isInterfaceScope: false,
+        isLValueScope: false,
       },
       parser({ source, tokens, tokenIndex: 0 }),
     );
@@ -53,6 +56,8 @@ test("no 1080", () => {
   const error = getError("true ? 10 : 8", parseExpression, checkExpression);
   expect(error).toBeUndefined();
 });
+
+test.todo("1560");
 
 test.todo("1686");
 
@@ -195,6 +200,8 @@ test.todo("4937", () => {
   expect(error!.code).toBe(4937);
 });
 
+test.todo("5424");
+
 test("5704", () => {
   const error = getError(
     `
@@ -236,6 +243,8 @@ test("6160", () => {
 });
 
 test.todo("6473");
+
+test.todo("6675");
 
 test.todo("6933");
 

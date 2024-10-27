@@ -18,7 +18,9 @@ export type CheckContext = {
    * which function is being targeted in the case of overloading.
    */
   arguments: Map<Ast.Expression, Type.Type[]>;
+  isDeclarationPass: boolean;
   isContractScope: boolean;
+  isInterfaceScope: boolean;
   isLValueScope: boolean;
 };
 
@@ -176,9 +178,21 @@ export const check = (source: string, program: Ast.Program): TypeAnnotations => 
     functionSymbols: [defaultFunctionSymbols, new Map()],
     annotations: new Map(),
     arguments: new Map(),
+    isDeclarationPass: false,
     isContractScope: false,
+    isInterfaceScope: false,
     isLValueScope: false,
   };
+
+  context.isDeclarationPass = true;
+
+  for (const definition of program) {
+    if (definition.ast !== Ast.disc.PragmaDirective) {
+      checkDefinition(context, definition);
+    }
+  }
+
+  context.isDeclarationPass = false;
 
   for (const definition of program) {
     if (definition.ast !== Ast.disc.PragmaDirective) {
@@ -199,8 +213,9 @@ const addSymbol = (context: CheckContext, symbol: string, type: Type.Type) => {
   if (
     existingSymbol !== undefined &&
     (type.type !== Type.disc.Function || type.isTypeConversion === false)
-  )
+  ) {
     throw new TypeError("Identifier already declared", 2333);
+  }
 
   if (type.type === Type.disc.Function) {
     if (existingFunctionSymbol === undefined) functionScope.set(symbol, []);
@@ -227,6 +242,7 @@ const resolveSymbol = (context: CheckContext, symbol: string): Type.Type => {
     if (scope?.has(symbol)) return scope.get(symbol)!;
   }
   // TODO(kyle) Identifier not found or not unique.solidity(7920)
+  console.log(symbol);
   throw new TypeError("Undeclared identifier", 7576);
 };
 
@@ -252,7 +268,6 @@ const resolveFunctionSymbol = (
         ) {
           return functionType;
         }
-        // Member "run" not unique after argument-dependent lookup in contract Contract1.solidity(6675)
       }
     }
   }
@@ -282,19 +297,23 @@ export const checkDefinition = (context: CheckContext, definition: Ast.Definitio
     case Ast.disc.FunctionDefinition: {
       switch (definition.kind.token) {
         case Token.disc.Function: {
-          const type = {
-            type: Type.disc.Function,
-            parameters: definition.parameters.map((param) => Type.convertAst(param.type)),
-            returns: definition.returns.map((ret) => Type.convertAst(ret.type)),
-            isTypeConversion: false,
-          } satisfies Type.Function;
+          if (context.isDeclarationPass) {
+            const type = {
+              type: Type.disc.Function,
+              parameters: definition.parameters.map((param) => Type.convertAst(param.type)),
+              returns: definition.returns.map((ret) => Type.convertAst(ret.type)),
+              isTypeConversion: false,
+            } satisfies Type.Function;
 
-          addSymbol(context, definition.name!.value, type);
+            addSymbol(context, definition.name!.value, type);
+          } else {
+            // TODO(kyle) check matching return type
+            // TODO(kyle) check state mutability
 
-          // TODO(kyle) check matching return type
-          // TODO(kyle) check state mutability
-
-          if (definition.body !== undefined) checkStatement(context, definition.body);
+            if (definition.body !== undefined) {
+              checkStatement(context, definition.body);
+            }
+          }
           break;
         }
       }
@@ -302,21 +321,33 @@ export const checkDefinition = (context: CheckContext, definition: Ast.Definitio
     }
 
     case Ast.disc.ContractDefinition:
-      context.isContractScope = true;
-      addSymbol(context, definition.name.value, Type.convertAst(definition));
-      addSymbol(context, definition.name.value, {
-        type: Type.disc.Function,
-        parameters: [Type.convertAst(definition)],
-        returns: [Type.convertAst(definition)],
-        isTypeConversion: true,
-      });
+      if (context.isDeclarationPass) {
+        addSymbol(context, definition.name.value, Type.convertAst(definition));
+        addSymbol(context, definition.name.value, {
+          type: Type.disc.Function,
+          parameters: [Type.convertAst(definition)],
+          returns: [Type.convertAst(definition)],
+          isTypeConversion: true,
+        });
+      } else {
+        context.isContractScope = true;
+        enterScope(context);
 
-      enterScope(context);
-      for (const _definition of definition.nodes) {
-        checkDefinition(context, _definition);
+        context.isDeclarationPass = true;
+
+        for (const _definition of definition.nodes) {
+          checkDefinition(context, _definition);
+        }
+
+        context.isDeclarationPass = false;
+
+        for (const _definition of definition.nodes) {
+          checkDefinition(context, _definition);
+        }
+
+        exitScope(context);
+        context.isContractScope = false;
       }
-      exitScope(context);
-      context.isContractScope = false;
 
       break;
 
