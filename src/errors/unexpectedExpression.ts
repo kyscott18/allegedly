@@ -1,5 +1,5 @@
 import type { Ast } from "../types/ast";
-import { recoverSource } from "../utils/frame";
+import { frame, recoverSource } from "../utils/frame";
 
 export type UnexpectExpressionErrorType = UnexpectExpressionError & {
   name: "UnexpectExpressionError";
@@ -10,7 +10,12 @@ export class UnexpectExpressionError extends Error {
     source,
     expression,
   }: { source: string; expression: Ast.Expression; expected: string }) {
-    const _token = recoverSource(source, expression.loc);
-    super(`Unexpected expression: "${_token}".`);
+    super();
+    this.cause = frame(
+      source,
+      expression.loc,
+      `Unexpected expression: "${recoverSource(source, expression.loc)}".`,
+    );
+    this.stack = undefined;
   }
 }

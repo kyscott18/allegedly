@@ -1,5 +1,5 @@
 import type { SourceLocation } from "../types/utils";
-import { recoverSource } from "../utils/frame";
+import { frame, recoverSource } from "../utils/frame";
 
 export type UnrecognizedSymbolErrorType = UnrecognizedSymbolError & {
   name: "UnrecognizedSymbolError";
@@ -7,10 +7,8 @@ export type UnrecognizedSymbolErrorType = UnrecognizedSymbolError & {
 export class UnrecognizedSymbolError extends Error {
   override name = "UnrecognizedSymbolError";
   constructor({ source, loc }: { source: string; loc: SourceLocation }) {
-    const symbol = recoverSource(source, loc);
-
-    super(`Unrecognized symbol: "${symbol}"`);
-
-    // frame(source, loc, `Unrecognized symbol: "${symbol}"`);
+    super();
+    this.cause = frame(source, loc, `Unrecognized symbol: "${recoverSource(source, loc)}"`);
+    this.stack = undefined;
   }
 }

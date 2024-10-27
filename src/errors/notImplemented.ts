@@ -7,14 +7,12 @@ export type NotImplementedErrorType = NotImplementedError & {
 export class NotImplementedError extends Error {
   override name = "NotImplementedError";
   constructor({ source, loc, feature }: { source: string; loc: SourceLocation; feature: string }) {
-    super(
-      `${feature} is a feature of solidity that has not yet been implemented into this compiler.`,
-    );
-
-    frame(
+    super();
+    this.cause = frame(
       source,
       loc,
       `${feature} is a feature of solidity that has not yet been implemented into this compiler.`,
     );
+    this.stack = undefined;
   }
 }

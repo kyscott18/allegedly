@@ -1,3 +1,4 @@
+import { InvariantViolationError } from "../errors/invariantViolation";
 import { Ast } from "./ast";
 import { Token } from "./token";
 
@@ -124,6 +125,43 @@ export namespace Type {
       returns: [type],
       isTypeConversion: true,
     };
+  };
+
+  export const toString = (type: Type): string => {
+    switch (type.type) {
+      case disc.Literal:
+        return type.value.value;
+      case disc.Elementary:
+        switch (type.value.token) {
+          case Token.disc.Address:
+            return "address";
+          case Token.disc.String:
+            return "string";
+          case Token.disc.Uint:
+            return `uint${type.value.size}`;
+          case Token.disc.Int:
+            return `int${type.value.size}`;
+          case Token.disc.Byte:
+            return `bytes${type.value.size}`;
+          case Token.disc.Bytes:
+            return "bytes";
+          case Token.disc.Bool:
+            return "bool";
+        }
+        throw new InvariantViolationError();
+
+      case disc.Function:
+        return "function";
+
+      case disc.Contract:
+        return "contract";
+
+      case disc.Struct:
+        return "struct";
+
+      case disc.Tuple:
+        return `(${type.elements.map((t) => (t ? toString(t) : "")).join(", ")})`;
+    }
   };
 
   export type Type = Literal | Elementary | Function | Contract | Struct | Tuple;

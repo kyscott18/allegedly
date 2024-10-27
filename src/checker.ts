@@ -6,6 +6,7 @@ import { TypeError } from "./errors/type";
 import { Ast } from "./types/ast";
 import { Token } from "./types/token";
 import { Type } from "./types/type";
+import { recoverSource } from "./utils/frame";
 import { never } from "./utils/never";
 
 export type CheckContext = {
@@ -204,6 +205,7 @@ export const check = (source: string, program: Ast.Program): TypeAnnotations => 
 };
 
 const addSymbol = (context: CheckContext, symbol: string, type: Type.Type) => {
+  // TODO(kyle) symbol: identifier
   const scope = context.symbols[context.symbols.length - 1]!;
   const functionScope = context.functionSymbols[context.symbols.length - 1]!;
 
@@ -214,7 +216,7 @@ const addSymbol = (context: CheckContext, symbol: string, type: Type.Type) => {
     existingSymbol !== undefined &&
     (type.type !== Type.disc.Function || type.isTypeConversion === false)
   ) {
-    throw new TypeError("Identifier already declared", 2333);
+    throw new TypeError({ message: `Identifier "${symbol}" already declared`, code: 2333 });
   }
 
   if (type.type === Type.disc.Function) {
@@ -225,7 +227,11 @@ const addSymbol = (context: CheckContext, symbol: string, type: Type.Type) => {
           type.parameters.length === functionType.parameters.length &&
           type.parameters.every((p, i) => p.type === functionType.parameters[i]!.type)
         ) {
-          throw new TypeError("Function with same name and parameter types defined twice", 1686);
+          // TODO(kyle) find function name
+          throw new TypeError({
+            message: "Function with same name and parameter types defined twice",
+            code: 1686,
+          });
         }
       }
     }
@@ -236,24 +242,28 @@ const addSymbol = (context: CheckContext, symbol: string, type: Type.Type) => {
   }
 };
 
-const resolveSymbol = (context: CheckContext, symbol: string): Type.Type => {
+const resolveSymbol = (context: CheckContext, symbol: Token.Identifier): Type.Type => {
   for (let i = context.symbols.length - 1; i >= 0; i--) {
     const scope = context.symbols[i];
-    if (scope?.has(symbol)) return scope.get(symbol)!;
+    if (scope?.has(symbol.value)) return scope.get(symbol.value)!;
   }
-  // TODO(kyle) Identifier not found or not unique.solidity(7920)
-  throw new TypeError("Undeclared identifier", 7576);
+
+  throw new TypeError({
+    frame: { source: context.source, loc: symbol.loc },
+    message: `Undeclared identifier "${symbol.value}"`,
+    code: 7576,
+  });
 };
 
 const resolveFunctionSymbol = (
   context: CheckContext,
-  symbol: string,
+  symbol: Token.Identifier,
   argumentTypes: Type.Type[],
 ): Type.Type => {
   for (let i = context.functionSymbols.length - 1; i >= 0; i--) {
     const scope = context.functionSymbols[i];
-    if (scope?.has(symbol)) {
-      const functionTypes = scope!.get(symbol)!;
+    if (scope?.has(symbol.value)) {
+      const functionTypes = scope!.get(symbol.value)!;
       if (functionTypes.length === 1) return functionTypes[0]!;
       for (const functionType of functionTypes) {
         if (
@@ -271,7 +281,11 @@ const resolveFunctionSymbol = (
     }
   }
 
-  throw new TypeError("Undeclared identifier", 7576);
+  throw new TypeError({
+    frame: { source: context.source, loc: symbol.loc },
+    message: `Undeclared identifier "${symbol.value}"`,
+    code: 7576,
+  });
 };
 
 const enterScope = (context: CheckContext) => {
@@ -391,7 +405,7 @@ export const checkStatement = (context: CheckContext, statement: Ast.Statement):
           let type: Type.Type;
           if (declaration.type.ast === Ast.disc.UserDefinedType) {
             // Identifier not found or not unique.solidity(7920)
-            type = resolveSymbol(context, declaration.type.type.value);
+            type = resolveSymbol(context, declaration.type.type);
           } else {
             type = Type.convertAst(declaration.type);
           }
@@ -415,7 +429,7 @@ export const checkStatement = (context: CheckContext, statement: Ast.Statement):
             if (astType === undefined) {
               type.elements.push(undefined);
             } else if (astType.type.ast === Ast.disc.UserDefinedType) {
-              type.elements.push(resolveSymbol(context, astType.type.type.value));
+              type.elements.push(resolveSymbol(context, astType.type.type));
             } else {
               type.elements.push(Type.convertAst(astType.type));
             }
@@ -425,10 +439,11 @@ export const checkStatement = (context: CheckContext, statement: Ast.Statement):
             initializer.type !== Type.disc.Tuple ||
             type.elements.length !== initializer.elements.length
           ) {
-            throw new TypeError(
-              `Different number of components on the left hand side (${type.elements.length}) than on the right hand side (${initializer.type !== Type.disc.Tuple ? 1 : initializer.elements.length})`,
-              7364,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: statement.loc },
+              message: `Different number of components on the left hand side (${type.elements.length}) than on the right hand side (${initializer.type !== Type.disc.Tuple ? 1 : initializer.elements.length})`,
+              code: 7364,
+            });
           }
 
           for (let i = 0; i < type.elements.length; i++) {
@@ -436,26 +451,27 @@ export const checkStatement = (context: CheckContext, statement: Ast.Statement):
               type.elements[i] &&
               isImplicitlyConvertibleTo(initializer.elements[i]!, type.elements[i]!) === false
             ) {
-              throw new TypeError(
-                `Type ${initializer} is not implicitly convertible to expected type ${statement.declarations[0]!.type}`,
-                9574,
-              );
+              throw new TypeError({
+                message: `Type "${Type.toString(initializer.elements[i]!)}" is not implicitly convertible to expected type "${Type.toString(type.elements[i]!)}"`,
+                code: 9574,
+              });
             }
           }
         } else {
           const astType = statement.declarations[0]!;
 
           if (astType.type.ast === Ast.disc.UserDefinedType) {
-            type = resolveSymbol(context, astType.type.type.value);
+            type = resolveSymbol(context, astType.type.type);
           } else {
             type = Type.convertAst(astType.type);
           }
 
           if (isImplicitlyConvertibleTo(initializer, type) === false) {
-            throw new TypeError(
-              `Type ${initializer} is not implicitly convertible to expected type ${statement.declarations[0]!.type}`,
-              9574,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: statement.initializer.loc },
+              message: `Type "${Type.toString(initializer)}" is not implicitly convertible to expected type "${type}"`,
+              code: 9574,
+            });
           }
         }
       }
@@ -505,13 +521,9 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
     case Ast.disc.Identifier: {
       if (context.arguments.has(expression)) {
         // TODO(kyle) return array, only filter if one
-        return resolveFunctionSymbol(
-          context,
-          expression.token.value,
-          context.arguments.get(expression)!,
-        );
+        return resolveFunctionSymbol(context, expression.token, context.arguments.get(expression)!);
       }
-      return resolveSymbol(context, expression.token.value);
+      return resolveSymbol(context, expression.token);
     }
 
     case Ast.disc.Literal: {
@@ -531,14 +543,19 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       switch (expression.operator.token) {
         case Token.disc.Assign: {
           if (isLValue(context, expression.left) === false) {
-            throw new TypeError("Expression has to be an lvalue", 4247);
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.left.loc },
+              message: "Expression has to be an lvalue",
+              code: 4247,
+            });
           }
 
           if (isImplicitlyConvertibleTo(right, left) === false) {
-            throw new TypeError(
-              `Type ${left} is not implicitly convertible to expected type ${right}`,
-              7407,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.right.loc },
+              message: `Type "${Type.toString(left)}" is not implicitly convertible to expected type "${Type.toString(right)}"`,
+              code: 7407,
+            });
           }
 
           return left;
@@ -560,10 +577,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             left.value.token !== weakRight.value.token ||
             left.value.size < weakRight.value.size
           ) {
-            throw new TypeError(
-              `Operator ${expression.operator} not compatible with types ${left.type} and ${right.type}`,
-              7366,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${recoverSource(context.source, expression.operator.loc)}" not compatible with types "${Type.toString(left)}" and "${Type.toString(right)}"`,
+              code: 7366,
+            });
           }
 
           return left;
@@ -582,10 +600,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             left.value.token !== weakRight.value.token ||
             left.value.size < weakRight.value.size
           ) {
-            throw new TypeError(
-              `Operator ${expression.operator} not compatible with types ${left.type} and ${right.type}`,
-              7366,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${recoverSource(context.source, expression.operator.loc)}" not compatible with types "${Type.toString(left)}" and "${Type.toString(right)}"`,
+              code: 7366,
+            });
           }
 
           return left;
@@ -609,10 +628,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             left.value.token !== weakRight.value.token ||
             left.value.size < weakRight.value.size
           ) {
-            throw new TypeError(
-              `Operator ${expression.operator} not compatible with types ${left.type} and ${right.type}`,
-              7366,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${recoverSource(context.source, expression.operator.loc)}" not compatible with types "${Type.toString(left)}" and "${Type.toString(right)}"`,
+              code: 7366,
+            });
           }
 
           return left;
@@ -634,10 +654,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
               weakRight.value.token !== Token.disc.Byte) ||
             left.value.token !== weakRight.value.token
           ) {
-            throw new TypeError(
-              `Operator ${expression.operator} not compatible with types ${left.type} and ${right.type}`,
-              7366,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${recoverSource(context.source, expression.operator.loc)}" not compatible with types "${Type.toString(left)}" and "${Type.toString(right)}"`,
+              code: 7366,
+            });
           }
 
           return left;
@@ -662,7 +683,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         case Token.disc.Increment:
         case Token.disc.Decrement:
           if (isLValue(context, expression.expression) === false) {
-            throw new TypeError("Expression has to be an lvalue", 4247);
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: "Expression has to be an lvalue",
+              code: 4247,
+            });
           }
 
           if (
@@ -670,7 +695,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             (expressionType.value.token !== Token.disc.Uint &&
               expressionType.value.token !== Token.disc.Int)
           ) {
-            throw new TypeError("Built-in unary operator ++ cannot be applied to type ${}", 9767);
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${recoverSource(context.source, expression.operator.loc)}" cannot be applied to type "${Type.toString(expressionType)}"`,
+              code: 9767,
+            });
           }
           break;
 
@@ -682,10 +711,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
                 weakType.value.token !== Token.disc.Int) ||
               expressionType.type !== Type.disc.Literal)
           ) {
-            throw new TypeError(
-              `Built-in unary operator ${expression.operator} cannot be applied to type ${expressionType}`,
-              4907,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${recoverSource(context.source, expression.operator.loc)}" cannot be applied to type ${Type.toString(expressionType)}`,
+              code: 4907,
+            });
           }
 
           return {
@@ -696,14 +726,19 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 
         case Token.disc.Delete: {
           if (isLValue(context, expression.expression) === false) {
-            throw new TypeError("Expression has to be an lvalue", 4247);
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: "Expression has to be an lvalue",
+              code: 4247,
+            });
           }
 
           if (expressionType.type !== Type.disc.Elementary) {
-            throw new TypeError(
-              "Built-in unary operator delete cannot be applied to type ${}",
-              9767,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${recoverSource(context.source, expression.operator.loc)}" cannot be applied to type ${Type.toString(expressionType)}`,
+              code: 9767,
+            });
           }
 
           return {
@@ -714,7 +749,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
 
         case Token.disc.Not: {
           if (weakType.type !== Type.disc.Elementary || weakType.value.token !== Token.disc.Bool) {
-            throw new TypeError("Built-in unary operator ! cannot be applied to type ${}", 4907);
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${recoverSource(context.source, expression.operator.loc)}" cannot be applied to type ${Type.toString(expressionType)}`,
+              code: 4907,
+            });
           }
 
           return weakType;
@@ -727,7 +766,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
               weakType.value.token !== Token.disc.Int &&
               weakType.value.token !== Token.disc.Byte)
           ) {
-            throw new TypeError("Built-in unary operator ~ cannot be applied to type ${}", 4907);
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${recoverSource(context.source, expression.operator.loc)}" cannot be applied to type ${Type.toString(expressionType)}`,
+              code: 4907,
+            });
           }
 
           break;
@@ -758,10 +801,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             (commonType.value.token !== Token.disc.Uint &&
               commonType.value.token !== Token.disc.Int)
           ) {
-            throw new TypeError(
-              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
-              2271,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${expression.operator.token}" cannot be applied to types "${Type.toString(left)}" and "${Type.toString(right)}"`,
+              code: 2271,
+            });
           }
 
           return commonType;
@@ -775,10 +819,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             (commonType.value.token !== Token.disc.Uint &&
               commonType.value.token !== Token.disc.Int)
           ) {
-            throw new TypeError(
-              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
-              2271,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${expression.operator.token}" cannot be applied to types "${Type.toString(left)}" and "${Type.toString(right)}"`,
+              code: 2271,
+            });
           }
 
           const isSigned =
@@ -804,17 +849,19 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             (weakLeft.value.token !== Token.disc.Uint && weakLeft.value.token !== Token.disc.Int) ||
             weakRight.value.token !== Token.disc.Uint
           ) {
-            throw new TypeError(
-              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
-              2271,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${expression.operator.token}" cannot be applied to types "${Type.toString(left)}" and "${Type.toString(right)}"`,
+              code: 2271,
+            });
           }
 
           if (weakLeft.value.size < weakRight.value.size) {
-            throw new TypeError(
-              `The result type of the exponentiation operation is equal to the type of the first operand (${left.type}) ignoring the (larger) type of the second operand (${right.type}) which might be unexpected. Silence this warning by either converting the first or the second operand to the type of the other.`,
-              3149,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${expression.operator.token}" cannot be applied when "${Type.toString(weakRight)}" is bigger than "${Type.toString(weakLeft)}"`,
+              code: 3149,
+            });
           }
 
           return {
@@ -835,10 +882,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             weakLeft.value.token !== Token.disc.Bool ||
             weakRight.value.token !== Token.disc.Bool
           ) {
-            throw new TypeError(
-              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
-              2271,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${expression.operator.token}" cannot be applied to types "${Type.toString(left)}" and "${Type.toString(right)}"`,
+              code: 2271,
+            });
           }
 
           return Type.staticBool;
@@ -859,10 +907,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             weakRight.value.token === Token.disc.Bytes ||
             weakLeft.value.token !== weakRight.value.token
           ) {
-            throw new TypeError(
-              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
-              2271,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${expression.operator.token}" cannot be applied to types "${Type.toString(left)}" and "${Type.toString(right)}"`,
+              code: 2271,
+            });
           }
 
           return Type.staticBool;
@@ -887,10 +936,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
             weakRight.value.token === Token.disc.Bool ||
             weakLeft.value.token !== weakRight.value.token
           ) {
-            throw new TypeError(
-              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
-              2271,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${expression.operator.token}" cannot be applied to types "${Type.toString(left)}" and "${Type.toString(right)}"`,
+              code: 2271,
+            });
           }
 
           return Type.staticBool;
@@ -914,10 +964,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
               weakRight.value.token !== Token.disc.Byte) ||
             weakLeft.value.token !== weakRight.value.token
           ) {
-            throw new TypeError(
-              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
-              2271,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${expression.operator.token}" cannot be applied to types "${Type.toString(left)}" and "${Type.toString(right)}"`,
+              code: 2271,
+            });
           }
 
           return weakLeft;
@@ -940,10 +991,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
               weakRight.value.token !== Token.disc.Byte) ||
             weakLeft.value.token !== weakRight.value.token
           ) {
-            throw new TypeError(
-              `Built-in binary operator ${expression.operator.token} cannot be applied to types ${left} and ${right}`,
-              2271,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Operator "${expression.operator.token}" cannot be applied to types "${Type.toString(left)}" and "${Type.toString(right)}"`,
+              code: 2271,
+            });
           }
 
           return weakLeft;
@@ -969,19 +1021,21 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
           value: { token: Token.disc.Bool },
         }) === false
       ) {
-        throw new TypeError(
-          `Type ${condition} is not implicitly convertible to expected type bool`,
-          7407,
-        );
+        throw new TypeError({
+          frame: { source: context.source, loc: expression.loc },
+          message: `Type "${Type.toString(condition)}" is not implicitly convertible to expected type "bool"`,
+          code: 7407,
+        });
       }
 
       const commonType = getCommonType(trueExpression, falseExpression);
 
       if (commonType === undefined) {
-        throw new TypeError(
-          `True expressions's type ${trueExpression} does not match false expressions type ${falseExpression}`,
-          1080,
-        );
+        throw new TypeError({
+          frame: { source: context.source, loc: expression.loc },
+          message: `True expressions's type "${Type.toString(trueExpression)}" does not match false expressions type "${Type.toString(falseExpression)}"`,
+          code: 1080,
+        });
       }
 
       return commonType;
@@ -999,25 +1053,31 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       const expressionType = checkExpression(context, expression.expression);
 
       if (expressionType.type !== Type.disc.Function) {
-        throw new TypeError("This expression is not callable", 5704);
+        throw new TypeError({
+          frame: { source: context.source, loc: expression.loc },
+          message: "This expression is not callable",
+          code: 5704,
+        });
       }
 
       context.arguments.delete(expression.expression);
 
       if (expressionType.parameters.length !== expression.arguments.length) {
-        throw new TypeError(
-          `Wrong argument count for function call: ${expression.arguments.length} arguments given but expected ${expressionType.parameters.length}.`,
-          6160,
-        );
+        throw new TypeError({
+          frame: { source: context.source, loc: expression.loc },
+          message: `Wrong argument count for function call: ${expression.arguments.length} arguments given but expected ${expressionType.parameters.length}.`,
+          code: 6160,
+        });
       }
 
       for (const argumentType of argumentTypes) {
         if (expressionType.isTypeConversion) {
           if (isExplicitlyConvertibleTo(argumentType, expressionType.returns[0]!) === false) {
-            throw new TypeError(
-              `Explicit type conversion is not allowed from "${argumentType}" to "${expressionType.returns[0]!}".`,
-              9640,
-            );
+            throw new TypeError({
+              frame: { source: context.source, loc: expression.loc },
+              message: `Explicit type conversion is not allowed from "${Type.toString(argumentType)}" to "${Type.toString(expressionType.returns[0]!)}".`,
+              code: 9640,
+            });
           }
         }
       }
@@ -1033,10 +1093,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         const functionTypes = expressionType.functions.get(expression.member.token.value);
 
         if (functionTypes === undefined) {
-          throw new TypeError(
-            `Member "${expression.member.token.value}" not found or not visible after argument-dependent lookup in ${expressionType}`,
-            9582,
-          );
+          throw new TypeError({
+            frame: { source: context.source, loc: expression.loc },
+            message: `Member "${expression.member.token.value}" not found or not visible after argument-dependent lookup in "${Type.toString(expressionType)}"`,
+            code: 9582,
+          });
         }
 
         if (context.arguments.has(expression)) {
@@ -1062,10 +1123,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
         }
       }
 
-      throw new TypeError(
-        `Member "${expression.member.token.value}" not found or not visible after argument-dependent lookup in ${expressionType}`,
-        9582,
-      );
+      throw new TypeError({
+        frame: { source: context.source, loc: expression.loc },
+        message: `Member "${expression.member.token.value}" not found or not visible after argument-dependent lookup in ${Type.toString(expressionType)}`,
+        code: 9582,
+      });
     }
 
     case Ast.disc.IndexAccessExpression:
@@ -1093,7 +1155,11 @@ export const checkExpression = (context: CheckContext, expression: Ast.Expressio
       const elements = expression.elements.map((e) => {
         if (e === undefined) {
           if (context.isLValueScope === true) return undefined;
-          throw new TypeError("Tuple component cannot be empty", 8381);
+          throw new TypeError({
+            frame: { source: context.source, loc: expression.loc },
+            message: "Tuple component cannot be empty",
+            code: 8381,
+          });
         }
         const type = checkExpression(context, e);
         context.annotations.set(e, type);

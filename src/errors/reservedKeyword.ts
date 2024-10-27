@@ -7,9 +7,8 @@ export type ReservedKeywordErrorType = ReservedKeywordError & {
 export class ReservedKeywordError extends Error {
   override name = "ReservedKeywordError";
   constructor({ source, loc }: { source: string; loc: SourceLocation }) {
-    const keyword = recoverSource(source, loc);
-    super(`"${keyword}" is a reserved keyword.`);
-
-    frame(source, loc, `"${keyword}" is a reserved keyword.`);
+    super();
+    this.cause = frame(source, loc, `"${recoverSource(source, loc)}" is a reserved keyword.`);
+    this.stack = undefined;
   }
 }

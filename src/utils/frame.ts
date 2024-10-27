@@ -45,7 +45,7 @@ export const frame = (source: string, loc: SourceLocation, message?: string) => 
     frame = `${frame}\n\n${colors.bold(colors.red(message))}`;
   }
 
-  return frame;
+  return `\n${frame}`;
 };
 
 export const recoverSource = (source: string, loc: SourceLocation) => {
