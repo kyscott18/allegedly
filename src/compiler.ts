@@ -64,35 +64,35 @@ export const compile = (
         throw new NotImplementedError({
           source: context.source,
           loc: defintion.loc,
-          feature: "events",
+          feature: "event definition",
         });
 
       case Ast.disc.ErrorDefinition:
         throw new NotImplementedError({
           source: context.source,
           loc: defintion.loc,
-          feature: "errors",
+          feature: "error definition",
         });
 
       case Ast.disc.StructDefinition:
         throw new NotImplementedError({
           source: context.source,
           loc: defintion.loc,
-          feature: "structs",
+          feature: "struct definition",
         });
 
       case Ast.disc.ModifierDefinition:
         throw new NotImplementedError({
           source: context.source,
           loc: defintion.loc,
-          feature: "modifiers",
+          feature: "modifier definition",
         });
 
       case Ast.disc.PragmaDirective:
         throw new NotImplementedError({
           source: context.source,
           loc: defintion.loc,
-          feature: "pragma",
+          feature: "pragma directive",
         });
 
       default:
@@ -187,8 +187,8 @@ export const compileLiteral = (value: Omit<Ast.Literal["token"], "loc">): Hex =>
       return value.value === "true" ? "0x01" : "0x00";
     }
 
-    default:
-      never(value);
+    case Token.disc.StringLiteral:
+    case Token.disc.HexLiteral:
       throw new InvariantViolationError();
   }
 };
@@ -211,21 +211,21 @@ const compileContract = (context: CompileBytecodeContext, node: Ast.ContractDefi
         throw new NotImplementedError({
           source: context.source,
           loc: _node.loc,
-          feature: "events",
+          feature: "event definition",
         });
 
       case Ast.disc.ErrorDefinition:
         throw new NotImplementedError({
           source: context.source,
           loc: _node.loc,
-          feature: "errors",
+          feature: "error definition",
         });
 
       case Ast.disc.StructDefinition:
         throw new NotImplementedError({
           source: context.source,
           loc: _node.loc,
-          feature: "structs",
+          feature: "struct definition",
         });
 
       case Ast.disc.ModifierDefinition:
@@ -354,7 +354,7 @@ const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement):
       throw new NotImplementedError({
         source: context.source,
         loc: node.loc,
-        feature: "blocks",
+        feature: "block statement",
       });
     }
 
@@ -362,7 +362,7 @@ const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement):
       throw new NotImplementedError({
         source: context.source,
         loc: node.loc,
-        feature: "unchecked blocks",
+        feature: "unchecked block statement",
       });
     }
 
@@ -370,7 +370,7 @@ const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement):
       throw new NotImplementedError({
         source: context.source,
         loc: node.loc,
-        feature: "if statements",
+        feature: "if statement",
       });
     }
 
@@ -378,7 +378,7 @@ const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement):
       throw new NotImplementedError({
         source: context.source,
         loc: node.loc,
-        feature: "for loops",
+        feature: "for loop statement",
       });
     }
 
@@ -386,7 +386,7 @@ const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement):
       throw new NotImplementedError({
         source: context.source,
         loc: node.loc,
-        feature: "while loops",
+        feature: "while loop statement",
       });
     }
 
@@ -394,7 +394,7 @@ const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement):
       throw new NotImplementedError({
         source: context.source,
         loc: node.loc,
-        feature: "do-while loops",
+        feature: "do-while loop statement",
       });
     }
 
@@ -451,7 +451,7 @@ const compileStatement = (context: CompileBytecodeContext, node: Ast.Statement):
       throw new NotImplementedError({
         source: context.source,
         loc: node.loc,
-        feature: "placeholder",
+        feature: "placeholder statement",
       });
     }
   }
@@ -1128,7 +1128,7 @@ const compileExpression = (
         };
       }
 
-      throw new NotImplementedError();
+      throw new InvariantViolationError();
 
     case Ast.disc.MemberAccessExpression: {
       if (node.expression.ast === Ast.disc.Identifier && node.expression.token.value === "block") {
@@ -1217,10 +1217,25 @@ const compileExpression = (
     }
 
     case Ast.disc.IndexAccessExpression:
-      throw new InvariantViolationError();
+      throw new NotImplementedError({
+        source: context.source,
+        loc: node.loc,
+        feature: "index access",
+      });
+
+    case Ast.disc.IndexRangeAccessExpression:
+      throw new NotImplementedError({
+        source: context.source,
+        loc: node.loc,
+        feature: "index range access",
+      });
 
     case Ast.disc.NewExpression:
-      throw new InvariantViolationError();
+      throw new NotImplementedError({
+        source: context.source,
+        loc: node.loc,
+        feature: "contract creation",
+      });
 
     case Ast.disc.TupleExpression: {
       let code: Hex = "0x";

@@ -333,21 +333,21 @@ export const parseErrorDefinition = (context: ParseContext): Ast.ErrorDefinition
   };
 };
 
-export const parseStructDefinition = (context: ParseContext): Ast.StructDefinition => {
-  throw new NotImplementedError({
-    source: context.source,
-    loc: context.tokens[context.tokenIndex]!.loc,
-    feature: "structs",
-  });
-};
+// export const parseStructDefinition = (context: ParseContext): Ast.StructDefinition => {
+//   throw new NotImplementedError({
+//     source: context.source,
+//     loc: context.tokens[context.tokenIndex]!.loc,
+//     feature: "struct defintion",
+//   });
+// };
 
-export const parseModifierDefinition = (context: ParseContext): Ast.ModifierDefinition => {
-  throw new NotImplementedError({
-    source: context.source,
-    loc: context.tokens[context.tokenIndex]!.loc,
-    feature: "modifier",
-  });
-};
+// export const parseModifierDefinition = (context: ParseContext): Ast.ModifierDefinition => {
+//   throw new NotImplementedError({
+//     source: context.source,
+//     loc: context.tokens[context.tokenIndex]!.loc,
+//     feature: "modifier definition",
+//   });
+// };
 
 export const parseVariableDefinition = (context: ParseContext): Ast.VariableDefintion => {
   const start = context.tokenIndex;
@@ -1349,6 +1349,6 @@ export const parsePragmentDirective = (context: ParseContext): Ast.PragmaDirecti
   throw new NotImplementedError({
     source: context.source,
     loc: context.tokens[context.tokenIndex]!.loc,
-    feature: "pragma",
+    feature: "pragma directive",
   });
 };
