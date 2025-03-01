@@ -5,17 +5,17 @@
   "module": "src/index.ts",
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@changesets/cli": "^2.27.9",
+    "@changesets/cli": "^2.28.1",
     "@ethereumjs/evm": "^3.1.1",
-    "@size-limit/preset-small-lib": "^11.1.6",
-    "@types/bun": "^1.1.13",
-    "mitata": "^1.0.10",
-    "size-limit": "^11.1.6"
+    "@size-limit/preset-small-lib": "^11.2.0",
+    "@types/bun": "^1.2.4",
+    "mitata": "^1.0.34",
+    "size-limit": "^11.2.0"
   },
   "peerDependencies": {
-    "abitype": "^1.0.6",
-    "typescript": "^5.6.3",
-    "viem": "^2.21.45"
+    "abitype": "^1.0.8",
+    "typescript": "^5.8.2",
+    "viem": "^2.23.5"
   },
   "files": ["dist"],
   "scripts": {
